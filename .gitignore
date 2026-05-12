@@ -37,6 +37,9 @@ out/
 *secret*
 *token*
 !*.example
+# Allow documentation files that happen to contain "secret" in the name
+!docs/runbooks/github-secrets.md
+!docs/**/*-secrets*.md
 .npmrc.local
 
 # ─── Editor / IDE ──────────────────────────────────────────────
