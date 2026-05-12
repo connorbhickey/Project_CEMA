@@ -20,7 +20,8 @@ privately by one of the following methods:
    Use the "Report a vulnerability" button on the
    [Security tab](../../security/advisories/new) of this repository.
 
-2. **Email**: `conlaxer13@gmail.com` with subject `[SECURITY] Project_CEMA`.
+2. **Email**: `security@example.com` with subject `[SECURITY] Project_CEMA`.
+   *(This is a placeholder. Configure a real `security@<your-domain>` mailbox before public launch.)*
 
 Please include:
 

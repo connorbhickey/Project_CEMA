@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/connorbhickey/Project_CEMA/security/advisories/new
     about: Report a security issue privately (do NOT use issues for security)
   - name: Compliance question
-    url: mailto:conlaxer13@gmail.com
-    about: Email compliance@<domain> for UPL / TCPA / PII / SOC 2 questions
+    url: https://github.com/connorbhickey/Project_CEMA/issues/new?labels=compliance,triage&template=compliance_issue.yml
+    about: For UPL / TCPA / PII / SOC 2 questions, open a compliance issue (a dedicated mailbox will be set up before public launch)

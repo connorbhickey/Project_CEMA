@@ -8,7 +8,7 @@ A signing-only SSH key has been generated and git is configured to use it:
 
 - **Private key:** `~/.ssh/id_ed25519_signing` (passphrase-less; signing-only, no auth)
 - **Public key:** `~/.ssh/id_ed25519_signing.pub`
-- **Allowed signers file:** `~/.ssh/allowed_signers` (maps `conlaxer13@gmail.com` to the signing key for local verification)
+- **Allowed signers file:** `~/.ssh/allowed_signers` (maps the maintainer's email to the signing key for local verification)
 - **Git config (global):**
   - `gpg.format = ssh`
   - `user.signingkey = ~/.ssh/id_ed25519_signing.pub`

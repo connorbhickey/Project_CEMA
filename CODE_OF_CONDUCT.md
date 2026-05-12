@@ -23,7 +23,8 @@ or experience level.
 
 ## Enforcement
 
-Reports of unacceptable behavior should be sent to `conlaxer13@gmail.com`.
+Reports of unacceptable behavior should be sent via GitHub's private
+report tools, or to `conduct@example.com` once a domain is configured.
 
 All reports will be reviewed and investigated promptly and confidentially.
 Maintainers may take any action deemed appropriate, up to and including
