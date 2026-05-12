@@ -295,44 +295,349 @@ Use the `commit-commands:commit` skill or `commit-commands:commit-push-pr` skill
 
 ## 9. Skills to invoke (proactively)
 
-When working in this repo, invoke these skills *before* the relevant work, not after:
+When working in this repo, invoke these skills *before* the relevant work, not after. The full strategic catalog with rationale lives in [spec §20.18](docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md); this table is the operational quick-reference.
+
+### 9.1 Process discipline (superpowers plugin) — invoke pervasively
 
 | Situation | Invoke |
 |---|---|
 | Starting any conversation | `superpowers:using-superpowers` (auto-loaded) |
-| Building any new feature | `superpowers:brainstorming` first, then `superpowers:writing-plans` |
-| Multi-step implementation | `superpowers:executing-plans` |
+| Pre-spec — designing a feature | `superpowers:brainstorming` |
+| Post-spec — translating spec to tasks | `superpowers:writing-plans` |
+| Inline plan execution with checkpoints | `superpowers:executing-plans` |
+| Multi-task implementation via subagents | `superpowers:subagent-driven-development` |
+| Multiple independent parallel tasks | `superpowers:dispatching-parallel-agents` |
+| Isolating a risky implementation | `superpowers:using-git-worktrees` |
 | Implementing a feature or bugfix | `superpowers:test-driven-development` |
-| Encountering a bug | `superpowers:systematic-debugging` |
-| Working with Next.js (any change to `apps/web`) | `vercel:nextjs` |
-| Working with Workflow DevKit | `vercel:workflow` |
-| Working with AI SDK | `vercel:ai-sdk` |
-| Working with AI Elements | `vercel:ai-elements` |
-| Chat-style UI | `vercel:chat-sdk` |
-| Vercel storage (Neon, Blob, Edge Config) | `vercel:vercel-storage` |
+| Encountering any bug / failing test | `superpowers:systematic-debugging` |
+| Verifying before claiming done | `superpowers:verification-before-completion` |
+| Requesting code review | `superpowers:requesting-code-review` |
+| Receiving review feedback | `superpowers:receiving-code-review` |
+| Wrapping up a development branch | `superpowers:finishing-a-development-branch` |
+| Authoring new skills | `superpowers:writing-skills` |
+
+### 9.2 Vercel platform skills — invoke for any change touching the relevant area
+
+| Situation | Invoke |
+|---|---|
+| Any change in `apps/web` (Next.js) | `vercel:nextjs` |
+| React component changes | `vercel:react-best-practices` |
+| Long-running / multi-day workflow code | `vercel:workflow` |
+| Calling LLMs via AI SDK | `vercel:ai-sdk` |
+| Building AI chat / agent surfaces | `vercel:ai-elements` |
+| Chat-style multi-platform bots | `vercel:chat-sdk` |
+| JSON rendering in chat (tool calls, streaming) | `vercel:json-render` |
+| Vercel storage (Neon, Blob, Edge Config, Marketplace) | `vercel:vercel-storage` |
 | Auth (Clerk / WorkOS) | `vercel:auth` |
 | Cron tasks | `vercel:cron-jobs` |
 | Runtime cache | `vercel:runtime-cache` |
-| Middleware (routing) | `vercel:routing-middleware` |
-| Long-running / multi-day workflows | `vercel:workflow` |
-| Vercel Sandbox | `vercel:vercel-sandbox` |
-| Feature flags | `vercel:vercel-flags` |
-| Observability | `vercel:observability` |
-| Deploying | `vercel:deploy` |
-| Managing env vars | `vercel:env` |
+| Next.js 16 Cache Components / PPR / `use cache` | `vercel:next-cache-components` |
+| Middleware (routing, rewrites, redirects) | `vercel:routing-middleware` |
+| Vercel Sandbox (untrusted code execution) | `vercel:vercel-sandbox` |
+| Vercel Functions guidance | `vercel:vercel-functions` |
+| Vercel Queues | `vercel:vercel-queues` |
+| Vercel feature flags | `vercel:vercel-flags` |
+| Observability (logs, traces, web analytics) | `vercel:observability` |
+| Deploying / promoting / rolling back | `vercel:deployments-cicd` or `vercel:deploy` |
+| Managing env vars | `vercel:env-vars` or `vercel:env` |
+| Vercel CLI operations | `vercel:vercel-cli` |
+| Vercel REST API operations | `vercel:vercel-api` |
+| Vercel Agent (PR review, incident investigation) | `vercel:vercel-agent` |
+| AI Gateway (model routing, failover) | `vercel:ai-gateway` |
+| Marketplace integrations | `vercel:marketplace` |
+| Turbopack tuning | `vercel:turbopack` |
+| Turborepo configuration | `vercel:turborepo` |
+| shadcn/ui CLI + registries | `vercel:shadcn` |
+| v0.dev usage | `vercel:v0-dev` |
+| Next.js version upgrade | `vercel:next-upgrade` |
+| Multiple services in one project | `vercel:vercel-services` |
 | Verifying full-story end-to-end | `vercel:verification` |
+| Browser automation CLI | `vercel:agent-browser` |
+| Browser verification after dev server starts | `vercel:agent-browser-verify` |
 | Stuck / hung / frustrated | `vercel:investigation-mode` |
-| Creating commits | `commit-commands:commit` |
-| Commit + push + PR | `commit-commands:commit-push-pr` |
-| Cleaning [gone] branches | `commit-commands:clean_gone` |
-| Reviewing a PR | `pr-review-toolkit:review-pr` |
-| Verifying before claiming done | `superpowers:verification-before-completion` |
-| Receiving review feedback | `superpowers:receiving-code-review` |
-| Updating this CLAUDE.md | `claude-md-management:revise-claude-md` |
-| Plugins / hooks / skills development | `plugin-dev:create-plugin` |
+| Knowledge update (correct outdated info) | `vercel:knowledge-update` (auto-loaded) |
 | Project bootstrap | `vercel:bootstrap` |
 
-Do not invoke a skill *just because* it's listed — invoke when its description matches your current task. But err on the side of invoking; skills compound.
+### 9.3 Engineering plugin — operational rigor
+
+| Situation | Invoke |
+|---|---|
+| Choosing a technology (ADR) | `engineering:architecture` |
+| Designing a new system / subsystem | `engineering:system-design` |
+| Designing test strategy | `engineering:testing-strategy` |
+| Self-review before opening PR | `engineering:code-review` |
+| Structured debugging session | `engineering:debug` |
+| Writing READMEs / runbooks / docs | `engineering:documentation` |
+| Tech-debt audit | `engineering:tech-debt` |
+| Production incident triage | `engineering:incident-response` |
+| Pre-deploy checklist | `engineering:deploy-checklist` |
+| Daily / weekly standup write-up | `engineering:standup` |
+
+### 9.4 Code review plugins (free AI reviewers)
+
+| Situation | Invoke |
+|---|---|
+| Comprehensive PR review | `pr-review-toolkit:review-pr` |
+| CodeRabbit-driven review | `coderabbit:code-review` |
+| Ad-hoc free-standing review | `code-review:code-review` |
+| Review focused on security / silent failures | dispatch `pr-review-toolkit:silent-failure-hunter` |
+| Review of new types/schemas | dispatch `pr-review-toolkit:type-design-analyzer` |
+| Review of test coverage on a PR | dispatch `pr-review-toolkit:pr-test-analyzer` |
+| Review of comment accuracy | dispatch `pr-review-toolkit:comment-analyzer` |
+| Simplification pass after a logical chunk | dispatch `pr-review-toolkit:code-simplifier` or `code-simplifier:code-simplifier` |
+| Major-step review against the plan | dispatch `superpowers:code-reviewer` |
+
+### 9.5 Commit / PR flow
+
+| Situation | Invoke |
+|---|---|
+| Creating a commit | `commit-commands:commit` |
+| Commit + push + open PR | `commit-commands:commit-push-pr` |
+| Cleaning `[gone]` branches | `commit-commands:clean_gone` |
+
+### 9.6 Product management
+
+| Situation | Invoke |
+|---|---|
+| New feature spec | `product-management:write-spec` |
+| Idea exploration | `product-management:product-brainstorming` |
+| Sprint planning | `product-management:sprint-planning` |
+| Roadmap update | `product-management:roadmap-update` |
+| Metrics review | `product-management:metrics-review` |
+| Stakeholder update | `product-management:stakeholder-update` |
+| Competitive brief refresh | `product-management:competitive-brief` |
+| Synthesizing design-partner interviews | `product-management:synthesize-research` |
+| Quick brainstorm with a thinking partner | `product-management:brainstorm` |
+
+### 9.7 Operations
+
+| Situation | Invoke |
+|---|---|
+| Documenting an SOP / process | `operations:process-doc` |
+| Authoring or updating a runbook | `operations:runbook` |
+| Identifying / mitigating risks | `operations:risk-assessment` |
+| SOC 2 evidence collection | `operations:compliance-tracking` |
+| Vendor due diligence | `operations:vendor-review` |
+| Production change request | `operations:change-request` |
+| Weekly / monthly status report | `operations:status-report` |
+| Resource capacity planning | `operations:capacity-plan` |
+| Process optimization analysis | `operations:process-optimization` |
+
+### 9.8 Legal (mandatory for compliance posture)
+
+| Situation | Invoke |
+|---|---|
+| Any change touching legal documents / borrower comms / audit | `legal:compliance-check` |
+| UPL / TCPA / PII risk assessment | `legal:legal-risk-assessment` |
+| Triaging an incoming NDA | `legal:triage-nda` |
+| Vendor MSA review | `legal:review-contract` |
+| Status of existing vendor agreement | `legal:vendor-check` |
+| E-signature workflow setup | `legal:signature-request` |
+| Pre-counsel meeting preparation | `legal:meeting-briefing` |
+| Daily / topic / incident legal briefings | `legal:brief` |
+| Generic legal inquiry response | `legal:legal-response` |
+
+### 9.9 Design + frontend
+
+| Situation | Invoke |
+|---|---|
+| Auditing / extending design system | `design:design-system` |
+| WCAG 2.1 AA accessibility audit | `design:accessibility-review` |
+| Structured design feedback | `design:design-critique` |
+| Writing UX microcopy / errors / empty states | `design:ux-copy` |
+| Planning user research | `design:user-research` |
+| Synthesizing user research | `design:research-synthesis` |
+| Generating dev specs from designs | `design:design-handoff` |
+| Distinctive production-grade UI design | `frontend-design:frontend-design` |
+
+### 9.10 Data + analytics
+
+| Situation | Invoke |
+|---|---|
+| Writing performant SQL | `data:sql-queries` |
+| Translating NL to SQL | `data:write-query` |
+| Profiling a new dataset | `data:explore-data` |
+| Ad-hoc data question | `data:analyze` |
+| Pre-share analysis QA | `data:validate-data` |
+| Stats methods (trend, outlier, hypothesis) | `data:statistical-analysis` |
+| Building a chart | `data:create-viz` |
+| Executive dashboard | `data:build-dashboard` |
+| Tribal-knowledge → skill | `data:data-context-extractor` |
+
+### 9.11 Anthropic skills (document and artifact handling)
+
+| Situation | Invoke |
+|---|---|
+| Any PDF input/output (collateral file, recorded mortgage, NYS-261, MT-15) | `anthropic-skills:pdf` ⭐ core to Phase 1 IDP |
+| Word doc (.docx) work | `anthropic-skills:docx` |
+| Spreadsheet (.xlsx) work | `anthropic-skills:xlsx` |
+| Slide deck (.pptx) work | `anthropic-skills:pptx` |
+| Building a new MCP server | `anthropic-skills:mcp-builder` |
+| Creating new skills | `anthropic-skills:skill-creator` |
+| Long-form internal doc co-authoring | `anthropic-skills:doc-coauthoring` |
+| Multi-component HTML artifact for claude.ai | `anthropic-skills:web-artifacts-builder` |
+| Theming slides / docs / reports | `anthropic-skills:theme-factory` |
+| Internal company comms | `anthropic-skills:internal-comms` |
+| Anthropic brand surfaces | `anthropic-skills:brand-guidelines` |
+| Periodic memory audit | `anthropic-skills:consolidate-memory` |
+| Scheduled tasks (beyond Vercel Cron) | `anthropic-skills:schedule` |
+| Canvas / algorithmic art for marketing | `anthropic-skills:canvas-design` / `anthropic-skills:algorithmic-art` |
+
+### 9.12 Plugin development (for project-specific extensions)
+
+| Situation | Invoke |
+|---|---|
+| Creating a Project_CEMA plugin | `plugin-dev:create-plugin` |
+| Plugin scaffolding | `plugin-dev:plugin-structure` |
+| Adding a slash command | `plugin-dev:command-development` |
+| Adding a hook | `plugin-dev:hook-development` |
+| Adding a skill | `plugin-dev:skill-development` |
+| Adding a subagent | `plugin-dev:agent-development` |
+| MCP server integration | `plugin-dev:mcp-integration` |
+| Plugin settings | `plugin-dev:plugin-settings` |
+| Alternative skill-creator entry | `skill-creator:skill-creator` |
+
+### 9.13 Hookify (hook automation)
+
+| Situation | Invoke |
+|---|---|
+| Creating hooks from repeat behaviors | `hookify:hookify` |
+| Writing a hook rule | `hookify:writing-rules` |
+| Enabling / disabling rules | `hookify:configure` |
+| Auditing active rules | `hookify:list` |
+
+Project-specific hooks to author early:
+- Pre-commit PII scanner (SSN-pattern blocker)
+- Pre-push attorney-review-bypass detector
+- Pre-commit audit-log-skip detector
+
+### 9.14 Firecrawl + enterprise search
+
+| Situation | Invoke |
+|---|---|
+| Scraping public servicer / county clerk docs | `firecrawl:firecrawl-cli` |
+| Auto-generating skills from docs | `firecrawl:skill-gen` |
+| Cross-source search | `enterprise-search:search` |
+| Daily/weekly cross-source digest | `enterprise-search:digest` |
+| Synthesized multi-source answers | `enterprise-search:knowledge-synthesis` |
+| Decomposing complex search | `enterprise-search:search-strategy` |
+| Connected-source management | `enterprise-search:source-management` |
+
+### 9.15 Marketing + brand voice (post-launch)
+
+| Situation | Invoke |
+|---|---|
+| Generating brand voice guidelines | `brand-voice:generate-guidelines` |
+| Applying brand voice to content | `brand-voice:enforce-voice` or `brand-voice:brand-voice-enforcement` |
+| Discovering brand assets across platforms | `brand-voice:discover-brand` |
+| Refreshing competitive brief | `marketing:competitive-brief` |
+| Multi-channel content draft | `marketing:content-creation` or `marketing:draft-content` |
+| Campaign planning | `marketing:campaign-plan` |
+| Customer onboarding email sequence | `marketing:email-sequence` |
+| Marketing-site SEO | `marketing:seo-audit` |
+| Brand compliance review | `marketing:brand-review` |
+| Marketing performance review | `marketing:performance-report` |
+
+### 9.16 Hugging Face (Phase 2+ — fine-tuning)
+
+| Situation | Invoke |
+|---|---|
+| HF CLI operations | `huggingface-skills:hf-cli` |
+| NY mortgage dataset curation | `huggingface-skills:hugging-face-datasets` |
+| Fine-tuning a language model | `huggingface-skills:hugging-face-model-trainer` |
+| Fine-tuning a vision model | `huggingface-skills:hugging-face-vision-trainer` |
+| Eval tracking | `huggingface-skills:hugging-face-evaluation` |
+| Browser ML / Transformers.js | `huggingface-skills:transformers-js` |
+| Internal Gradio demos | `huggingface-skills:huggingface-gradio` |
+| Experiment tracking | `huggingface-skills:hugging-face-trackio` |
+| Running HF Jobs | `huggingface-skills:hugging-face-jobs` |
+| HF tool builder | `huggingface-skills:hugging-face-tool-builder` |
+
+### 9.17 Finance (internal accounting / SOX)
+
+| Situation | Invoke |
+|---|---|
+| SOC 2 / SOX audit support | `finance:audit-support` |
+| Billing reconciliation | `finance:reconciliation` |
+| Budget variance analysis | `finance:variance-analysis` |
+| Internal financial statements | `finance:financial-statements` |
+| Month-end close | `finance:close-management` |
+| Journal entries | `finance:journal-entry` / `finance:journal-entry-prep` |
+| SOX sample selection / testing | `finance:sox-testing` |
+
+### 9.18 Productivity
+
+| Situation | Invoke |
+|---|---|
+| TASKS.md tracking | `productivity:task-management` |
+| Memory / shorthand decoding | `productivity:memory-management` |
+| Refreshing tasks + memory | `productivity:update` |
+| Initial productivity setup | `productivity:start` |
+
+### 9.19 Claude Code self-management
+
+| Situation | Invoke |
+|---|---|
+| Updating this CLAUDE.md | `claude-md-management:revise-claude-md` |
+| Auditing this CLAUDE.md | `claude-md-management:claude-md-improver` |
+| Re-auditing automation opportunities | `claude-code-setup:claude-automation-recommender` |
+
+### 9.20 Figma (if/when design moves to Figma)
+
+| Situation | Invoke |
+|---|---|
+| Before any Figma tool call (MANDATORY) | `figma:figma-use` |
+| Translating Figma → production code | `figma:figma-implement-design` |
+| Generating Figma designs from code/spec | `figma:figma-generate-design` |
+| Building a Figma library from codebase | `figma:figma-generate-library` |
+| Mapping Figma components to code | `figma:figma-code-connect-components` |
+| Codifying design rules | `figma:figma-create-design-system-rules` |
+
+### 9.21 Other
+
+| Situation | Invoke |
+|---|---|
+| Interactive parameter exploration / demo | `playground:playground` |
+| Guided feature development (alternative to writing-plans) | `feature-dev:feature-dev` |
+
+### 9.22 Subagent types (dispatch via Agent tool)
+
+| Subagent | When to dispatch |
+|---|---|
+| `Explore` | Codebase exploration > 3 queries |
+| `Plan` | Implementation strategy questions |
+| `general-purpose` | Multi-step research with web fetches |
+| `feature-dev:code-architect` | Architecting new feature within patterns |
+| `feature-dev:code-explorer` | Deep analysis of existing feature |
+| `feature-dev:code-reviewer` | High-confidence review filtering |
+| `pr-review-toolkit:code-reviewer` | PR-time code review |
+| `pr-review-toolkit:silent-failure-hunter` | After try/catch / fallback changes |
+| `pr-review-toolkit:type-design-analyzer` | New types or schemas |
+| `pr-review-toolkit:pr-test-analyzer` | Test coverage audit |
+| `pr-review-toolkit:comment-analyzer` | Comment accuracy check |
+| `superpowers:code-reviewer` | Major-step review against plan |
+| `coderabbit:code-reviewer` | Specialized CodeRabbit analysis |
+| `claude-code-guide` | Questions about Claude Code / SDK / API |
+| `vercel:ai-architect` | Architecting AI features on Vercel |
+| `vercel:deployment-expert` | Deployment strategy / CI/CD |
+| `vercel:performance-optimizer` | Core Web Vitals / Lighthouse / loading perf |
+
+### 9.23 Free MCP servers to install
+
+| MCP | Purpose |
+|---|---|
+| `context7` | Up-to-date library docs (Next.js, Drizzle, Clerk, AI SDK) — antidote to stale training data |
+| `github` | PR / issue / CI operations |
+| `playwright` | Browser automation (testing + ACRIS paths) |
+| `serena` | Semantic code analysis across the monorepo |
+| `firecrawl` | Web scraping (servicer + county clerk docs) |
+| `pinecone` | Vector search ops (optional alongside pgvector) |
+
+These give Claude direct tool access to live systems so many of the skills above can do their work autonomously.
+
+### 9.24 Invocation principle
+
+Do not invoke a skill *just because* it's listed — invoke when its description matches your current task. But err on the side of invoking; skills compound. The full strategic rationale is in [spec §20.18](docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md).
 
 ---
 

@@ -1631,6 +1631,324 @@ The CLAUDE.md is co-located with the repo and travels with the codebase. It is u
 - Branch protection + 1-week recovery window on accidental deletion
 - Vercel project export weekly
 
+### 20.18 AI Assistant Skill Ecosystem (proactive invocation catalog)
+
+This project is developed with significant AI assistance (Claude Opus 4.7 / Sonnet 4.6). To ensure consistent, high-quality output, the following free Claude Code plugins and skills MUST be invoked proactively at the appropriate moments. CLAUDE.md §9 contains the operational invocation table; this section documents the strategic *why* per plugin and where each provides leverage.
+
+#### 20.18.1 Superpowers plugin (process discipline)
+
+| Skill | Used during | Why it matters here |
+|---|---|---|
+| `superpowers:using-superpowers` | Every session start | Auto-loaded; bootstraps the skill discipline |
+| `superpowers:brainstorming` | Pre-spec phase | Hard gate against jumping to code before design approved |
+| `superpowers:writing-plans` | Post-spec, pre-implementation | Translates approved spec into TDD-disciplined task list |
+| `superpowers:executing-plans` | Inline plan execution | Batched execution with checkpoints |
+| `superpowers:subagent-driven-development` | Multi-task implementation | Fresh subagent per task; protects main context |
+| `superpowers:dispatching-parallel-agents` | Independent parallel work | Research, multi-integration scaffolding |
+| `superpowers:using-git-worktrees` | Plan execution isolation | Keeps risky implementation work out of main worktree |
+| `superpowers:test-driven-development` | Every feature/bugfix | Enforces failing-test-first; prevents drift |
+| `superpowers:systematic-debugging` | Bug discovery | Reproduce → isolate → diagnose → fix loop |
+| `superpowers:verification-before-completion` | End of every task | Prevents false "done" claims before commit |
+| `superpowers:requesting-code-review` | Before merging | Triggers structured review request |
+| `superpowers:receiving-code-review` | When review feedback arrives | Disciplined feedback intake |
+| `superpowers:finishing-a-development-branch` | Branch close-out | Standardized merge / squash / cleanup |
+| `superpowers:writing-skills` | If we author new skills | For project-specific skill packs |
+
+#### 20.18.2 Vercel plugin (platform-native guidance)
+
+Already covered in CLAUDE.md §9. Every Next.js / Workflow DevKit / AI SDK / storage / cron / middleware change must invoke the corresponding Vercel skill *before* writing code. The training-data-may-be-outdated risk for Vercel APIs is real — the skill loads current documentation references.
+
+#### 20.18.3 Engineering plugin (operational rigor)
+
+| Skill | Used during |
+|---|---|
+| `engineering:architecture` | Major architecture decisions → output is an ADR in `docs/adr/` |
+| `engineering:system-design` | Designing new subsystems within a phase |
+| `engineering:testing-strategy` | Designing test plans for new modules |
+| `engineering:code-review` | Before opening a PR (self-review) |
+| `engineering:debug` | Structured debugging session |
+| `engineering:documentation` | Writing READMEs, runbooks, handbooks |
+| `engineering:tech-debt` | Quarterly debt audits |
+| `engineering:incident-response` | Production incident — triage, comms, postmortem |
+| `engineering:deploy-checklist` | Pre-deploy verification |
+| `engineering:standup` | Daily / weekly status |
+
+#### 20.18.4 Product management plugin
+
+| Skill | Used during |
+|---|---|
+| `product-management:write-spec` | Phase 1+ feature specs |
+| `product-management:product-brainstorming` | Already used for v1 |
+| `product-management:sprint-planning` | Phase 1+ sprint planning |
+| `product-management:roadmap-update` | Quarterly roadmap |
+| `product-management:metrics-review` | Weekly/monthly KPI reviews |
+| `product-management:stakeholder-update` | Investor / lender client updates |
+| `product-management:competitive-brief` | Already used for v1; refresh quarterly |
+| `product-management:synthesize-research` | Distilling design-partner interviews |
+
+#### 20.18.5 Operations plugin
+
+| Skill | Used during |
+|---|---|
+| `operations:runbook` | Document operational procedures (servicer escalation, recording rejection recovery) |
+| `operations:process-doc` | Formal SOPs (attorney-review workflow, exception triage) |
+| `operations:risk-assessment` | Vendor risk, deal risk |
+| `operations:compliance-tracking` | SOC 2 evidence collection |
+| `operations:vendor-review` | Every one of the 50+ integrations needs vendor due-diligence |
+| `operations:change-request` | Production environment / infra changes |
+| `operations:status-report` | Weekly leadership status |
+| `operations:capacity-plan` | When forecasting LLM cost, infra scale |
+
+#### 20.18.6 Legal plugin (mandatory for compliance posture)
+
+| Skill | Used during |
+|---|---|
+| `legal:compliance-check` | Any code touching legal documents, voice/SMS to borrowers, or audit log |
+| `legal:legal-risk-assessment` | UPL exposure decisions, TCPA risk decisions |
+| `legal:triage-nda` | Design-partner NDAs |
+| `legal:review-contract` | Vendor MSAs (Twilio, Anthropic, Neon, Clerk, DocMagic) |
+| `legal:vendor-check` | Existing vendor agreement status |
+| `legal:signature-request` | E-signature workflows for internal docs |
+| `legal:meeting-briefing` | Pre-counsel meetings |
+| `legal:brief` | Daily / topic / incident legal briefings |
+
+#### 20.18.7 Design + frontend plugins
+
+| Skill | Used during |
+|---|---|
+| `design:design-system` | Building / extending shadcn-based design system |
+| `design:accessibility-review` | WCAG 2.1 AA audits on processor UI |
+| `design:design-critique` | UI review before shipping |
+| `design:ux-copy` | Empty states, error messages, borrower-facing language |
+| `design:user-research` | Design-partner interviews with loan processors |
+| `design:research-synthesis` | Post-interview thematic synthesis |
+| `design:design-handoff` | Dev specs from designs |
+| `frontend-design:frontend-design` | Distinctive UI for processor workspace |
+
+#### 20.18.8 Data + analytics plugins
+
+| Skill | Used during |
+|---|---|
+| `data:sql-queries` | All complex Postgres queries |
+| `data:write-query` | Analytics queries on the warehouse |
+| `data:explore-data` | ACRIS data exploration, HMDA, NY DTF data |
+| `data:analyze` | Ad-hoc data questions (servicer SLA distributions, deal-flow metrics) |
+| `data:validate-data` | QA an analysis before publishing |
+| `data:statistical-analysis` | Distribution / outlier / trend analysis |
+| `data:create-viz` | Charts for internal dashboards |
+| `data:build-dashboard` | Executive overview dashboards |
+| `data:data-visualization` | All chart work |
+| `data:data-context-extractor` | Distilling SME knowledge into queryable skills |
+
+#### 20.18.9 PR review toolkit (free code-review agents)
+
+| Skill / Agent | Used during |
+|---|---|
+| `pr-review-toolkit:review-pr` | Every non-trivial PR (orchestrates the agents below) |
+| `pr-review-toolkit:code-reviewer` | General-purpose review |
+| `pr-review-toolkit:silent-failure-hunter` | After any try/catch or fallback change |
+| `pr-review-toolkit:type-design-analyzer` | After new type or schema introduction |
+| `pr-review-toolkit:pr-test-analyzer` | PRs with new functionality (test-coverage QA) |
+| `pr-review-toolkit:comment-analyzer` | PRs adding documentation comments |
+| `pr-review-toolkit:code-simplifier` | After any logical chunk of new code |
+| `coderabbit:code-review` | Automated AI review (also fires via GitHub workflow) |
+| `code-review:code-review` | Free-standing slash command for ad-hoc reviews |
+
+#### 20.18.10 Commit commands
+
+| Skill | Used during |
+|---|---|
+| `commit-commands:commit` | Every commit (enforces Conventional Commits) |
+| `commit-commands:commit-push-pr` | Commit + push + open PR in one step |
+| `commit-commands:clean_gone` | Periodic [gone] branch cleanup |
+
+#### 20.18.11 Anthropic skills (document & artifact handling)
+
+| Skill | Used during |
+|---|---|
+| `anthropic-skills:pdf` | Any PDF input (collateral files, recorded mortgages, prior CEMAs, NYS-261, MT-15) — CORE to Phase 1 IDP work |
+| `anthropic-skills:docx` | Word doc input (some lenders still use .docx CEMA templates) |
+| `anthropic-skills:xlsx` | Spreadsheet input (processor pipelines, servicer playbooks, analytics) |
+| `anthropic-skills:pptx` | Investor / client presentations |
+| `anthropic-skills:mcp-builder` | Building project-specific MCP servers (e.g., ACRIS MCP, Servicer Playbook MCP) |
+| `anthropic-skills:skill-creator` | Creating new project-specific skills |
+| `anthropic-skills:doc-coauthoring` | Long-form internal docs |
+| `anthropic-skills:web-artifacts-builder` | Internal admin UI prototypes |
+| `anthropic-skills:theme-factory` | Slide themes / report themes |
+| `anthropic-skills:internal-comms` | Team/company-wide announcements |
+| `anthropic-skills:brand-guidelines` | When/if we adopt Anthropic-style brand surfaces |
+| `anthropic-skills:consolidate-memory` | Periodic memory audit |
+| `anthropic-skills:schedule` | Scheduled tasks beyond Vercel Cron |
+
+#### 20.18.12 Plugin development plugins
+
+| Skill | Used during |
+|---|---|
+| `plugin-dev:create-plugin` | If we author Project_CEMA plugin extensions |
+| `plugin-dev:skill-development` | Project-specific skills (e.g., a CEMA-domain skill bundle) |
+| `plugin-dev:hook-development` | Custom hooks (e.g., pre-commit PII scan) |
+| `plugin-dev:command-development` | Custom slash commands (e.g., `/new-deal`, `/check-eligibility`) |
+| `plugin-dev:agent-development` | Custom subagents (e.g., a CEMA-specialist code reviewer) |
+| `plugin-dev:mcp-integration` | Integrating MCP servers into the plugin |
+| `plugin-dev:plugin-settings` | Plugin configuration management |
+| `plugin-dev:plugin-structure` | Plugin architecture guidance |
+| `skill-creator:skill-creator` | Alternative skill-creator entry point |
+
+#### 20.18.13 Hookify plugin (hook automation)
+
+| Skill | Used during |
+|---|---|
+| `hookify:hookify` | When we identify repeat behaviors to prevent |
+| `hookify:writing-rules` | Authoring new hook rules |
+| `hookify:configure` | Enabling/disabling rules |
+| `hookify:list` | Auditing active rules |
+
+Concrete first hooks we'll author:
+- Pre-commit PII scan (block commits containing SSN-like patterns even if redactPii missed)
+- Pre-push attorney-review-bypass detector (scan diff for code mutating Document.status to executed/recorded without an AttorneyApproval row)
+- Pre-commit audit-log-skip detector (any DB mutation in `apps/web/lib/actions/` must call `emitAuditEvent` in the same function)
+
+#### 20.18.14 Firecrawl plugin (web operations)
+
+| Skill | Used during |
+|---|---|
+| `firecrawl:firecrawl-cli` | Scraping public servicer CEMA-request guides, county clerk fee schedules, NY DTF guidance |
+| `firecrawl:skill-gen` | Auto-generating skills from servicer documentation |
+
+#### 20.18.15 Enterprise search plugin
+
+| Skill | Used during |
+|---|---|
+| `enterprise-search:search` | "Find that doc about Mr. Cooper's CEMA process" across connected sources |
+| `enterprise-search:digest` | Daily/weekly cross-system digest |
+| `enterprise-search:knowledge-synthesis` | Synthesizing multi-source answers with citations |
+| `enterprise-search:search-strategy` | Decomposing complex search queries |
+| `enterprise-search:source-management` | Managing connected MCP sources |
+
+#### 20.18.16 Brand voice plugin (when we have brand identity)
+
+| Skill | Used during |
+|---|---|
+| `brand-voice:enforce-voice` | Borrower-facing comms, marketing copy |
+| `brand-voice:generate-guidelines` | Initial brand voice guidelines |
+| `brand-voice:discover-brand` | Pre-guideline brand asset discovery |
+| `brand-voice:brand-voice-enforcement` | Compliance check on outbound content |
+| `brand-voice:guideline-generation` | Alternative entry point |
+
+#### 20.18.17 Marketing plugin (post-launch GTM)
+
+| Skill | Used during |
+|---|---|
+| `marketing:competitive-brief` | Refreshed quarterly |
+| `marketing:content-creation` | Blog, case studies, white papers |
+| `marketing:draft-content` | Draft any single piece |
+| `marketing:campaign-plan` | Launch / phase-rollout campaigns |
+| `marketing:email-sequence` | Onboarding email sequences for new lender customers |
+| `marketing:seo-audit` | Marketing-site optimization |
+| `marketing:brand-review` | Brand compliance before publishing |
+| `marketing:performance-report` | Marketing performance dashboards |
+
+#### 20.18.18 Hugging Face skills (Phase 2+ — fine-tuning)
+
+| Skill | Used during |
+|---|---|
+| `huggingface-skills:hf-cli` | Managing fine-tuning runs and datasets |
+| `huggingface-skills:hugging-face-datasets` | NY mortgage chain dataset curation |
+| `huggingface-skills:hugging-face-model-trainer` | Fine-tune Llama / Qwen on extracted-mortgage corpora (Phase 2) |
+| `huggingface-skills:hugging-face-vision-trainer` | Fine-tune vision models on NY mortgage scan images (Phase 2) |
+| `huggingface-skills:hugging-face-evaluation` | Tracking fine-tune eval results |
+| `huggingface-skills:transformers-js` | In-browser ML for borrower portal niceties |
+| `huggingface-skills:huggingface-gradio` | Internal demo UIs |
+| `huggingface-skills:hugging-face-trackio` | Experiment tracking |
+| `huggingface-skills:hugging-face-jobs` | Running training jobs |
+| `huggingface-skills:hugging-face-tool-builder` | Tool/agent assembly using HF |
+| `huggingface-skills:hugging-face-paper-publisher` | If we publish research |
+
+#### 20.18.19 Feature dev plugin
+
+| Skill | Used during |
+|---|---|
+| `feature-dev:feature-dev` | Guided feature development with codebase understanding |
+
+#### 20.18.20 Finance plugin (internal SOX / accounting)
+
+| Skill | Used during |
+|---|---|
+| `finance:audit-support` | SOC 2 + future SOX |
+| `finance:reconciliation` | Stripe + Metronome billing reconciliation |
+| `finance:variance-analysis` | Budget vs. actual on LLM spend |
+| `finance:financial-statements` | Internal monthly statements |
+| `finance:close-management` | Month-end close |
+| `finance:journal-entry` / `finance:journal-entry-prep` | Bookkeeping |
+| `finance:sox-testing` | Once SOX applies |
+
+#### 20.18.21 Productivity plugin
+
+| Skill | Used during |
+|---|---|
+| `productivity:task-management` | Team-wide TASKS.md tracking |
+| `productivity:memory-management` | Shorthand / nickname / acronym decoding |
+| `productivity:update` | Pulling new assignments + memory refresh |
+| `productivity:start` | First-time productivity setup |
+
+#### 20.18.22 Claude Code setup + management plugins
+
+| Skill | Used during |
+|---|---|
+| `claude-md-management:revise-claude-md` | Every meaningful project shift |
+| `claude-md-management:claude-md-improver` | Periodic CLAUDE.md audit |
+| `claude-code-setup:claude-automation-recommender` | Periodic re-audit of automation opportunities |
+
+#### 20.18.23 Figma plugin (if/when design moves to Figma)
+
+| Skill | Used during |
+|---|---|
+| `figma:figma-use` | Mandatory prerequisite for all Figma tool use |
+| `figma:figma-implement-design` | Translating Figma → production code |
+| `figma:figma-generate-design` | Generating Figma from spec / page |
+| `figma:figma-generate-library` | Building a Figma design system from this codebase |
+| `figma:figma-code-connect-components` | Mapping Figma components to code |
+| `figma:figma-create-design-system-rules` | Codifying design rules |
+
+#### 20.18.24 Playground plugin
+
+| Skill | Used during |
+|---|---|
+| `playground:playground` | Self-contained interactive explorers for parameter exploration (e.g., interactive CEMA savings calculator demo for sales) |
+
+#### 20.18.25 Free MCP servers worth installing
+
+In addition to the plugin skills above, install these MCP servers (from `.mcp.json` once authored, or via the Claude Code marketplace):
+
+| MCP | Purpose |
+|---|---|
+| `context7` | Up-to-date library docs (Next.js, Drizzle, Clerk, AI SDK) — critical because training data lags |
+| `github` | PR / issue / CI operations from inside Claude Code |
+| `playwright` | Browser automation for testing and ACRIS browser-automation paths |
+| `serena` | Semantic code analysis across the monorepo |
+| `firecrawl` | Web scraping for servicer documentation and county clerk pages |
+| `pinecone` | Vector search ops (optional alongside pgvector) |
+
+These give Claude direct tool access to live systems and enable many of the skills above to do their work autonomously.
+
+#### 20.18.26 Subagent types worth invoking
+
+| Subagent | When to invoke |
+|---|---|
+| `Explore` | Codebase exploration > 3 grep/glob queries |
+| `Plan` | Complex implementation planning (alternative to writing-plans skill) |
+| `general-purpose` | Multi-step research with web fetches |
+| `feature-dev:code-architect` | Architecting new feature within existing patterns |
+| `feature-dev:code-explorer` | Deep analysis of existing feature |
+| `feature-dev:code-reviewer` | High-confidence review filtering |
+| `pr-review-toolkit:code-reviewer` | PR-time code review |
+| `pr-review-toolkit:silent-failure-hunter` | Error handling review |
+| `pr-review-toolkit:type-design-analyzer` | New types/schemas |
+| `pr-review-toolkit:pr-test-analyzer` | Test coverage audit |
+| `superpowers:code-reviewer` | Major step review against plan |
+| `coderabbit:code-reviewer` | Specialized CodeRabbit analysis |
+| `claude-code-guide` | Questions about Claude Code itself, SDK, or API |
+
 ---
 
 *End of design spec.*

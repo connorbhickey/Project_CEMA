@@ -19,6 +19,76 @@
 
 ---
 
+## Skills to invoke during execution
+
+This plan is designed to be executed with significant AI assistance. The table below maps each task to the specific Claude Code skills that should be invoked **before** starting the task, so the implementing agent has the right context loaded. Full strategic catalog in [spec §20.18](../../superpowers/specs/2026-05-12-cema-ai-processor-design.md).
+
+### Pervasive across all tasks
+
+Always have these active throughout execution:
+
+| Skill | Why |
+|---|---|
+| `superpowers:using-superpowers` | Auto-loaded — establishes skill discipline |
+| `superpowers:test-driven-development` | Every code-bearing task is TDD-structured |
+| `superpowers:verification-before-completion` | Run at the end of every task before commit |
+| `commit-commands:commit` | Enforces Conventional Commits at commit time |
+| `vercel:knowledge-update` | Auto-loaded — corrects outdated Vercel knowledge |
+
+### Per-task skill invocations
+
+| Task | Skill(s) to invoke before starting | Subagent(s) optionally dispatched after |
+|---|---|---|
+| **1** Bootstrap pnpm + Husky | `vercel:bootstrap` | — |
+| **2** packages/config | `vercel:turborepo` | — |
+| **3** packages/db skeleton | `vercel:vercel-storage`, `vercel:marketplace` (for Neon install) | — |
+| **4** enums schema | — | — |
+| **5** tenants schema | — | `pr-review-toolkit:type-design-analyzer` |
+| **6** servicers schema | — | `pr-review-toolkit:type-design-analyzer` |
+| **7** deals schema | — | `pr-review-toolkit:type-design-analyzer` |
+| **8** parties + documents + attorney-review + audit schemas | `legal:compliance-check` (audit + attorney gate) | `pr-review-toolkit:type-design-analyzer` |
+| **9** Generate + apply migration | `vercel:vercel-storage` | — |
+| **10** RLS policies | `legal:compliance-check` (multi-tenant isolation is compliance-critical) | `pr-review-toolkit:silent-failure-hunter` |
+| **11** packages/compliance | `legal:compliance-check`, `legal:legal-risk-assessment` | `pr-review-toolkit:type-design-analyzer` |
+| **12** packages/auth | `vercel:auth`, `vercel:marketplace` (for Clerk install) | — |
+| **13** packages/ui | `vercel:shadcn`, `frontend-design:frontend-design`, `design:design-system`, `design:accessibility-review` | `pr-review-toolkit:code-simplifier` |
+| **14** apps/web scaffold | `vercel:nextjs`, `vercel:routing-middleware`, `vercel:turbopack` | `vercel:agent-browser-verify` (after dev server starts) |
+| **15** sign-in / sign-up routes | `vercel:auth`, `vercel:nextjs` | `design:accessibility-review` |
+| **16** Clerk webhook → DB sync | `vercel:auth`, `vercel:vercel-functions` | `pr-review-toolkit:silent-failure-hunter` |
+| **17** Authenticated app layout | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:auth`, `design:design-system` | `design:accessibility-review` |
+| **18** Deal list + create server actions | `vercel:nextjs`, `vercel:vercel-storage`, `legal:compliance-check` (audit emission) | `pr-review-toolkit:silent-failure-hunter`, `pr-review-toolkit:code-reviewer` |
+| **19** Deal list page | `vercel:nextjs`, `vercel:next-cache-components`, `design:design-critique`, `design:ux-copy` (empty state) | `design:accessibility-review` |
+| **20** New deal form | `vercel:nextjs`, `vercel:react-best-practices`, `design:design-critique`, `design:ux-copy` (labels/errors) | `pr-review-toolkit:type-design-analyzer`, `design:accessibility-review` |
+| **21** Deal detail page | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:vercel-storage` | `design:accessibility-review` |
+| **22** Playwright e2e | `vercel:agent-browser`, `vercel:verification`, `engineering:testing-strategy` | `pr-review-toolkit:pr-test-analyzer` |
+| **23** RLS isolation test | `legal:compliance-check` (THIS IS THE TENANT-ISOLATION COMPLIANCE PROOF), `vercel:vercel-storage` | `pr-review-toolkit:silent-failure-hunter` |
+| **24** Vercel project link + first deploy | `vercel:bootstrap`, `vercel:deployments-cicd`, `vercel:env-vars`, `vercel:vercel-cli`, `engineering:deploy-checklist` | `vercel:verification` |
+
+### Phase-end (after Task 24 lands)
+
+Invoke after the entire plan completes:
+
+| Skill | Why |
+|---|---|
+| `engineering:architecture` | Author ADR `docs/adr/0001-phase-0-month-1-architecture.md` capturing what shipped vs. what changed from the spec |
+| `claude-md-management:revise-claude-md` | Update CLAUDE.md status section to reflect Phase 0 Month 1 complete |
+| `superpowers:finishing-a-development-branch` | Standardized end-of-development checklist |
+| `operations:runbook` | Author `docs/runbooks/local-dev-setup.md` so future engineers can spin up from scratch in < 30 min |
+| `operations:vendor-review` | Vendor due diligence on Neon, Clerk, Vercel, anyone else added |
+| `pr-review-toolkit:review-pr` | Final cross-cutting review of all 24 task commits |
+| `claude-code-setup:claude-automation-recommender` | Audit what *else* should be automated based on this month's experience |
+
+### Phase-start prerequisites
+
+Before Task 1, ensure these subagents and MCPs are available (configure via `.mcp.json` or the Claude Code marketplace):
+
+- **MCPs:** `context7` (library docs), `github` (PR ops), `playwright` (browser testing), `serena` (semantic code analysis), `firecrawl` (web scraping for any Phase 0+ servicer doc work)
+- **Subagent types worth dispatching during this plan:** `Explore` (codebase searches), `Plan` (sub-design questions), `general-purpose` (multi-step research), the `pr-review-toolkit:*` agents, `feature-dev:code-explorer`
+
+If any of these aren't installed at execution time, install before Task 1 — they materially improve quality.
+
+---
+
 ## File Structure
 
 ```
