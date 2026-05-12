@@ -43,15 +43,25 @@ After either option, GitHub will show all future commits as "Verified" with the 
 
 ## After the public key is uploaded — enable `required_signatures`
 
-Once new commits show as "Verified" in GitHub, enable signature enforcement on `main`:
+Once new commits show as "Verified" in GitHub, signature enforcement *would* be enabled on `main` via:
 
 ```bash
-gh api -X PUT repos/connorbhickey/Project_CEMA/branches/main/protection/required_signatures
+gh api -X POST repos/connorbhickey/Project_CEMA/branches/main/protection/required_signatures
 ```
 
-(Or set `required_signatures: true` in the full branch-protection JSON — see spec §20.14.)
+**HOWEVER:** GitHub gates `required_signatures` on private repos behind a **paid plan**. The `connorbhickey` org is currently on the **Free** plan, which returns:
 
-**Do not enable this until the public key is uploaded** — it will block all pushes if the verifying side can't recognize the signature.
+```
+HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature.
+```
+
+### Options
+
+1. **Upgrade the org to GitHub Team plan** ($4/user/month — [github.com/organizations/connorbhickey/billing/plans](https://github.com/organizations/connorbhickey/billing/plans)). Unlocks `required_signatures` plus CODEOWNERS enforcement on private repos, environment-protected deployments, etc. **Recommended for production-bound projects.**
+2. **Accept enforcement via PR review process** (free). Signing still works locally; the PR template + CODEOWNERS approval acts as social enforcement. Acceptable while solo.
+3. **Make the repo public** — not acceptable for proprietary mortgage software with NDAs.
+
+**Do not enable `required_signatures` (after upgrade) until every active contributor has their public signing key uploaded to GitHub** — it will block all their pushes if the verifying side can't recognize the signature.
 
 ## New-engineer onboarding
 
