@@ -1,0 +1,47 @@
+name: Compliance / regulatory concern
+description: Flag a UPL, TCPA, PII, audit-trail, or SOC 2 concern
+title: '[compliance]: <short description>'
+labels: ['compliance', 'triage', 'priority-high']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for concerns that may affect regulatory compliance.
+        For security vulnerabilities, use the [security disclosure](../../security/advisories/new) form instead.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - 'UPL (unauthorized practice of law)'
+        - 'TCPA (telephone consumer protection)'
+        - 'PII handling / GLBA Safeguards'
+        - 'Audit trail integrity'
+        - 'SOC 2 control'
+        - 'NY DFS regulation'
+        - 'Recording compliance (two-party consent)'
+        - 'Other'
+    validations:
+      required: true
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern description
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, code paths, regulatory citations. Redact all PII.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential impact
+      description: Tenants affected, regulators involved, monetary exposure.
+    validations:
+      required: true
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Proposed remediation

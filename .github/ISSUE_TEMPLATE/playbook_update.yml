@@ -1,0 +1,47 @@
+name: Servicer playbook update
+description: Update the per-servicer CEMA outreach playbook
+title: '[playbook]: <servicer name>'
+labels: ['playbook', 'servicer-knowledge']
+body:
+  - type: input
+    id: servicer
+    attributes:
+      label: Servicer name
+      placeholder: 'Mr. Cooper'
+    validations:
+      required: true
+  - type: input
+    id: nmls
+    attributes:
+      label: NMLS ID (if known)
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: Change type
+      options:
+        - 'New playbook (servicer not yet covered)'
+        - 'Contact info change (phone, fax, email, portal)'
+        - 'Submission method change (e.g., now accepts email)'
+        - 'SLA update'
+        - 'New escalation path'
+        - 'Rejection-reason pattern observed'
+        - 'Other'
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Change details
+      description: Be specific. Include source (call notes, email thread, etc.).
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link to communication record, deal ID (PII redacted), screenshot.
+  - type: input
+    id: deals_affected
+    attributes:
+      label: Deals affected
+      description: How many open deals does this servicer change impact?

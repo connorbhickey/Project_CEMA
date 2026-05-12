@@ -1,0 +1,44 @@
+# CODEOWNERS — auto-assigns reviewers based on changed paths.
+# Order matters: later patterns take precedence.
+
+# Global owner — fallback
+*                              @hicklax13
+
+# Apps
+/apps/web/                     @hicklax13
+/apps/api/                     @hicklax13
+/apps/admin/                   @hicklax13
+
+# Domain packages
+/packages/agents/              @hicklax13
+/packages/idp/                 @hicklax13
+/packages/doc-gen/             @hicklax13
+/packages/integrations/        @hicklax13
+/packages/db/                  @hicklax13
+/packages/auth/                @hicklax13
+/packages/workflows/           @hicklax13
+/packages/prompts/             @hicklax13
+/packages/playbooks/           @hicklax13
+/packages/compliance/          @hicklax13
+
+# Infrastructure
+/infrastructure/               @hicklax13
+/.github/                      @hicklax13
+/.changeset/                   @hicklax13
+vercel.json                    @hicklax13
+turbo.json                     @hicklax13
+
+# Compliance & security
+SECURITY.md                    @hicklax13
+LICENSE                        @hicklax13
+/docs/compliance/              @hicklax13
+
+# Specs & research — authoritative
+/docs/superpowers/             @hicklax13
+/docs/research/                @hicklax13
+/docs/adr/                     @hicklax13
+
+# AI assistant config
+CLAUDE.md                      @hicklax13
+.cursorrules                   @hicklax13
+.aider.conf.yml                @hicklax13

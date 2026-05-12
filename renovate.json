@@ -1,0 +1,75 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitScopeDisabled",
+    ":dependencyDashboard",
+    ":maintainLockFilesWeekly",
+    ":automergeBranch",
+    ":separateMajorReleases",
+    "schedule:weekly"
+  ],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "matchCurrentVersion": "!/^0\\./",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["major-upgrade"]
+    },
+    {
+      "matchPackagePatterns": ["^@types/"],
+      "groupName": "type definitions",
+      "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["eslint", "^@typescript-eslint/"],
+      "groupName": "eslint",
+      "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["^@vercel/", "^vercel$"],
+      "groupName": "vercel sdks"
+    },
+    {
+      "matchPackagePatterns": ["^@anthropic-ai/", "^openai$", "^@google/generative-ai$"],
+      "groupName": "llm sdks"
+    },
+    {
+      "matchPackagePatterns": ["^next$", "^next-"],
+      "groupName": "nextjs",
+      "automerge": false
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true,
+    "labels": ["security"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 4am on monday"]
+  },
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 4,
+  "stabilityDays": 3
+}

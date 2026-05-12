@@ -1,0 +1,40 @@
+name: LLM eval (Braintrust)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/agents/**'
+      - 'packages/prompts/**'
+      - 'packages/idp/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  eval:
+    name: Run agent evals
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - id: eval
+        run: pnpm eval
+        env:
+          BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Comment eval summary
+        if: always() && hashFiles('eval-results/summary.md') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body-file eval-results/summary.md

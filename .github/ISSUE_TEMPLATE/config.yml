@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/connorbhickey/Project_CEMA/security/advisories/new
+    about: Report a security issue privately (do NOT use issues for security)
+  - name: Compliance question
+    url: mailto:conlaxer13@gmail.com
+    about: Email compliance@<domain> for UPL / TCPA / PII / SOC 2 questions

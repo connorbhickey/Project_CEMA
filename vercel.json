@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "turbo run build --filter=web",
+  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "framework": null,
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet ."
+}

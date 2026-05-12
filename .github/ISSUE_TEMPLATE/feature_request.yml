@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a new feature or enhancement
+title: '[feat]: <short description>'
+labels: ['enhancement', 'triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user/operator problem does this solve? Reference the spec section if applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target phase
+      options:
+        - 'Phase 0 — Foundation'
+        - 'Phase 1 — Refi-CEMA Agents'
+        - 'Phase 2 — Documents & Recording'
+        - 'Phase 2.5 — Purchase CEMA'
+        - 'Phase 3 — Voice Agent'
+        - 'Phase 4 — Sub-type Expansion'
+        - 'Backlog (no phase yet)'
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What's in scope; what's explicitly out?
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criteria
+      description: How will we know it works?

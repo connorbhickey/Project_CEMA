@@ -1,0 +1,53 @@
+name: Database migration check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/db/**'
+      - 'packages/db/migrations/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  migration-safety:
+    name: Drizzle migration safety
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: project_cema_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/project_cema_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations from main
+        run: |
+          git checkout origin/main -- packages/db/migrations
+          pnpm db:migrate
+          git checkout HEAD -- packages/db/migrations
+      - name: Apply new migrations
+        run: pnpm db:migrate
+      - name: Generate diff from schema
+        run: pnpm db:generate --dry-run
+      - name: Check for destructive operations
+        run: |
+          if grep -E '^\s*(DROP|TRUNCATE|ALTER\s+.*\s+DROP)' packages/db/migrations/*.sql 2>/dev/null; then
+            echo "::error::Destructive migration detected. Mark as 'breaking' label and document migration steps."
+            exit 1
+          fi

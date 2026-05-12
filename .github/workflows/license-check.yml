@@ -1,0 +1,30 @@
+name: License check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  license:
+    name: Check transitive licenses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Install license-checker
+        run: pnpm add -D -w license-checker
+      - name: Verify no copyleft licenses
+        run: |
+          pnpm exec license-checker --production --excludePackages 'project-cema' \
+            --failOn 'AGPL-1.0;AGPL-3.0;GPL-2.0;GPL-3.0;SSPL-1.0'

@@ -1,0 +1,11 @@
+node_modules
+.next
+.turbo
+.vercel
+dist
+build
+coverage
+pnpm-lock.yaml
+*.min.js
+*.min.css
+**/migrations/meta/**

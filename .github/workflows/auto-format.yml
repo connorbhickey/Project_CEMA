@@ -1,0 +1,40 @@
+name: Auto-format
+
+on:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-format-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Prettier + ESLint --fix
+    if: github.actor != 'dependabot[bot]' && github.actor != 'renovate[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format
+      - run: pnpm lint:fix
+        continue-on-error: true
+      - name: Commit changes if any
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add -A
+            git commit -m "style(auto-format): apply Prettier + ESLint --fix"
+            git push
+          fi
