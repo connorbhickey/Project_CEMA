@@ -31,6 +31,8 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/project_cema_ci
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -38,9 +40,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Apply migrations from main
         run: |
-          git checkout origin/main -- packages/db/migrations
-          pnpm db:migrate
-          git checkout HEAD -- packages/db/migrations
+          if git ls-tree -d origin/main packages/db/migrations 2>/dev/null | grep -q migrations; then
+            git checkout origin/main -- packages/db/migrations
+            pnpm db:migrate
+            git checkout HEAD -- packages/db/migrations
+          else
+            echo "No migrations on main yet — skipping baseline migration step."
+          fi
       - name: Apply new migrations
         run: pnpm db:migrate
       - name: Generate diff from schema
