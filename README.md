@@ -60,14 +60,14 @@ Full tree in [CLAUDE.md §6](CLAUDE.md).
 
 ## Critical docs
 
-| Doc | Purpose |
-|---|---|
-| [CLAUDE.md](CLAUDE.md) | AI assistant operating manual — start here if you're an AI |
-| [docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md](docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md) | Authoritative design spec — 20 sections |
-| [docs/research/01-job-tasks-and-automation.md](docs/research/01-job-tasks-and-automation.md) | CEMA processor job duties + automation analysis |
-| [docs/research/02-competitive-landscape.md](docs/research/02-competitive-landscape.md) | Competitive map + uniqueness scoring |
-| [SECURITY.md](SECURITY.md) | Responsible disclosure |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| Doc                                                                                                                            | Purpose                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| [CLAUDE.md](CLAUDE.md)                                                                                                         | AI assistant operating manual — start here if you're an AI |
+| [docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md](docs/superpowers/specs/2026-05-12-cema-ai-processor-design.md) | Authoritative design spec — 20 sections                    |
+| [docs/research/01-job-tasks-and-automation.md](docs/research/01-job-tasks-and-automation.md)                                   | CEMA processor job duties + automation analysis            |
+| [docs/research/02-competitive-landscape.md](docs/research/02-competitive-landscape.md)                                         | Competitive map + uniqueness scoring                       |
+| [SECURITY.md](SECURITY.md)                                                                                                     | Responsible disclosure                                     |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                             | How to contribute                                          |
 
 ---
 

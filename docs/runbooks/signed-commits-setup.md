@@ -43,7 +43,7 @@ After either option, GitHub will show all future commits as "Verified" with the 
 
 ## After the public key is uploaded — enable `required_signatures`
 
-Once new commits show as "Verified" in GitHub, signature enforcement *would* be enabled on `main` via:
+Once new commits show as "Verified" in GitHub, signature enforcement _would_ be enabled on `main` via:
 
 ```bash
 gh api -X POST repos/connorbhickey/Project_CEMA/branches/main/protection/required_signatures
@@ -80,9 +80,9 @@ A new engineer (or new machine) must:
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `git log %G?` shows `N` instead of `G` | Local repo config overrides global | `git config --local --unset commit.gpgsign` |
-| GitHub shows "Unverified" but local signing works | Public key not yet uploaded to GitHub (or uploaded as Auth key, not Signing key) | Re-upload as **Signing Key** type via web UI |
-| `error: gpg failed to sign the data` | Wrong key path or permissions | Ensure private key is `chmod 600` and path matches `user.signingkey` |
-| `gh ssh-key add` returns 404 | Token lacks `admin:ssh_signing_key` scope | `gh auth refresh -h github.com -s admin:ssh_signing_key` |
+| Symptom                                           | Cause                                                                            | Fix                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `git log %G?` shows `N` instead of `G`            | Local repo config overrides global                                               | `git config --local --unset commit.gpgsign`                          |
+| GitHub shows "Unverified" but local signing works | Public key not yet uploaded to GitHub (or uploaded as Auth key, not Signing key) | Re-upload as **Signing Key** type via web UI                         |
+| `error: gpg failed to sign the data`              | Wrong key path or permissions                                                    | Ensure private key is `chmod 600` and path matches `user.signingkey` |
+| `gh ssh-key add` returns 404                      | Token lacks `admin:ssh_signing_key` scope                                        | `gh auth refresh -h github.com -s admin:ssh_signing_key`             |

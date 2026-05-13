@@ -24,20 +24,20 @@ Phase 0 commits can ship without setting any custom secret.
 
 ### Phase 0 (Month 2+) — security scanning
 
-| Secret | Workflow | Where to get |
-|---|---|---|
+| Secret                | Workflow            | Where to get                                                                                                                   |
+| --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `GITGUARDIAN_API_KEY` | `security-scan.yml` | Sign up at [dashboard.gitguardian.com](https://dashboard.gitguardian.com) (free tier available) → API → Personal Access Tokens |
-| `SNYK_TOKEN` | `security-scan.yml` | Sign up at [snyk.io](https://snyk.io) (free tier) → Account Settings → API Token |
+| `SNYK_TOKEN`          | `security-scan.yml` | Sign up at [snyk.io](https://snyk.io) (free tier) → Account Settings → API Token                                               |
 
 Until both are added, those scan steps will skip with a warning rather than fail.
 
 ### Phase 1+ — Turbo remote cache (optional, performance)
 
-| Secret | Variable | Where to get |
-|---|---|---|
-| `TURBO_TOKEN` | (secret) | Vercel: account.vercel.com → Settings → Tokens → Create Token (scope: read+write to your team) |
-| `TURBO_REMOTE_CACHE_SIGNATURE_KEY` | (secret) | Generate a random hex string: `openssl rand -hex 32` |
-| `TURBO_TEAM` | (variable, not secret) | Vercel team slug (e.g., `connorbhickey-projects`) |
+| Secret                             | Variable               | Where to get                                                                                   |
+| ---------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `TURBO_TOKEN`                      | (secret)               | Vercel: account.vercel.com → Settings → Tokens → Create Token (scope: read+write to your team) |
+| `TURBO_REMOTE_CACHE_SIGNATURE_KEY` | (secret)               | Generate a random hex string: `openssl rand -hex 32`                                           |
+| `TURBO_TEAM`                       | (variable, not secret) | Vercel team slug (e.g., `connorbhickey-projects`)                                              |
 
 Add the variable: `gh variable set TURBO_TEAM --repo connorbhickey/Project_CEMA --body "your-team-slug"`
 
@@ -45,29 +45,29 @@ Add the variable: `gh variable set TURBO_TEAM --repo connorbhickey/Project_CEMA 
 
 These only matter for `llm-eval.yml`, which only triggers when files under `packages/agents/`, `packages/prompts/`, or `packages/idp/` change — those don't exist until Phase 1.
 
-| Secret | Where to get |
-|---|---|
+| Secret               | Where to get                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------- |
 | `BRAINTRUST_API_KEY` | [braintrust.dev](https://www.braintrust.dev) → Settings → API Keys (free tier available) |
-| `AI_GATEWAY_API_KEY` | Vercel dashboard → AI Gateway → API Keys |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
-| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) → API Keys |
+| `AI_GATEWAY_API_KEY` | Vercel dashboard → AI Gateway → API Keys                                                 |
+| `ANTHROPIC_API_KEY`  | [console.anthropic.com](https://console.anthropic.com) → API Keys                        |
+| `OPENAI_API_KEY`     | [platform.openai.com](https://platform.openai.com) → API Keys                            |
 
 ### Phase 3+ — Voice agent vendor
 
-| Secret | Where to get |
-|---|---|
-| `TWILIO_ACCOUNT_SID` | [console.twilio.com](https://console.twilio.com) |
-| `TWILIO_AUTH_TOKEN` | Same |
-| `CONDUIT_API_KEY` (or `SALIENT_*`, depending on vendor choice) | Per spec §17 pending decision |
+| Secret                                                         | Where to get                                     |
+| -------------------------------------------------------------- | ------------------------------------------------ |
+| `TWILIO_ACCOUNT_SID`                                           | [console.twilio.com](https://console.twilio.com) |
+| `TWILIO_AUTH_TOKEN`                                            | Same                                             |
+| `CONDUIT_API_KEY` (or `SALIENT_*`, depending on vendor choice) | Per spec §17 pending decision                    |
 
 ## Required GitHub Actions VARIABLES (not secrets)
 
 Variables are non-sensitive config. Set with `gh variable set <NAME> --body "..."`.
 
-| Variable | Purpose | Default |
-|---|---|---|
-| `TURBO_TEAM` | Turborepo remote cache team | (none — turbo works without remote cache) |
-| `PLAYWRIGHT_BASE_URL` | E2E target URL when not using webServer | `http://localhost:3000` |
+| Variable              | Purpose                                 | Default                                   |
+| --------------------- | --------------------------------------- | ----------------------------------------- |
+| `TURBO_TEAM`          | Turborepo remote cache team             | (none — turbo works without remote cache) |
+| `PLAYWRIGHT_BASE_URL` | E2E target URL when not using webServer | `http://localhost:3000`                   |
 
 ## Required GitHub Environments (Phase 1+)
 

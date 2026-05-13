@@ -40,7 +40,7 @@ We use **Conventional Commits**:
 - **Type**: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `build`, `revert`, `style`.
 - **Scope**: the affected package or app (e.g., `feat(agents/servicer-outreach): ...`).
 - **Subject**: imperative mood, no period, ≤ 72 chars.
-- **Body** (optional): explain *why*, not *what*. The diff explains what.
+- **Body** (optional): explain _why_, not _what_. The diff explains what.
 - **Footer** (optional): `Closes #123`, `BREAKING CHANGE: ...`, co-authors.
 
 **Signed commits are required.** Configure GPG or SSH signing before your first commit:
