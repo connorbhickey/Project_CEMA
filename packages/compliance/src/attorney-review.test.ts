@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { requireAttorneyApproval } from './attorney-review.js';
+import { requireAttorneyApproval } from './attorney-review';
 
 describe('attorney review guard', () => {
   it('approved documents pass the guard', () => {

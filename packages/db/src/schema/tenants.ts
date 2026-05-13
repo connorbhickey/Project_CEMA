@@ -10,7 +10,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-import { lenderSubtypeEnum } from './enums.js';
+import { lenderSubtypeEnum } from './enums';
 
 export const orgRoleEnum = pgEnum('org_role', ['owner', 'admin', 'member']);
 

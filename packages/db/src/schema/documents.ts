@@ -12,8 +12,8 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-import { deals } from './deals.js';
-import { documentKindEnum, documentStatusEnum } from './enums.js';
+import { deals } from './deals';
+import { documentKindEnum, documentStatusEnum } from './enums';
 
 // ---------------------------------------------------------------------------
 // documents — every PDF/file the deal touches.

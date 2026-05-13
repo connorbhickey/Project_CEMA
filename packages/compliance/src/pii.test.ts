@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { maskSsn, redactPii } from './pii.js';
+import { maskSsn, redactPii } from './pii';
 
 describe('PII redaction', () => {
   it('masks SSN to last-4 only (dashed format)', () => {

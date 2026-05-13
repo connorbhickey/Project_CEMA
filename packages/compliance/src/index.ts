@@ -1,7 +1,7 @@
-export { emitAuditEvent, type AuditEventInput } from './audit-log.js';
-export { maskSsn, redactPii } from './pii.js';
+export { emitAuditEvent, type AuditEventInput } from './audit-log';
+export { maskSsn, redactPii } from './pii';
 export {
   AttorneyReviewRequiredError,
   requireAttorneyApproval,
   type DocumentGate,
-} from './attorney-review.js';
+} from './attorney-review';

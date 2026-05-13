@@ -8,7 +8,7 @@ import {
   lenderSubtypeEnum,
   partyRoleEnum,
   propertyTypeEnum,
-} from './enums.js';
+} from './enums';
 
 describe('enums', () => {
   it('cema type covers refi and purchase', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { servicerCemaDepartments, servicers } from './servicers.js';
+import { servicerCemaDepartments, servicers } from './servicers';
 
 describe('servicers schema', () => {
   it('servicers table has playbook columns', () => {

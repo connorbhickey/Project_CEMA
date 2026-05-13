@@ -1,6 +1,6 @@
 import { index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { organizations, users } from './tenants.js';
+import { organizations, users } from './tenants';
 
 // ---------------------------------------------------------------------------
 // auditEvents — append-only audit log for the entire system.

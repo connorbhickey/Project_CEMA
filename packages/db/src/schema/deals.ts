@@ -14,9 +14,9 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-import { cemaTypeEnum, dealStatusEnum, loanProgramEnum, propertyTypeEnum } from './enums.js';
-import { servicers } from './servicers.js';
-import { organizations, users } from './tenants.js';
+import { cemaTypeEnum, dealStatusEnum, loanProgramEnum, propertyTypeEnum } from './enums';
+import { servicers } from './servicers';
+import { organizations, users } from './tenants';
 
 // ---------------------------------------------------------------------------
 // properties — NYC uses block+lot+acrisBbl; upstate uses taxMapId.

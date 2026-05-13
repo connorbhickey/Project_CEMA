@@ -1,10 +1,10 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 
-import { attorneyApprovals } from './attorney-review.js';
-import { auditEvents } from './audit.js';
-import { documents } from './documents.js';
-import { parties } from './parties.js';
+import { attorneyApprovals } from './attorney-review';
+import { auditEvents } from './audit';
+import { documents } from './documents';
+import { parties } from './parties';
 
 describe('parties + documents + attorney + audit', () => {
   it('parties tied to a deal with a role', () => {

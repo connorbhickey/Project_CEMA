@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 
-import { resolveOrganizationId } from './tenant.js';
+import { resolveOrganizationId } from './tenant';
 
 export async function getCurrentUser() {
   return await currentUser();

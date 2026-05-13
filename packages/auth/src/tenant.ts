@@ -1,4 +1,4 @@
-import type { ClerkAuthSnapshot } from './types.js';
+import type { ClerkAuthSnapshot } from './types';
 
 export class NotAuthenticatedError extends Error {
   constructor() {

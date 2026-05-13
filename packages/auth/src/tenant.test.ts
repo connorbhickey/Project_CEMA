@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveOrganizationId } from './tenant.js';
+import { resolveOrganizationId } from './tenant';
 
 describe('resolveOrganizationId', () => {
   it('returns the active Clerk org when present', () => {
