@@ -40,13 +40,16 @@
     },
     "db:generate": {
       "cache": false,
-      "outputs": ["drizzle/**"]
+      "outputs": ["drizzle/**"],
+      "env": ["DATABASE_URL"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL"]
     },
     "db:setup": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL"]
     },
     "db:studio": {
       "cache": false,
