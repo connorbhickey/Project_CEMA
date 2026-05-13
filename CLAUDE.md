@@ -18,9 +18,11 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Spec complete, awaiting user approval, implementation plan not yet written.**
-- **Next step:** Invoke `superpowers:writing-plans` to produce the Phase 0 implementation plan.
-- **Code:** None yet. Repo not initialized. This file ships with the initial commit.
+- **Phase:** **Phase 0 Month 1 complete** — multi-tenant scaffold (Drizzle + Neon + RLS), Deal entity with attorney-review primitives, audit log, packages/{config,db,compliance,auth,ui}, Next.js 16 web app with Clerk auth + Deal CRUD, Vercel preview-per-PR active.
+- **Next step:** Plan Phase 0 Month 2 (telephony foundation per spec §11.1). Address two carry-over items first:
+  1. **RLS BYPASSRLS gap** — production currently connects as `neondb_owner` (BYPASSRLS=true), bypassing RLS. Task 23's test proves RLS works under `cema_app_user` (non-bypass). Production app needs to switch.
+  2. **Husky v10 deprecation** — pre-commit/commit-msg hooks emit deprecation warnings about the v8 shim line. Strip them before husky 10 lands.
+- **Code:** 5 workspace packages + 1 Next.js 16 app. 55 unit tests + 1 Playwright e2e (label-gated). Initial migration applied to Neon dev branch. Vercel preview deploys live per-PR.
 
 ---
 
