@@ -27,7 +27,7 @@ describe('PII redaction', () => {
     const input = { ssn: '123-45-6789', name: 'Alice', age: 33 };
     const out = redactPii(input);
     expect(input.ssn).toBe('123-45-6789'); // original unchanged
-    expect((out).ssn).toBe('***-**-6789');
-    expect((out).name).toBe('Alice');
+    expect(out.ssn).toBe('***-**-6789');
+    expect(out.name).toBe('Alice');
   });
 });
