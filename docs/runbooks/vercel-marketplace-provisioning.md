@@ -18,6 +18,7 @@ vercel link
 ```
 
 When prompted:
+
 - **Set up "Project_CEMA"?** Yes
 - **Which scope?** `connorbhickey` (or your team)
 - **Link to existing project?** No
@@ -27,6 +28,7 @@ When prompted:
 This creates `.vercel/project.json` (already gitignored).
 
 After `vercel link`, open the Vercel dashboard:
+
 - Project Settings → Build & Development
 - **Root Directory:** `apps/web`
 - **Framework Preset:** Next.js
@@ -50,11 +52,13 @@ After `vercel link`, open the Vercel dashboard:
    - `POSTGRES_DATABASE`
 
 7. Pull the env vars to local for dev:
+
    ```bash
    vercel env pull apps/web/.env.local
    ```
 
 8. Verify:
+
    ```bash
    cat apps/web/.env.local | grep DATABASE_URL
    ```
@@ -73,6 +77,7 @@ After `vercel link`, open the Vercel dashboard:
    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 
 7. Re-pull env vars:
+
    ```bash
    vercel env pull apps/web/.env.local
    ```
@@ -108,16 +113,17 @@ When ready:
 - **Sentry:** [vercel.com/marketplace/sentry](https://vercel.com/marketplace/sentry) — auto-provisions `SENTRY_DSN`
 
 Pull env vars after each install:
+
 ```bash
 vercel env pull apps/web/.env.local
 ```
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `vercel link` errors out | Not logged in | `vercel login` first |
-| `vercel env pull` says "no env vars" | Project not linked or env vars haven't propagated yet | Wait 30s; re-run; confirm in Vercel dashboard |
-| Clerk webhook events not reaching app | Wrong endpoint URL or missing signing secret | Confirm `CLERK_WEBHOOK_SECRET` matches Clerk dashboard; confirm endpoint URL is the deployed version, not localhost |
-| Neon connections timing out | Free tier auto-suspends after 5 min idle | Normal — first connection wakes the branch, takes ~1s |
-| Organizations not appearing | Forgot to enable in Clerk dashboard | Configure → Organizations → toggle on |
+| Symptom                               | Cause                                                 | Fix                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `vercel link` errors out              | Not logged in                                         | `vercel login` first                                                                                                |
+| `vercel env pull` says "no env vars"  | Project not linked or env vars haven't propagated yet | Wait 30s; re-run; confirm in Vercel dashboard                                                                       |
+| Clerk webhook events not reaching app | Wrong endpoint URL or missing signing secret          | Confirm `CLERK_WEBHOOK_SECRET` matches Clerk dashboard; confirm endpoint URL is the deployed version, not localhost |
+| Neon connections timing out           | Free tier auto-suspends after 5 min idle              | Normal — first connection wakes the branch, takes ~1s                                                               |
+| Organizations not appearing           | Forgot to enable in Clerk dashboard                   | Configure → Organizations → toggle on                                                                               |

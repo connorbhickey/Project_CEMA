@@ -12,7 +12,7 @@ mortgage instrument. When a borrower refinances or purchases, instead of recordi
 mortgage (and paying the full NYS Mortgage Recording Tax of ~1.8–2.05% depending on county),
 the new lender takes assignment of the existing mortgage from the old lender, then a CEMA
 "gaps" the difference between the existing balance and the new loan amount. Tax is paid only on
-the *gap*, not the full new loan.
+the _gap_, not the full new loan.
 
 **Why it matters:** On a $700k refi where the existing loan balance is $500k, the borrower
 saves roughly **$3,600–$4,100** in recording tax. Real, immediate, ROI-positive savings.
@@ -84,15 +84,15 @@ loan processors.
 
 **What this changes:**
 
-| Dimension          | Old framing                         | New framing                              |
-|--------------------|-------------------------------------|------------------------------------------|
-| Product type       | Workflow SaaS                       | AI automation / vertical AI agent        |
-| Primary user       | Multi-role office workers           | Operator / supervisor + AI               |
-| Value metric       | Hours saved per user                | FTE replaced ($150–$250k saved annually) |
-| Pricing/sales      | Per-seat SaaS                       | Annual license priced vs. saved salary   |
-| UI emphasis        | Collaboration screens               | Exception queue, audit trail, oversight  |
-| Tech emphasis      | CRUD + forms                        | Doc IDP + LLMs + agentic workflows       |
-| Deployment         | Multi-tenant SaaS                   | Single-tenant or small-tenant            |
+| Dimension     | Old framing               | New framing                              |
+| ------------- | ------------------------- | ---------------------------------------- |
+| Product type  | Workflow SaaS             | AI automation / vertical AI agent        |
+| Primary user  | Multi-role office workers | Operator / supervisor + AI               |
+| Value metric  | Hours saved per user      | FTE replaced ($150–$250k saved annually) |
+| Pricing/sales | Per-seat SaaS             | Annual license priced vs. saved salary   |
+| UI emphasis   | Collaboration screens     | Exception queue, audit trail, oversight  |
+| Tech emphasis | CRUD + forms              | Doc IDP + LLMs + agentic workflows       |
+| Deployment    | Multi-tenant SaaS         | Single-tenant or small-tenant            |
 
 **Critical design principle going forward:**
 Build for **deliverables**, not **tasks**. Humans do hundreds of micro-tasks to

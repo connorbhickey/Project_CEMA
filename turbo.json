@@ -1,19 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalDependencies": [
-    ".env.example",
-    ".eslintrc.cjs",
-    ".prettierrc",
-    "tsconfig.json"
-  ],
-  "globalEnv": [
-    "NODE_ENV",
-    "CI",
-    "VERCEL",
-    "VERCEL_ENV",
-    "VERCEL_URL"
-  ],
+  "globalDependencies": [".env.example", ".eslintrc.cjs", ".prettierrc", "tsconfig.json"],
+  "globalEnv": ["NODE_ENV", "CI", "VERCEL", "VERCEL_ENV", "VERCEL_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

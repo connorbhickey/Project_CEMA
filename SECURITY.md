@@ -5,7 +5,7 @@
 This project is pre-launch. Only the `main` branch is currently supported.
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | `main`  | ✅        |
 | forks   | ❌        |
 
@@ -21,7 +21,7 @@ privately by one of the following methods:
    [Security tab](../../security/advisories/new) of this repository.
 
 2. **Email**: `security@example.com` with subject `[SECURITY] Project_CEMA`.
-   *(This is a placeholder. Configure a real `security@<your-domain>` mailbox before public launch.)*
+   _(This is a placeholder. Configure a real `security@<your-domain>` mailbox before public launch.)_
 
 Please include:
 
@@ -78,4 +78,4 @@ acknowledgments page and may offer ad-hoc bounties at our discretion.
 
 ## PGP Key
 
-PGP key for encrypted reports: *(to be published before public launch)*
+PGP key for encrypted reports: _(to be published before public launch)_

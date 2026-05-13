@@ -24,7 +24,7 @@ Within ~5 minutes of install, Renovate will open a "Configure Renovate" PR. Revi
 
 - **Auto-merge** for security patches (daily), patches/minor (weekly), and lockfile maintenance (weekly)
 - **Manual review** for major upgrades
-- **Grouped updates** for: @types/*, ESLint plugins, Vercel SDKs, LLM SDKs (Anthropic + OpenAI + Google)
+- **Grouped updates** for: @types/\*, ESLint plugins, Vercel SDKs, LLM SDKs (Anthropic + OpenAI + Google)
 - **Stability delay:** 3 days before opening update PRs (avoids broken releases)
 - **Rate limits:** max 10 concurrent PRs, max 4 PRs per hour
 
@@ -44,9 +44,9 @@ Visit [github.com/organizations/connorbhickey/settings/installations](https://gi
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| No onboarding PR appears after install | Renovate hasn't crawled yet | Wait 15 min; check [developer.mend.io](https://developer.mend.io/github/connorbhickey/Project_CEMA) for status |
-| Onboarding PR fails | `renovate.json` invalid | Validate at [docs.renovatebot.com/config-validation](https://docs.renovatebot.com/config-validation/) |
-| Updates not auto-merging | Branch protection blocks bot merges | Add `renovate[bot]` to bypass list, OR ensure all required checks pass on bot PRs |
-| Too many PRs at once | `prConcurrentLimit` too high | Lower in `renovate.json` |
+| Symptom                                | Cause                               | Fix                                                                                                            |
+| -------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| No onboarding PR appears after install | Renovate hasn't crawled yet         | Wait 15 min; check [developer.mend.io](https://developer.mend.io/github/connorbhickey/Project_CEMA) for status |
+| Onboarding PR fails                    | `renovate.json` invalid             | Validate at [docs.renovatebot.com/config-validation](https://docs.renovatebot.com/config-validation/)          |
+| Updates not auto-merging               | Branch protection blocks bot merges | Add `renovate[bot]` to bypass list, OR ensure all required checks pass on bot PRs                              |
+| Too many PRs at once                   | `prConcurrentLimit` too high        | Lower in `renovate.json`                                                                                       |

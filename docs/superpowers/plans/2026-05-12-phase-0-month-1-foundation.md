@@ -27,56 +27,56 @@ This plan is designed to be executed with significant AI assistance. The table b
 
 Always have these active throughout execution:
 
-| Skill | Why |
-|---|---|
-| `superpowers:using-superpowers` | Auto-loaded — establishes skill discipline |
-| `superpowers:test-driven-development` | Every code-bearing task is TDD-structured |
-| `superpowers:verification-before-completion` | Run at the end of every task before commit |
-| `commit-commands:commit` | Enforces Conventional Commits at commit time |
-| `vercel:knowledge-update` | Auto-loaded — corrects outdated Vercel knowledge |
+| Skill                                        | Why                                              |
+| -------------------------------------------- | ------------------------------------------------ |
+| `superpowers:using-superpowers`              | Auto-loaded — establishes skill discipline       |
+| `superpowers:test-driven-development`        | Every code-bearing task is TDD-structured        |
+| `superpowers:verification-before-completion` | Run at the end of every task before commit       |
+| `commit-commands:commit`                     | Enforces Conventional Commits at commit time     |
+| `vercel:knowledge-update`                    | Auto-loaded — corrects outdated Vercel knowledge |
 
 ### Per-task skill invocations
 
-| Task | Skill(s) to invoke before starting | Subagent(s) optionally dispatched after |
-|---|---|---|
-| **1** Bootstrap pnpm + Husky | `vercel:bootstrap` | — |
-| **2** packages/config | `vercel:turborepo` | — |
-| **3** packages/db skeleton | `vercel:vercel-storage`, `vercel:marketplace` (for Neon install) | — |
-| **4** enums schema | — | — |
-| **5** tenants schema | — | `pr-review-toolkit:type-design-analyzer` |
-| **6** servicers schema | — | `pr-review-toolkit:type-design-analyzer` |
-| **7** deals schema | — | `pr-review-toolkit:type-design-analyzer` |
-| **8** parties + documents + attorney-review + audit schemas | `legal:compliance-check` (audit + attorney gate) | `pr-review-toolkit:type-design-analyzer` |
-| **9** Generate + apply migration | `vercel:vercel-storage` | — |
-| **10** RLS policies | `legal:compliance-check` (multi-tenant isolation is compliance-critical) | `pr-review-toolkit:silent-failure-hunter` |
-| **11** packages/compliance | `legal:compliance-check`, `legal:legal-risk-assessment` | `pr-review-toolkit:type-design-analyzer` |
-| **12** packages/auth | `vercel:auth`, `vercel:marketplace` (for Clerk install) | — |
-| **13** packages/ui | `vercel:shadcn`, `frontend-design:frontend-design`, `design:design-system`, `design:accessibility-review` | `pr-review-toolkit:code-simplifier` |
-| **14** apps/web scaffold | `vercel:nextjs`, `vercel:routing-middleware`, `vercel:turbopack` | `vercel:agent-browser-verify` (after dev server starts) |
-| **15** sign-in / sign-up routes | `vercel:auth`, `vercel:nextjs` | `design:accessibility-review` |
-| **16** Clerk webhook → DB sync | `vercel:auth`, `vercel:vercel-functions` | `pr-review-toolkit:silent-failure-hunter` |
-| **17** Authenticated app layout | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:auth`, `design:design-system` | `design:accessibility-review` |
-| **18** Deal list + create server actions | `vercel:nextjs`, `vercel:vercel-storage`, `legal:compliance-check` (audit emission) | `pr-review-toolkit:silent-failure-hunter`, `pr-review-toolkit:code-reviewer` |
-| **19** Deal list page | `vercel:nextjs`, `vercel:next-cache-components`, `design:design-critique`, `design:ux-copy` (empty state) | `design:accessibility-review` |
-| **20** New deal form | `vercel:nextjs`, `vercel:react-best-practices`, `design:design-critique`, `design:ux-copy` (labels/errors) | `pr-review-toolkit:type-design-analyzer`, `design:accessibility-review` |
-| **21** Deal detail page | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:vercel-storage` | `design:accessibility-review` |
-| **22** Playwright e2e | `vercel:agent-browser`, `vercel:verification`, `engineering:testing-strategy` | `pr-review-toolkit:pr-test-analyzer` |
-| **23** RLS isolation test | `legal:compliance-check` (THIS IS THE TENANT-ISOLATION COMPLIANCE PROOF), `vercel:vercel-storage` | `pr-review-toolkit:silent-failure-hunter` |
-| **24** Vercel project link + first deploy | `vercel:bootstrap`, `vercel:deployments-cicd`, `vercel:env-vars`, `vercel:vercel-cli`, `engineering:deploy-checklist` | `vercel:verification` |
+| Task                                                        | Skill(s) to invoke before starting                                                                                    | Subagent(s) optionally dispatched after                                      |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **1** Bootstrap pnpm + Husky                                | `vercel:bootstrap`                                                                                                    | —                                                                            |
+| **2** packages/config                                       | `vercel:turborepo`                                                                                                    | —                                                                            |
+| **3** packages/db skeleton                                  | `vercel:vercel-storage`, `vercel:marketplace` (for Neon install)                                                      | —                                                                            |
+| **4** enums schema                                          | —                                                                                                                     | —                                                                            |
+| **5** tenants schema                                        | —                                                                                                                     | `pr-review-toolkit:type-design-analyzer`                                     |
+| **6** servicers schema                                      | —                                                                                                                     | `pr-review-toolkit:type-design-analyzer`                                     |
+| **7** deals schema                                          | —                                                                                                                     | `pr-review-toolkit:type-design-analyzer`                                     |
+| **8** parties + documents + attorney-review + audit schemas | `legal:compliance-check` (audit + attorney gate)                                                                      | `pr-review-toolkit:type-design-analyzer`                                     |
+| **9** Generate + apply migration                            | `vercel:vercel-storage`                                                                                               | —                                                                            |
+| **10** RLS policies                                         | `legal:compliance-check` (multi-tenant isolation is compliance-critical)                                              | `pr-review-toolkit:silent-failure-hunter`                                    |
+| **11** packages/compliance                                  | `legal:compliance-check`, `legal:legal-risk-assessment`                                                               | `pr-review-toolkit:type-design-analyzer`                                     |
+| **12** packages/auth                                        | `vercel:auth`, `vercel:marketplace` (for Clerk install)                                                               | —                                                                            |
+| **13** packages/ui                                          | `vercel:shadcn`, `frontend-design:frontend-design`, `design:design-system`, `design:accessibility-review`             | `pr-review-toolkit:code-simplifier`                                          |
+| **14** apps/web scaffold                                    | `vercel:nextjs`, `vercel:routing-middleware`, `vercel:turbopack`                                                      | `vercel:agent-browser-verify` (after dev server starts)                      |
+| **15** sign-in / sign-up routes                             | `vercel:auth`, `vercel:nextjs`                                                                                        | `design:accessibility-review`                                                |
+| **16** Clerk webhook → DB sync                              | `vercel:auth`, `vercel:vercel-functions`                                                                              | `pr-review-toolkit:silent-failure-hunter`                                    |
+| **17** Authenticated app layout                             | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:auth`, `design:design-system`                                | `design:accessibility-review`                                                |
+| **18** Deal list + create server actions                    | `vercel:nextjs`, `vercel:vercel-storage`, `legal:compliance-check` (audit emission)                                   | `pr-review-toolkit:silent-failure-hunter`, `pr-review-toolkit:code-reviewer` |
+| **19** Deal list page                                       | `vercel:nextjs`, `vercel:next-cache-components`, `design:design-critique`, `design:ux-copy` (empty state)             | `design:accessibility-review`                                                |
+| **20** New deal form                                        | `vercel:nextjs`, `vercel:react-best-practices`, `design:design-critique`, `design:ux-copy` (labels/errors)            | `pr-review-toolkit:type-design-analyzer`, `design:accessibility-review`      |
+| **21** Deal detail page                                     | `vercel:nextjs`, `vercel:next-cache-components`, `vercel:vercel-storage`                                              | `design:accessibility-review`                                                |
+| **22** Playwright e2e                                       | `vercel:agent-browser`, `vercel:verification`, `engineering:testing-strategy`                                         | `pr-review-toolkit:pr-test-analyzer`                                         |
+| **23** RLS isolation test                                   | `legal:compliance-check` (THIS IS THE TENANT-ISOLATION COMPLIANCE PROOF), `vercel:vercel-storage`                     | `pr-review-toolkit:silent-failure-hunter`                                    |
+| **24** Vercel project link + first deploy                   | `vercel:bootstrap`, `vercel:deployments-cicd`, `vercel:env-vars`, `vercel:vercel-cli`, `engineering:deploy-checklist` | `vercel:verification`                                                        |
 
 ### Phase-end (after Task 24 lands)
 
 Invoke after the entire plan completes:
 
-| Skill | Why |
-|---|---|
-| `engineering:architecture` | Author ADR `docs/adr/0001-phase-0-month-1-architecture.md` capturing what shipped vs. what changed from the spec |
-| `claude-md-management:revise-claude-md` | Update CLAUDE.md status section to reflect Phase 0 Month 1 complete |
-| `superpowers:finishing-a-development-branch` | Standardized end-of-development checklist |
-| `operations:runbook` | Author `docs/runbooks/local-dev-setup.md` so future engineers can spin up from scratch in < 30 min |
-| `operations:vendor-review` | Vendor due diligence on Neon, Clerk, Vercel, anyone else added |
-| `pr-review-toolkit:review-pr` | Final cross-cutting review of all 24 task commits |
-| `claude-code-setup:claude-automation-recommender` | Audit what *else* should be automated based on this month's experience |
+| Skill                                             | Why                                                                                                              |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `engineering:architecture`                        | Author ADR `docs/adr/0001-phase-0-month-1-architecture.md` capturing what shipped vs. what changed from the spec |
+| `claude-md-management:revise-claude-md`           | Update CLAUDE.md status section to reflect Phase 0 Month 1 complete                                              |
+| `superpowers:finishing-a-development-branch`      | Standardized end-of-development checklist                                                                        |
+| `operations:runbook`                              | Author `docs/runbooks/local-dev-setup.md` so future engineers can spin up from scratch in < 30 min               |
+| `operations:vendor-review`                        | Vendor due diligence on Neon, Clerk, Vercel, anyone else added                                                   |
+| `pr-review-toolkit:review-pr`                     | Final cross-cutting review of all 24 task commits                                                                |
+| `claude-code-setup:claude-automation-recommender` | Audit what _else_ should be automated based on this month's experience                                           |
 
 ### Phase-start prerequisites
 
@@ -203,6 +203,7 @@ packages/config/
 ### Task 1: Bootstrap pnpm workspace + Husky pre-commit hooks
 
 **Files:**
+
 - Modify: `package.json` (root already exists from initial commit)
 - Create: `.husky/pre-commit`
 - Create: `.husky/commit-msg`
@@ -280,6 +281,7 @@ git commit -m "chore(setup): install pnpm deps and configure Husky hooks"
 ### Task 2: Set up packages/config (shared tsconfig, ESLint, Prettier)
 
 **Files:**
+
 - Create: `packages/config/package.json`
 - Create: `packages/config/tsconfig/base.json`
 - Create: `packages/config/tsconfig/nextjs.json`
@@ -452,6 +454,7 @@ git commit -m "chore(config): scaffold shared tsconfig, eslint, prettier configs
 ### Task 3: Set up packages/db skeleton with Drizzle + Neon
 
 **Files:**
+
 - Create: `packages/db/package.json`
 - Create: `packages/db/tsconfig.json`
 - Create: `packages/db/drizzle.config.ts`
@@ -624,6 +627,7 @@ git commit -m "feat(db): scaffold Drizzle + Neon client and config"
 ### Task 4: Implement enums schema (canonical domain enums)
 
 **Files:**
+
 - Create: `packages/db/src/schema/enums.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/src/schema/enums.test.ts`
@@ -898,6 +902,7 @@ git commit -m "feat(db/schema): add canonical domain enums (lender, cema, proper
 ### Task 5: Implement tenants schema (Organization, User, Membership)
 
 **Files:**
+
 - Create: `packages/db/src/schema/tenants.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/src/schema/tenants.test.ts`
@@ -1071,6 +1076,7 @@ git commit -m "feat(db/schema): add organizations, users, memberships tables"
 ### Task 6: Implement servicers schema (the playbook entity)
 
 **Files:**
+
 - Create: `packages/db/src/schema/servicers.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/src/schema/servicers.test.ts`
@@ -1229,6 +1235,7 @@ git commit -m "feat(db/schema): add servicers and servicer_cema_departments tabl
 ### Task 7: Implement deals schema (Deal + Property + Loans)
 
 **Files:**
+
 - Create: `packages/db/src/schema/deals.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/src/schema/deals.test.ts`
@@ -1457,6 +1464,7 @@ git commit -m "feat(db/schema): add deals, properties, new_loans, existing_loans
 ### Task 8: Implement parties, documents, attorney-review, and audit schemas
 
 **Files:**
+
 - Create: `packages/db/src/schema/parties.ts`
 - Create: `packages/db/src/schema/documents.ts`
 - Create: `packages/db/src/schema/attorney-review.ts`
@@ -1710,6 +1718,7 @@ git commit -m "feat(db/schema): add parties, documents, attorney_approvals, audi
 ### Task 9: Generate and apply initial migration
 
 **Files:**
+
 - Create: `packages/db/migrations/0000_*.sql` (generated)
 - Create: `packages/db/migrations/meta/_journal.json` (generated)
 
@@ -1760,6 +1769,7 @@ git commit -m "feat(db): apply initial migration with all phase-0 tables"
 ### Task 10: Implement Row-Level Security policies
 
 **Files:**
+
 - Create: `packages/db/src/rls.ts`
 - Create: `packages/db/migrations/0001_rls.sql` (hand-written; not generated)
 - Create: `packages/db/src/rls.test.ts`
@@ -1945,6 +1955,7 @@ git commit -m "feat(db/rls): enable row-level security on tenant-scoped tables"
 ### Task 11: Implement packages/compliance (PII redaction, audit log, attorney guard)
 
 **Files:**
+
 - Create: `packages/compliance/package.json`
 - Create: `packages/compliance/tsconfig.json`
 - Create: `packages/compliance/src/index.ts`
@@ -2299,6 +2310,7 @@ git commit -m "feat(compliance): add PII redaction, audit log emitter, attorney-
 ### Task 12: Implement packages/auth (Clerk wrappers + tenant helpers)
 
 **Files:**
+
 - Create: `packages/auth/package.json`
 - Create: `packages/auth/tsconfig.json`
 - Create: `packages/auth/src/index.ts`
@@ -2381,9 +2393,7 @@ describe('resolveOrganizationId', () => {
   });
 
   it('throws when user has no active org', () => {
-    expect(() => resolveOrganizationId({ userId: 'user_2xyz' })).toThrow(
-      /no active organization/i,
-    );
+    expect(() => resolveOrganizationId({ userId: 'user_2xyz' })).toThrow(/no active organization/i);
   });
 
   it('throws when user is signed out', () => {
@@ -2494,6 +2504,7 @@ git commit -m "feat(auth): add Clerk wrappers and tenant resolution helpers"
 ### Task 13: Scaffold packages/ui (shadcn/ui foundation)
 
 **Files:**
+
 - Create: `packages/ui/package.json`
 - Create: `packages/ui/tsconfig.json`
 - Create: `packages/ui/components.json`
@@ -2667,8 +2678,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => (
@@ -2687,18 +2697,19 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils.js';
 
-export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn(
-        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-        className,
-      )}
-      {...props}
-    />
-  ),
-);
+export const Input = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>(({ className, ...props }, ref) => (
+  <input
+    ref={ref}
+    className={cn(
+      'border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50',
+      className,
+    )}
+    {...props}
+  />
+));
 Input.displayName = 'Input';
 ```
 
@@ -2709,15 +2720,12 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils.js';
 
-export const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
-  ({ className, ...props }, ref) => (
-    <label
-      ref={ref}
-      className={cn('text-sm font-medium leading-none', className)}
-      {...props}
-    />
-  ),
-);
+export const Label = React.forwardRef<
+  HTMLLabelElement,
+  React.LabelHTMLAttributes<HTMLLabelElement>
+>(({ className, ...props }, ref) => (
+  <label ref={ref} className={cn('text-sm font-medium leading-none', className)} {...props} />
+));
 Label.displayName = 'Label';
 ```
 
@@ -2730,7 +2738,7 @@ import { cn } from '../lib/utils.js';
 
 export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('rounded-lg border bg-card shadow-sm', className)} {...props} />
+    <div ref={ref} className={cn('bg-card rounded-lg border shadow-sm', className)} {...props} />
   ),
 );
 Card.displayName = 'Card';
@@ -2742,15 +2750,18 @@ export const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
 );
 CardHeader.displayName = 'CardHeader';
 
-export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-lg font-semibold leading-none', className)} {...props} />
-  ),
-);
+export const CardTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3 ref={ref} className={cn('text-lg font-semibold leading-none', className)} {...props} />
+));
 CardTitle.displayName = 'CardTitle';
 
 export const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />,
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
+  ),
 );
 CardContent.displayName = 'CardContent';
 ```
@@ -2788,6 +2799,7 @@ git commit -m "feat(ui): scaffold shadcn-style component library (button, input,
 ### Task 14: Scaffold apps/web Next.js 16 app
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/next.config.ts`
@@ -2903,7 +2915,10 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: ['/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)', '/(api|trpc)(.*)'],
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
 };
 ```
 
@@ -3020,6 +3035,7 @@ git commit -m "feat(web): scaffold Next.js 16 app with Clerk middleware"
 ### Task 15: Add sign-in and sign-up routes
 
 **Files:**
+
 - Create: `apps/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 - Create: `apps/web/app/(auth)/sign-up/[[...sign-up]]/page.tsx`
 - Create: `apps/web/app/(auth)/layout.tsx`
@@ -3034,7 +3050,9 @@ Create `apps/web/app/(auth)/layout.tsx`:
 
 ```tsx
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  return <main className="flex min-h-screen items-center justify-center bg-secondary">{children}</main>;
+  return (
+    <main className="bg-secondary flex min-h-screen items-center justify-center">{children}</main>
+  );
 }
 ```
 
@@ -3101,6 +3119,7 @@ git commit -m "feat(web/auth): add Clerk sign-in and sign-up routes"
 ### Task 16: Clerk webhook → DB sync for orgs and users
 
 **Files:**
+
 - Create: `apps/web/app/api/webhooks/clerk/route.ts`
 - Create: `apps/web/lib/clerk-sync.ts`
 - Create: `apps/web/lib/clerk-sync.test.ts`
@@ -3131,14 +3150,17 @@ describe('handleClerkWebhook', () => {
         }),
       }),
     };
-    await handleClerkWebhook(fakeDb as never, {
-      type: 'organization.created',
-      data: {
-        id: 'org_2abc',
-        name: 'Acme Lending',
-        slug: 'acme-lending',
+    await handleClerkWebhook(
+      fakeDb as never,
+      {
+        type: 'organization.created',
+        data: {
+          id: 'org_2abc',
+          name: 'Acme Lending',
+          slug: 'acme-lending',
+        } as never,
       } as never,
-    } as never);
+    );
     expect(dbCalls).toContain('organizations.upsert');
   });
 
@@ -3154,15 +3176,18 @@ describe('handleClerkWebhook', () => {
         }),
       }),
     };
-    await handleClerkWebhook(fakeDb as never, {
-      type: 'user.created',
-      data: {
-        id: 'user_2xyz',
-        email_addresses: [{ email_address: 'test@example.com' }],
-        first_name: 'Test',
-        last_name: 'User',
+    await handleClerkWebhook(
+      fakeDb as never,
+      {
+        type: 'user.created',
+        data: {
+          id: 'user_2xyz',
+          email_addresses: [{ email_address: 'test@example.com' }],
+          first_name: 'Test',
+          last_name: 'User',
+        } as never,
       } as never,
-    } as never);
+    );
     expect(dbCalls).toContain('users.upsert');
   });
 
@@ -3201,13 +3226,10 @@ export async function handleClerkWebhook(db: Database, event: ClerkWebhookEvent)
     case 'organization.updated': {
       const { id, name, slug } = event.data;
       if (!id || !name || !slug) return;
-      await db
-        .insert(organizations)
-        .values({ clerkOrgId: id, name, slug })
-        .onConflictDoUpdate({
-          target: organizations.clerkOrgId,
-          set: { name, slug },
-        });
+      await db.insert(organizations).values({ clerkOrgId: id, name, slug }).onConflictDoUpdate({
+        target: organizations.clerkOrgId,
+        set: { name, slug },
+      });
       break;
     }
     case 'user.created':
@@ -3216,13 +3238,10 @@ export async function handleClerkWebhook(db: Database, event: ClerkWebhookEvent)
       const email = email_addresses?.[0]?.email_address;
       if (!id || !email) return;
       const fullName = [first_name, last_name].filter(Boolean).join(' ') || null;
-      await db
-        .insert(users)
-        .values({ clerkUserId: id, email, fullName })
-        .onConflictDoUpdate({
-          target: users.clerkUserId,
-          set: { email, fullName },
-        });
+      await db.insert(users).values({ clerkUserId: id, email, fullName }).onConflictDoUpdate({
+        target: users.clerkUserId,
+        set: { email, fullName },
+      });
       break;
     }
     default:
@@ -3307,6 +3326,7 @@ git commit -m "feat(web/webhooks): sync Clerk orgs and users into Postgres"
 ### Task 17: Authenticated app layout with sidebar
 
 **Files:**
+
 - Create: `apps/web/app/(app)/layout.tsx`
 - Create: `apps/web/components/sidebar.tsx`
 
@@ -3333,8 +3353,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!orgId) {
     // Force org creation flow before reaching app pages
     return (
-      <main className="flex min-h-screen items-center justify-center bg-secondary">
-        <div className="rounded-lg bg-card p-8 shadow-sm">
+      <main className="bg-secondary flex min-h-screen items-center justify-center">
+        <div className="bg-card rounded-lg p-8 shadow-sm">
           <h1 className="mb-4 text-xl font-semibold">Create or select an organization</h1>
           <OrganizationSwitcher afterCreateOrganizationUrl="/dashboard" />
         </div>
@@ -3345,7 +3365,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b bg-card px-6 py-3">
+        <header className="bg-card flex items-center justify-between border-b px-6 py-3">
           <OrganizationSwitcher />
           <UserButton />
         </header>
@@ -3371,14 +3391,14 @@ const NAV = [
 
 export function Sidebar() {
   return (
-    <aside className="w-56 border-r bg-card p-4">
+    <aside className="bg-card w-56 border-r p-4">
       <div className="mb-6 px-2 text-lg font-semibold">Project_CEMA</div>
       <nav className="space-y-1">
         {NAV.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="block rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+            className="hover:bg-accent block rounded-md px-2 py-1.5 text-sm"
           >
             {item.label}
           </Link>
@@ -3409,7 +3429,7 @@ export default function Page() {
           <CardTitle>Welcome</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Your CEMA pipeline will appear here once you create your first Deal.
           </p>
         </CardContent>
@@ -3439,6 +3459,7 @@ git commit -m "feat(web): add authenticated app layout with sidebar and org swit
 ### Task 18: Deal list + create server actions
 
 **Files:**
+
 - Create: `apps/web/lib/actions/list-deals.ts`
 - Create: `apps/web/lib/actions/create-deal.ts`
 - Create: `apps/web/lib/actions/create-deal.test.ts`
@@ -3561,7 +3582,13 @@ export const createDealInputSchema = z.object({
   county: z.string().min(1),
   zipCode: z.string().regex(/^\d{5}(-\d{4})?$/),
   principal: z.string().regex(/^\d+(\.\d{1,2})?$/),
-  program: z.enum(['conventional_fannie', 'conventional_freddie', 'conventional_private', 'jumbo', 'fha']),
+  program: z.enum([
+    'conventional_fannie',
+    'conventional_freddie',
+    'conventional_private',
+    'jumbo',
+    'fha',
+  ]),
   upb: z.string().regex(/^\d+(\.\d{1,2})?$/),
 });
 
@@ -3682,6 +3709,7 @@ git commit -m "feat(web/deals): add createDeal server action and listDeals helpe
 ### Task 19: Deal list page
 
 **Files:**
+
 - Create: `apps/web/app/(app)/deals/page.tsx`
 - Create: `apps/web/components/deal-card.tsx`
 
@@ -3768,7 +3796,7 @@ export default async function Page() {
         </Link>
       </div>
       {allDeals.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No deals yet. Click &quot;New deal&quot; to create your first.
         </p>
       ) : (
@@ -3803,6 +3831,7 @@ git commit -m "feat(web/deals): add deal list page with empty state"
 ### Task 20: New deal form
 
 **Files:**
+
 - Create: `apps/web/app/(app)/deals/new/page.tsx`
 - Create: `apps/web/components/deal-form.tsx`
 
@@ -3857,13 +3886,19 @@ export function DealForm() {
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-2 gap-4">
             <Field label="CEMA type" error={errors.cemaType?.message}>
-              <select className="h-10 w-full rounded-md border border-input bg-background px-3" {...register('cemaType')}>
+              <select
+                className="border-input bg-background h-10 w-full rounded-md border px-3"
+                {...register('cemaType')}
+              >
                 <option value="refi_cema">Refi CEMA</option>
                 <option value="purchase_cema">Purchase CEMA</option>
               </select>
             </Field>
             <Field label="Property type" error={errors.propertyType?.message}>
-              <select className="h-10 w-full rounded-md border border-input bg-background px-3" {...register('propertyType')}>
+              <select
+                className="border-input bg-background h-10 w-full rounded-md border px-3"
+                {...register('propertyType')}
+              >
                 <option value="one_family">1-family</option>
                 <option value="two_family">2-family</option>
                 <option value="three_family">3-family</option>
@@ -3898,7 +3933,10 @@ export function DealForm() {
             </Field>
           </div>
           <Field label="Loan program" error={errors.program?.message}>
-            <select className="h-10 w-full rounded-md border border-input bg-background px-3" {...register('program')}>
+            <select
+              className="border-input bg-background h-10 w-full rounded-md border px-3"
+              {...register('program')}
+            >
               <option value="conventional_fannie">Conventional — Fannie</option>
               <option value="conventional_freddie">Conventional — Freddie</option>
               <option value="conventional_private">Conventional — Private</option>
@@ -3916,7 +3954,15 @@ export function DealForm() {
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
@@ -3964,6 +4010,7 @@ git commit -m "feat(web/deals): add new-deal form with Zod validation and server
 ### Task 21: Deal detail page (read-only Phase 0 view)
 
 **Files:**
+
 - Create: `apps/web/app/(app)/deals/[id]/page.tsx`
 - Create: `apps/web/lib/actions/get-deal.ts`
 
@@ -4036,13 +4083,16 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <CardContent>
             {property ? (
               <dl className="space-y-1 text-sm">
-                <Row k="Address" v={`${property.streetAddress}${property.unit ? ` ${property.unit}` : ''}`} />
+                <Row
+                  k="Address"
+                  v={`${property.streetAddress}${property.unit ? ` ${property.unit}` : ''}`}
+                />
                 <Row k="City / County" v={`${property.city}, ${property.county}`} />
                 <Row k="ZIP" v={property.zipCode} />
                 <Row k="Type" v={property.propertyType} />
               </dl>
             ) : (
-              <p className="text-sm text-muted-foreground">No property yet.</p>
+              <p className="text-muted-foreground text-sm">No property yet.</p>
             )}
           </CardContent>
         </Card>
@@ -4057,7 +4107,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 <Row k="Program" v={newLoan.program} />
               </dl>
             ) : (
-              <p className="text-sm text-muted-foreground">No new loan yet.</p>
+              <p className="text-muted-foreground text-sm">No new loan yet.</p>
             )}
           </CardContent>
         </Card>
@@ -4067,7 +4117,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </CardHeader>
           <CardContent>
             {existingLoans.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No existing loans yet.</p>
+              <p className="text-muted-foreground text-sm">No existing loans yet.</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {existingLoans.map((loan) => (
@@ -4115,6 +4165,7 @@ git commit -m "feat(web/deals): add deal detail page (Phase 0 read-only view)"
 ### Task 22: Playwright e2e — happy path
 
 **Files:**
+
 - Create: `apps/web/playwright.config.ts`
 - Create: `apps/web/tests/e2e/happy-path.spec.ts`
 - Modify: `apps/web/package.json` (add test:e2e script)
@@ -4220,6 +4271,7 @@ git commit -m "test(web/e2e): add happy-path Playwright spec for sign-in + creat
 ### Task 23: RLS multi-tenant isolation test (the most important compliance test)
 
 **Files:**
+
 - Create: `apps/web/tests/integration/rls-isolation.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -4243,15 +4295,21 @@ const ORG_B_ID = '00000000-0000-0000-0000-00000000000b';
 const USER_ID = '00000000-0000-0000-0000-000000000001';
 
 beforeAll(async () => {
-  await db.insert(organizations).values([
-    { id: ORG_A_ID, clerkOrgId: 'org_a', name: 'Org A', slug: 'org-a' },
-    { id: ORG_B_ID, clerkOrgId: 'org_b', name: 'Org B', slug: 'org-b' },
-  ]).onConflictDoNothing();
-  await db.insert(users).values({
-    id: USER_ID,
-    clerkUserId: 'user_test',
-    email: 'rls-test@example.com',
-  }).onConflictDoNothing();
+  await db
+    .insert(organizations)
+    .values([
+      { id: ORG_A_ID, clerkOrgId: 'org_a', name: 'Org A', slug: 'org-a' },
+      { id: ORG_B_ID, clerkOrgId: 'org_b', name: 'Org B', slug: 'org-b' },
+    ])
+    .onConflictDoNothing();
+  await db
+    .insert(users)
+    .values({
+      id: USER_ID,
+      clerkUserId: 'user_test',
+      email: 'rls-test@example.com',
+    })
+    .onConflictDoNothing();
 });
 
 afterAll(async () => {
@@ -4378,6 +4436,7 @@ Open PR, merge.
 Done in-doc:
 
 **1. Spec coverage:** Every Phase 0 month-1 bullet from the spec maps to one or more tasks:
+
 - Multi-tenant scaffold → Tasks 5, 12, 16, 17
 - Neon Postgres + Drizzle → Tasks 3–10
 - Clerk auth → Tasks 12, 14, 15, 16
