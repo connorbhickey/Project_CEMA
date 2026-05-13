@@ -67,5 +67,12 @@ export const documents = pgTable(
       'documents_recording_xor',
       sql`NOT (${t.recordedReelPage} IS NOT NULL AND ${t.recordedCrfn} IS NOT NULL)`,
     ),
+    // Hard rule #2: DB-level enforcement — any document whose kind requires
+    // attorney review CANNOT be inserted with attorney_review_required = false.
+    // The 14 gate-required kinds come directly from CLAUDE.md hard rule #2.
+    check(
+      'documents_attorney_gate_required',
+      sql`${t.kind} NOT IN ('cema_3172','exhibit_a','exhibit_b','exhibit_c','exhibit_d','gap_note','gap_mortgage','consolidated_note','aom','allonge','aff_255','aff_275','mt_15','county_cover_sheet') OR ${t.attorneyReviewRequired} = true`,
+    ),
   ],
 );

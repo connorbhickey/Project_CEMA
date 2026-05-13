@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { check, index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { deals } from './deals.js';
 import { partyRoleEnum } from './enums.js';
@@ -27,5 +27,15 @@ export const parties = pgTable(
       .notNull()
       .$onUpdate(() => sql`now()`),
   },
-  (t) => [index('parties_deal_id_idx').on(t.dealId), index('parties_email_idx').on(t.email)],
+  (t) => [
+    index('parties_deal_id_idx').on(t.dealId),
+    index('parties_email_idx').on(t.email),
+    // Hard rule #3: Reject plaintext SSN at insert time. Any value matching the
+    // SSN pattern (123-45-6789, 123456789, etc.) is rejected. Encrypted
+    // ciphertext (pgcrypto output) does not match this pattern and passes.
+    check(
+      'parties_ssn_encrypted_not_plaintext',
+      sql`${t.ssnEncrypted} IS NULL OR NOT (${t.ssnEncrypted} ~ '^\\d{3}-?\\d{2}-?\\d{4}$')`,
+    ),
+  ],
 );

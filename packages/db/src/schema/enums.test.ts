@@ -51,7 +51,7 @@ describe('enums', () => {
     const required = [
       'note',
       'mortgage',
-      'assignment',
+      'aom',
       'allonge',
       'cema_3172',
       'exhibit_a',
