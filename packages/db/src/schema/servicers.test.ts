@@ -15,6 +15,7 @@ describe('servicers schema', () => {
         'parentServicerId',
         'collateralCustodian',
         'playbookVersion',
+        'notes',
         'lastVerifiedAt',
         'createdAt',
         'updatedAt',
@@ -22,7 +23,7 @@ describe('servicers schema', () => {
     );
   });
 
-  it('cema departments table joins to servicer', () => {
+  it('cema departments table joins to servicer with full contact + escalation columns', () => {
     const cols = Object.keys(servicerCemaDepartments);
     expect(cols).toEqual(
       expect.arrayContaining([
@@ -34,6 +35,8 @@ describe('servicers schema', () => {
         'portalUrl',
         'acceptedSubmissionMethods',
         'typicalSlaBusinessDays',
+        'escalationPath',
+        'commonRejectionReasons',
         'createdAt',
         'updatedAt',
       ]),
