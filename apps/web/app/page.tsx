@@ -6,5 +6,7 @@ export default async function Page() {
   if (userId) {
     redirect('/dashboard');
   }
-  redirect('/sign-in');
+  // trailing slash required: [[...sign-in]] is an optional catch-all whose
+  // root segment is /sign-in/ (empty catch), not /sign-in (typedRoutes strict)
+  redirect('/sign-in/');
 }
