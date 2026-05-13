@@ -1,5 +1,5 @@
-export { Button, type ButtonProps } from './components/button.js';
-export { Card, CardContent, CardHeader, CardTitle } from './components/card.js';
-export { Input } from './components/input.js';
-export { Label } from './components/label.js';
-export { cn } from './lib/utils.js';
+export { Button, type ButtonProps } from './components/button';
+export { Card, CardContent, CardHeader, CardTitle } from './components/card';
+export { Input } from './components/input';
+export { Label } from './components/label';
+export { cn } from './lib/utils';

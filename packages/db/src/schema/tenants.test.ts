@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { memberships, organizations, users } from './tenants.js';
+import { memberships, organizations, users } from './tenants';
 
 describe('tenants schema', () => {
   it('organizations table has required columns', () => {

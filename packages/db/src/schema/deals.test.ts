@@ -1,7 +1,7 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 
-import { deals, existingLoans, newLoans, properties } from './deals.js';
+import { deals, existingLoans, newLoans, properties } from './deals';
 
 describe('deals schema', () => {
   it('deals scoped to organization with full lifecycle columns', () => {

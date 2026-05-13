@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { check, index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { deals } from './deals.js';
-import { partyRoleEnum } from './enums.js';
+import { deals } from './deals';
+import { partyRoleEnum } from './enums';
 
 export const parties = pgTable(
   'parties',

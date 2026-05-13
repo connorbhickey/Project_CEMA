@@ -1,7 +1,7 @@
 import type { Database } from '@cema/db';
 import { auditEvents } from '@cema/db';
 
-import { redactPii } from './pii.js';
+import { redactPii } from './pii';
 
 export interface AuditEventInput {
   organizationId: string;

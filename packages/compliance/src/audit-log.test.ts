@@ -7,7 +7,7 @@ vi.mock('@cema/db', () => ({
   auditEvents: Symbol('auditEvents'),
 }));
 
-import { emitAuditEvent } from './audit-log.js';
+import { emitAuditEvent } from './audit-log';
 
 describe('audit log', () => {
   it('emit creates an audit row with required fields', async () => {

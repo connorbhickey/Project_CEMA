@@ -13,7 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
-import type { submissionMethodEnum } from './enums.js';
+import type { submissionMethodEnum } from './enums';
 
 // ---------------------------------------------------------------------------
 // EscalationContact — typed shape for escalation_path entries.

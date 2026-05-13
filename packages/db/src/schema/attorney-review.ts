@@ -10,8 +10,8 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-import { documents } from './documents.js';
-import { users } from './tenants.js';
+import { documents } from './documents';
+import { users } from './tenants';
 
 // ---------------------------------------------------------------------------
 // attorneyApprovals — immutable records of attorney approval per document version.

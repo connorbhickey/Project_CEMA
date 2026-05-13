@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getRlsContext, withRlsContext } from './rls.js';
+import { getRlsContext, withRlsContext } from './rls';
 
 describe('RLS context helpers', () => {
   it('withRlsContext returns a SET LOCAL SQL statement for a valid UUID', () => {
