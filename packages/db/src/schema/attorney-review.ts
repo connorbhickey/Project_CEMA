@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -50,5 +51,8 @@ export const attorneyApprovals = pgTable(
   (t) => [
     index('attorney_approvals_document_id_idx').on(t.documentId),
     index('attorney_approvals_approved_by_id_idx').on(t.approvedById),
+    // Prevent double-approval race conditions: a given document version can only
+    // ever have one approval row. A new document version requires a new approval.
+    uniqueIndex('attorney_approvals_doc_version_uidx').on(t.documentId, t.documentVersion),
   ],
 );

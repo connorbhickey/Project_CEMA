@@ -47,7 +47,7 @@ export const partyRoleEnum = pgEnum('party_role', [
 export const documentKindEnum = pgEnum('document_kind', [
   'note',
   'mortgage',
-  'assignment',
+  'aom',
   'allonge',
   'cema_3172',
   'exhibit_a',

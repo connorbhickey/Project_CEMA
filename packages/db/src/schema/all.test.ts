@@ -1,3 +1,4 @@
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 
 import { attorneyApprovals } from './attorney-review.js';
@@ -71,5 +72,25 @@ describe('parties + documents + attorney + audit', () => {
         'occurredAt',
       ]),
     );
+  });
+});
+
+describe('compliance constraints', () => {
+  it('documents enforces attorney gate on legal-document kinds', () => {
+    const config = getTableConfig(documents);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('documents_attorney_gate_required');
+  });
+
+  it('attorney_approvals prevents duplicate approvals per document version', () => {
+    const config = getTableConfig(attorneyApprovals);
+    const indexNames = config.indexes.map((i) => i.config.name);
+    expect(indexNames).toContain('attorney_approvals_doc_version_uidx');
+  });
+
+  it('parties rejects plaintext SSN format', () => {
+    const config = getTableConfig(parties);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('parties_ssn_encrypted_not_plaintext');
   });
 });
