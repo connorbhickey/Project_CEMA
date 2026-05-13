@@ -11,18 +11,19 @@
     "db:setup": "tsx ./scripts/setup.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint src"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
     "dotenv": "^16.4.0",
-    "drizzle-orm": "^0.36.0",
+    "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
     "@cema/config": "workspace:*",
     "@types/node": "^22.0.0",
-    "drizzle-kit": "^0.28.0",
+    "cross-env": "^10.1.0",
+    "drizzle-kit": "^0.31.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
