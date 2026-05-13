@@ -50,16 +50,28 @@ export const properties = pgTable(
     index('properties_county_idx').on(t.county),
     // Partial index for ACRIS lookups — only populated for NYC properties.
     index('properties_acris_bbl_idx').on(t.acrisBbl),
+    // Minor: enforce borough-block-lot format for NYC properties.
+    // Borough is 1-5 (Manhattan=1…Staten Island=5), block ≤5 digits, lot ≤4 digits.
+    // Example: "1-00123-0045"
+    check(
+      'properties_acris_bbl_format',
+      sql`${t.acrisBbl} IS NULL OR ${t.acrisBbl} ~ '^[1-5]-[0-9]{1,5}-[0-9]{1,4}$'`,
+    ),
   ],
 );
 
 // ---------------------------------------------------------------------------
 // newLoans — the funding details for the incoming loan.
+// Critical (Option 2a): organizationId added so this table can be RLS-scoped
+// in Task 10. onDelete: 'restrict' because orgs use soft-delete (deleted_at).
 // ---------------------------------------------------------------------------
 export const newLoans = pgTable(
   'new_loans',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'restrict' }),
     principal: decimal('principal', { precision: 12, scale: 2 }).notNull(),
     rate: decimal('rate', { precision: 6, scale: 4 }),
     termMonths: integer('term_months'),
@@ -72,6 +84,7 @@ export const newLoans = pgTable(
       .$onUpdate(() => sql`now()`),
   },
   (t) => [
+    index('new_loans_organization_id_idx').on(t.organizationId),
     // Numeric invariants — catch data-entry errors before they corrupt financials.
     check('new_loans_principal_positive', sql`${t.principal} > 0`),
     check('new_loans_term_months_positive', sql`${t.termMonths} IS NULL OR ${t.termMonths} > 0`),
@@ -127,6 +140,14 @@ export const deals = pgTable(
     index('deals_created_by_id_idx').on(t.createdById),
     // Status is the primary filter on the pipeline kanban view.
     index('deals_status_idx').on(t.status),
+    // Important: pipeline and SLA cron queries filter on these columns heavily.
+    index('deals_target_close_at_idx').on(t.targetCloseAt),
+    index('deals_sla_breach_at_idx').on(t.slaBreachAt),
+    // Important: completedAt must be set when the deal reaches 'completed' status.
+    check(
+      'deals_completed_at_required',
+      sql`${t.status} <> 'completed' OR ${t.completedAt} IS NOT NULL`,
+    ),
   ],
 );
 
@@ -171,12 +192,21 @@ export const existingLoans = pgTable(
     // FK indexes — Postgres does NOT auto-create.
     index('existing_loans_deal_id_idx').on(t.dealId),
     index('existing_loans_current_servicer_id_idx').on(t.currentServicerId),
+    // Critical: each chain position must be unique within a deal to prevent
+    // Schedule A consolidation list corruption from duplicate chain positions.
+    uniqueIndex('existing_loans_deal_chain_pos_idx').on(t.dealId, t.chainPosition),
     // Numeric invariants — UPB drives tax-savings calculation; must be valid.
     check('existing_loans_upb_nonneg', sql`${t.upb} >= 0`),
     check('existing_loans_chain_position_nonneg', sql`${t.chainPosition} >= 0`),
     check(
       'existing_loans_original_principal_positive',
       sql`${t.originalPrincipal} IS NULL OR ${t.originalPrincipal} > 0`,
+    ),
+    // Important: reel/page (upstate) and CRFN (NYC) are mutually exclusive;
+    // both populated simultaneously is always an error.
+    check(
+      'existing_loans_recording_xor',
+      sql`NOT (${t.recordedReelPage} IS NOT NULL AND ${t.recordedCrfn} IS NOT NULL)`,
     ),
   ],
 );
