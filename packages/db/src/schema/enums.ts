@@ -81,13 +81,13 @@ export const documentStatusEnum = pgEnum('document_status', [
   'rejected',
 ]);
 
+// VA permanently excluded (does not permit CEMA per spec §2.2 / 5.1).
+// FHA technically eligible but rarely used; revisit Phase 2.5.
 export const loanProgramEnum = pgEnum('loan_program', [
   'conventional_fannie',
   'conventional_freddie',
   'conventional_private',
   'jumbo',
-  'fha',
-  'va',
 ]);
 
 export const submissionMethodEnum = pgEnum('submission_method', [

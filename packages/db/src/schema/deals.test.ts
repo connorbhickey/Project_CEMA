@@ -1,3 +1,4 @@
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 
 import { deals, existingLoans, newLoans, properties } from './deals.js';
@@ -72,6 +73,7 @@ describe('deals schema', () => {
     expect(cols).toEqual(
       expect.arrayContaining([
         'id',
+        'organizationId',
         'principal',
         'rate',
         'termMonths',
@@ -81,5 +83,41 @@ describe('deals schema', () => {
         'updatedAt',
       ]),
     );
+  });
+});
+
+describe('deals schema constraints', () => {
+  it('new_loans has principal/term/rate CHECK constraints', () => {
+    const config = getTableConfig(newLoans);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('new_loans_principal_positive');
+    expect(checkNames).toContain('new_loans_term_months_positive');
+    expect(checkNames).toContain('new_loans_rate_nonneg');
+  });
+
+  it('existing_loans has unique chain_position per deal + recording XOR', () => {
+    const config = getTableConfig(existingLoans);
+    // uniqueIndex() produces an Index (lives in config.indexes, not uniqueConstraints).
+    const indexNames = config.indexes.map((i) => i.config.name);
+    expect(indexNames).toContain('existing_loans_deal_chain_pos_idx');
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('existing_loans_recording_xor');
+  });
+
+  it('deals enforces completedAt when status=completed', () => {
+    const config = getTableConfig(deals);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('deals_completed_at_required');
+  });
+
+  it('new_loans is org-scoped', () => {
+    const cols = Object.keys(newLoans);
+    expect(cols).toContain('organizationId');
+  });
+
+  it('properties acris_bbl has format CHECK', () => {
+    const config = getTableConfig(properties);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('properties_acris_bbl_format');
   });
 });
