@@ -92,8 +92,13 @@ pnpm db:migrate
 `drizzle.config.ts` auto-loads `apps/web/.env.local` via dotenv when `DATABASE_URL` is not already
 set as a shell variable, so running from `packages/db/` with the file present is sufficient.
 
-Expected output: The Drizzle migration tracking table is created if missing, then both
-`0000_purple_lester` and `0001_rls` are shown as applied.
+Expected output: The Drizzle migration tracking table is created if missing, then three migrations
+are shown as applied: `0000_purple_lester`, `0001_rls`, and `0002_app_role`. The last creates the
+`cema_app_user` Postgres role used by `withRls()` to enforce row-level security at runtime — see
+`packages/db/migrations/0002_app_role.sql` for the rationale.
+
+If you are pulling this branch on a long-lived dev Neon branch, the `0002_app_role.sql` migration
+runs idempotently (`DO $$ … IF NOT EXISTS …`), so re-running migrate is safe.
 
 Verify that RLS is active on the expected tables:
 
@@ -145,7 +150,7 @@ Run all checks from the repo root:
 pnpm typecheck      # tsc --noEmit across all packages
 pnpm lint           # ESLint with legacy config mode
 pnpm format:check   # Prettier format validation
-pnpm test           # 55 Vitest unit tests across all packages
+pnpm test           # 59 Vitest unit + integration tests across all packages
 pnpm build          # full Next.js production build
 ```
 
@@ -162,16 +167,20 @@ E2E_USER_EMAIL=<your-test-email> E2E_USER_PASSWORD=<your-test-password> pnpm tes
 The e2e spec starts the Next.js dev server automatically via Playwright's `webServer` config (120 s
 timeout). It runs the happy path: sign in → create a Deal → verify it appears in the list.
 
-**RLS isolation test (requires DATABASE_URL, hits real Neon dev branch):**
+**RLS isolation tests (require DATABASE_URL, hit real Neon dev branch):**
+
+Two complementary integration tests prove RLS works at different layers:
 
 ```bash
 cd apps/web
-pnpm test tests/integration/rls-isolation.test.ts
+pnpm test tests/integration/rls-isolation.test.ts        # raw RLS policy proof
+pnpm test tests/integration/withrls-enforcement.test.ts  # production code path proof
 ```
 
-This test creates two test organizations, seeds a Deal under Org A, then proves that querying as
-`cema_app_user` (BYPASSRLS=false) in Org B's RLS context returns zero rows for Org A's Deal. It
-cleans up after itself.
+`rls-isolation.test.ts` uses a raw `neon.transaction([...])` batch to confirm the RLS policies
+themselves filter rows correctly when run as `cema_app_user`. `withrls-enforcement.test.ts`
+exercises the actual `withRls()` wrapper that `createDeal`, `getDeal`, and `listDeals` use,
+catching regressions in the application path. Both tests clean up after themselves.
 
 ---
 
@@ -234,7 +243,8 @@ apps/
 | `pnpm test:e2e` times out before the page loads             | Dev server slow to boot                                               | Increase `webServer.timeout` in `apps/web/playwright.config.ts` (current: 120 000 ms)                                                      |
 | `Secret scan` check fails on PR                             | `GITGUARDIAN_API_KEY` not provisioned in repo secrets                 | This is a known carry-over. The check is non-blocking. Ask Connor about the API key.                                                       |
 | Clerk `401` on webhook endpoint after `pnpm dev`            | `CLERK_WEBHOOK_SECRET` is wrong or missing                            | Verify the secret matches the Clerk dashboard webhook signing secret for the dev instance                                                  |
-| RLS isolation test fails with `permission denied for table` | `cema_app_user` role not yet granted table privileges                 | The test provisions the role in `beforeAll` — ensure `DATABASE_URL` points to the same Neon branch where migrations were applied           |
+| RLS isolation test fails with `permission denied for table` | `cema_app_user` role not yet provisioned on the connected Neon branch | Run `pnpm db:migrate` — migration `0002_app_role.sql` provisions the role and grants                                                       |
+| `pnpm test` is much slower than before                      | First Pool connection wakes a suspended Neon dev branch               | Normal — Neon dev branches resume in ~1 s after auto-suspend; subsequent queries are fast                                                  |
 
 ---
 

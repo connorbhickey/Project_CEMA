@@ -380,6 +380,8 @@ These items are documented in CLAUDE.md §2 and reproduced here for the ADR reco
 1. **RLS BYPASSRLS gap** — switch `DATABASE_URL` to use `cema_app_user` (BYPASSRLS=false). Create
    the role in Neon, grant table privileges, update Vercel env var. This is the highest-priority
    item because RLS policies are currently inert in production.
+   **Status (2026-05-13): RESOLVED — see §"Phase 0 Month 2 carry-over: RLS production enforcement"
+   below for the actual fix shipped.**
 
 2. **Husky v10 readiness** — strip the v8 shim line from `.husky/pre-commit` and `.husky/commit-msg`.
 
@@ -399,6 +401,104 @@ Additionally discovered during ADR drafting:
 7. **GitGuardian secret scan** — provision the API key or remove the check.
 
 8. **ESLint flat-config migration** — not urgent, but should be scheduled before ESLint 10.
+
+---
+
+## Phase 0 Month 2 carry-over: RLS production enforcement
+
+**Status:** Shipped (2026-05-13)
+**Scope:** Carry-over item #1 from above.
+
+### Root cause (two independent bugs)
+
+The original Phase 0 Month 1 implementation had RLS policies defined and a `withRls()` wrapper that
+appeared to set the org context, but RLS was a no-op in production for _two_ reasons that
+compounded:
+
+**Bug A — Role bypasses RLS.** `packages/db/src/client.ts` connected via the `neondb_owner` role
+from `DATABASE_URL`. Neon provisions `neondb_owner` with `BYPASSRLS=true`, so Postgres skips the
+policy filter for that role regardless of what `current_setting('app.current_organization_id', ...)`
+returns.
+
+**Bug B — set_config doesn't propagate across queries with neon-http.** The Phase 0 Month 1 client
+used `drizzle-orm/neon-http`, where each `db.execute()` is its own HTTP roundtrip wrapped in its
+own implicit Postgres transaction. The first call to `set_config('app.current_organization_id', $1,
+true)` set the value with `is_local=true` — which scopes to the _current_ transaction. By the time
+the callback's `tx.insert(...)` ran, it was a different HTTP request, a different transaction, and
+the setting was already gone.
+
+The Task 23 RLS isolation test (`apps/web/tests/integration/rls-isolation.test.ts`) sidestepped
+both bugs by using `nsql.transaction([SET_config, SET_ROLE, SELECT])` — the neon-http batched form,
+which puts all three statements in a single HTTP/Postgres transaction. That proved RLS _can_ work
+but didn't exercise the production code path.
+
+### Fix (driver swap + role downgrade + runtime guard)
+
+Four changes, all in this branch:
+
+1. **Driver swap** — `packages/db/src/client.ts` moved from `drizzle-orm/neon-http` (HTTP, no
+   transactions) to `drizzle-orm/neon-serverless` (Pool over WebSocket, full transactions). Node
+   22's built-in WebSocket is sufficient, so `neonConfig.webSocketConstructor` is not configured.
+   No edge-runtime routes exist in `apps/web` (grep for `runtime\s*=\s*['"]edge['"]` returns
+   nothing), so the Pool driver works everywhere.
+
+2. **`withRls` refactor** — `apps/web/lib/with-rls.ts` now opens a real
+   `db.transaction(async (tx) => …)` and issues two SET LOCAL statements inside the transaction
+   before running the caller's queries:
+
+   ```
+   SET LOCAL ROLE cema_app_user
+   SELECT set_config('app.current_organization_id', $1, true)
+   ```
+
+   Both reset automatically at transaction end (COMMIT / ROLLBACK), so other code paths (Clerk
+   webhook sync, audit log emission outside withRls) keep their `neondb_owner` privileges. The
+   callback receives `tx` as its only DB handle.
+
+3. **Role provisioning migration** — `packages/db/migrations/0002_app_role.sql` creates
+   `cema_app_user` (NOLOGIN, BYPASSRLS=false by Postgres default), grants `SELECT/INSERT/UPDATE/
+DELETE` on all public tables, grants `USAGE` on sequences, sets ALTER DEFAULT PRIVILEGES so
+   future tables auto-inherit those grants, and grants membership in `cema_app_user` to
+   `neondb_owner` (so SET LOCAL ROLE works). Every Neon branch — dev, preview, production —
+   runs this migration via `drizzle-kit migrate` in the deploy workflow.
+
+4. **Runtime guard** — Immediately after `SET LOCAL ROLE`, `withRls` queries
+   `pg_roles.rolbypassrls` for the current user and throws if it's true. If a future refactor
+   removes the SET LOCAL ROLE line, the guard fires and aborts the transaction before any
+   tenant-scoped query runs. The new integration test
+   `apps/web/tests/integration/withrls-enforcement.test.ts` proves the guard works and
+   that the full path (Pool + withRls + Drizzle query) actually isolates orgs.
+
+### Caller contract
+
+Callers of `withRls(orgId, async (tx) => { … })` MUST use the `tx` argument for every database
+operation inside the callback. Calling `getDb()` inside the callback reaches for a fresh
+non-transactional connection, bypassing the SET LOCAL settings entirely.
+
+The audit-log helper `emitAuditEvent` now accepts `DbOrTx` (a union of `Database | Transaction`)
+exported from `@cema/db`, so the same helper works both inside and outside withRls.
+
+### Verification
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm test` all green.
+- `apps/web/tests/integration/withrls-enforcement.test.ts` exercises the production code path
+  end-to-end (insert Org A deal → read under Org B's withRls → assert invisible). Three of its
+  four assertions would have failed against the previous implementation.
+- `apps/web/tests/integration/rls-isolation.test.ts` remains valuable as a policy-layer proof
+  (raw neon batched transaction); the role-provisioning beforeAll was removed since migration
+  0002 now handles it.
+- `pnpm build` for apps/web compiles cleanly.
+
+### Files changed
+
+- `packages/db/src/client.ts` — Pool driver, new `Transaction` and `DbOrTx` exports.
+- `packages/db/src/index.ts` — re-exports `Transaction`, `DbOrTx`.
+- `packages/db/migrations/0002_app_role.sql` — new migration.
+- `packages/db/migrations/meta/_journal.json` — entry for 0002.
+- `apps/web/lib/with-rls.ts` — transaction-based RLS wrapper with guard.
+- `apps/web/tests/integration/withrls-enforcement.test.ts` — new integration test.
+- `apps/web/tests/integration/rls-isolation.test.ts` — removed redundant role provisioning.
+- `packages/compliance/src/audit-log.ts` — accept `DbOrTx` instead of `Database`.
 
 ---
 

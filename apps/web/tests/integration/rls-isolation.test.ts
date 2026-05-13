@@ -5,25 +5,30 @@
  * readable when the RLS context is set to Org B. This hits a real Neon
  * branch — it is intentionally NOT mocked.
  *
+ * ─── Why this test still exists after Phase 0 Month 2 RLS fix ─────────────
+ * The companion `withrls-enforcement.test.ts` exercises the *production*
+ * code path (`withRls()` from `apps/web/lib/with-rls.ts`). This test
+ * exercises the *underlying RLS policies* directly via a batched
+ * neon.transaction([…]) — a lower-level proof that the policies themselves
+ * filter rows when the session is a non-BYPASSRLS role. Both tests are
+ * valuable: this one isolates the policy layer, the other isolates the
+ * application wrapper.
+ *
  * ─── Why SET LOCAL ROLE? ───────────────────────────────────────────────────
  * The Neon connection string uses `neondb_owner`, which has BYPASSRLS=true.
  * To exercise the RLS policy the SELECT must run as a role with BYPASSRLS=false.
- * We create `cema_app_user` in beforeAll and use `SET LOCAL ROLE cema_app_user`
- * inside a neon transaction batch.
+ * `cema_app_user` (provisioned by migration 0002_app_role.sql) is that role;
+ * `SET LOCAL ROLE cema_app_user` downgrades the session for the duration of
+ * the batched transaction.
  *
- * ─── Why neon.transaction() instead of db.execute()? ──────────────────────
- * drizzle-orm/neon-http throws "No transactions support" for db.transaction().
- * Each db.execute() is a separate HTTP round-trip (its own Postgres txn), so
- * `SET LOCAL` settings reset between calls. neon().transaction([...]) sends
- * all statements in one HTTP request inside one real Postgres transaction —
- * the only way to keep LOCAL settings in scope for the SELECT.
+ * ─── Why neon.transaction() instead of the production withRls path? ───────
+ * This test deliberately uses the raw neon HTTP batched-transaction form
+ * to isolate the *policy* from the *wrapper*. The withRls wrapper is now
+ * exercised by withrls-enforcement.test.ts. Splitting the proofs makes a
+ * regression in either layer obvious.
  *
  * ─── Why sql([rawString]) for the DO block? ───────────────────────────────
- * Postgres DO blocks cannot accept query parameters ($1, $2, …). Using
- * `nsql\`DO $$ … ${param} … $$\`` would trigger "bind message supplies N
- * parameters, but prepared statement requires 0". Calling nsql([rawString])
- * sends the statement with zero parameters so the DO block executes cleanly.
- * The string is a compile-time constant — not user input — so no injection risk.
+ * Not used anymore — role provisioning moved to migration 0002_app_role.sql.
  */
 
 import { deals, getDb, organizations, users } from '@cema/db';
@@ -33,10 +38,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const ORG_A_ID = '00000000-0000-0000-0000-00000000000a';
 const ORG_B_ID = '00000000-0000-0000-0000-00000000000b';
 const USER_ID = '00000000-0000-0000-0000-000000000099';
-
-// The app role must have BYPASSRLS=false (Postgres default for new roles).
-// This is a compile-time constant, never derived from user input.
-const APP_ROLE = 'cema_app_user';
 
 // Skip the entire suite when DATABASE_URL is absent (e.g. CI without the secret).
 const skip = !process.env.DATABASE_URL;
@@ -48,38 +49,12 @@ function getNeonSql(): NeonQueryFunction<false, false> {
 
 describe.skipIf(skip)('RLS multi-tenant isolation', () => {
   beforeAll(async () => {
+    // Role provisioning (CREATE ROLE cema_app_user, GRANTs, GRANT membership
+    // to neondb_owner) is now handled by migration 0002_app_role.sql. The
+    // migration runs automatically against every Neon branch (dev, preview,
+    // production) so the role is guaranteed to exist before the test runs.
+    // Seed org and user rows only.
     const db = getDb();
-    const nsql = getNeonSql();
-
-    // ── 1. Provision the low-privilege app role (idempotent) ───────────────
-    // APP_ROLE is a compile-time constant. We use nsql([rawString]) — the
-    // single-element array form — to send the DO block without any $N
-    // parameters, which Postgres requires for DO blocks.
-    await nsql([
-      `DO $$ BEGIN
-         IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_ROLE}') THEN
-           CREATE ROLE ${APP_ROLE} LOGIN PASSWORD 'rls_test_only';
-         END IF;
-       END $$`,
-    ] as unknown as TemplateStringsArray);
-
-    // Grant table-level privileges so queries as cema_app_user don't fail on
-    // "permission denied for table" before RLS even applies.
-    // GRANT is idempotent — safe to run on every test run.
-    await nsql([
-      `GRANT SELECT, INSERT, UPDATE, DELETE ON deals TO ${APP_ROLE}`,
-    ] as unknown as TemplateStringsArray);
-    await nsql([
-      `GRANT SELECT, INSERT ON organizations TO ${APP_ROLE}`,
-    ] as unknown as TemplateStringsArray);
-    await nsql([`GRANT SELECT, INSERT ON users TO ${APP_ROLE}`] as unknown as TemplateStringsArray);
-
-    // neondb_owner must be a member of cema_app_user to be allowed to
-    // SET ROLE to it (Postgres requirement for non-superusers).
-    await nsql([`GRANT ${APP_ROLE} TO neondb_owner`] as unknown as TemplateStringsArray);
-
-    // ── 2. Seed org and user rows ──────────────────────────────────────────
-    // Inserted as neondb_owner (BYPASSRLS=true) — no RLS context needed here.
     await db
       .insert(organizations)
       .values([
