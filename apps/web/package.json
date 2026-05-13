@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint app lib proxy.ts",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -28,10 +29,11 @@
   },
   "devDependencies": {
     "@cema/config": "workspace:*",
+    "@playwright/test": "^1.60.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
     "autoprefixer": "^10.4.0",
     "cross-env": "^10.1.0",
     "postcss": "^8.4.0",
