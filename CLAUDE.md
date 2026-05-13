@@ -18,11 +18,11 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 1 complete** — multi-tenant scaffold (Drizzle + Neon + RLS), Deal entity with attorney-review primitives, audit log, packages/{config,db,compliance,auth,ui}, Next.js 16 web app with Clerk auth + Deal CRUD, Vercel preview-per-PR active.
-- **Next step:** Plan Phase 0 Month 2 (telephony foundation per spec §11.1). Address two carry-over items first:
-  1. **RLS BYPASSRLS gap** — production currently connects as `neondb_owner` (BYPASSRLS=true), bypassing RLS. Task 23's test proves RLS works under `cema_app_user` (non-bypass). Production app needs to switch.
+- **Phase:** **Phase 0 Month 1 complete; Month 2 in progress** — multi-tenant scaffold (Drizzle + Neon + RLS), Deal entity with attorney-review primitives, audit log, packages/{config,db,compliance,auth,ui}, Next.js 16 web app with Clerk auth + Deal CRUD, Vercel preview-per-PR active.
+- **Next step:** Plan Phase 0 Month 2 (telephony foundation per spec §11.1). Carry-over status:
+  1. **RLS BYPASSRLS gap — RESOLVED (2026-05-13).** Switched `@cema/db` from `drizzle-orm/neon-http` to `drizzle-orm/neon-serverless` (Pool); `withRls` now opens a real transaction and issues `SET LOCAL ROLE cema_app_user` + `SET LOCAL app.current_organization_id` per call. Migration `0002_app_role.sql` provisions the role (NOLOGIN, BYPASSRLS=false) on every Neon branch. New integration test `apps/web/tests/integration/withrls-enforcement.test.ts` proves enforcement through the production code path. See `docs/adr/0001-phase-0-month-1-architecture.md` §"Phase 0 Month 2 carry-over: RLS production enforcement" for details.
   2. **Husky v10 deprecation** — pre-commit/commit-msg hooks emit deprecation warnings about the v8 shim line. Strip them before husky 10 lands.
-- **Code:** 5 workspace packages + 1 Next.js 16 app. 55 unit tests + 1 Playwright e2e (label-gated). Initial migration applied to Neon dev branch. Vercel preview deploys live per-PR.
+- **Code:** 5 workspace packages + 1 Next.js 16 app. 59 unit + integration tests + 1 Playwright e2e (label-gated). Three migrations on Neon dev branch (`0000_purple_lester`, `0001_rls`, `0002_app_role`). Vercel preview deploys live per-PR.
 
 ---
 

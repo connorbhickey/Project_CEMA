@@ -15,6 +15,13 @@
       "when": 1747094400000,
       "tag": "0001_rls",
       "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747180800000,
+      "tag": "0002_app_role",
+      "breakpoints": false
     }
   ]
 }
