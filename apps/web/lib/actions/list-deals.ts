@@ -4,7 +4,9 @@ import { desc, eq } from 'drizzle-orm';
 
 import { withRls } from '@/lib/with-rls';
 
-export async function listDeals() {
+export type Deal = typeof deals.$inferSelect;
+
+export async function listDeals(): Promise<Deal[]> {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
   const org = await db.query.organizations.findFirst({
