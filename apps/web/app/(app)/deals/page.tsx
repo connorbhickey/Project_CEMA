@@ -1,9 +1,11 @@
 import { Button } from '@cema/ui';
+import type { Route } from 'next';
 import Link from 'next/link';
-
 
 import { DealCard } from '@/components/deal-card';
 import { listDeals } from '@/lib/actions/list-deals';
+
+const NEW_DEAL_HREF = '/deals/new' as Route<'/deals/new'>;
 
 export default async function Page() {
   const allDeals = await listDeals();
@@ -11,7 +13,7 @@ export default async function Page() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Deals</h1>
-        <Link href="/deals/new">
+        <Link href={NEW_DEAL_HREF}>
           <Button>New deal</Button>
         </Link>
       </div>

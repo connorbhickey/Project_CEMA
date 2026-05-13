@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@cema/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
 
-
 import type { Deal } from '@/lib/actions/list-deals';
 
 interface DealCardProps {
