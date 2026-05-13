@@ -37,7 +37,7 @@ describe('tenants schema', () => {
   it('memberships joins users to orgs with role', () => {
     const cols = Object.keys(memberships);
     expect(cols).toEqual(
-      expect.arrayContaining(['id', 'organizationId', 'userId', 'role', 'createdAt']),
+      expect.arrayContaining(['id', 'organizationId', 'userId', 'role', 'createdAt', 'updatedAt']),
     );
   });
 });
