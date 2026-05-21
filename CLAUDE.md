@@ -21,7 +21,7 @@
 - **Phase:** **Phase 0 Month 1 complete; Month 2 planning** — multi-tenant scaffold (Drizzle + Neon + RLS), Deal entity with attorney-review primitives, audit log, packages/{config,db,compliance,auth,ui}, Next.js 16 web app with Clerk auth + Deal CRUD. Vercel **production** deploys live as of 2026-05-13 (after PR #33 fix); **preview-per-PR is blocked** on a Neon Free-plan branch-quota issue — see carry-over #3 below.
 - **Next step:** Plan Phase 0 Month 2 (telephony foundation per spec §11.1). Carry-over status:
   1. **RLS BYPASSRLS gap — RESOLVED (2026-05-13).** Switched `@cema/db` from `drizzle-orm/neon-http` to `drizzle-orm/neon-serverless` (Pool); `withRls` now opens a real transaction and issues `SET LOCAL ROLE cema_app_user` + `SET LOCAL app.current_organization_id` per call. Migration `0002_app_role.sql` provisions the role (NOLOGIN, BYPASSRLS=false) on every Neon branch. New integration test `apps/web/tests/integration/withrls-enforcement.test.ts` proves enforcement through the production code path. See `docs/adr/0001-phase-0-month-1-architecture.md` §"Phase 0 Month 2 carry-over: RLS production enforcement" for details.
-  2. **Husky v10 deprecation** — pre-commit/commit-msg hooks emit deprecation warnings about the v8 shim line. Strip them before husky 10 lands.
+  2. **Husky v10 deprecation — RESOLVED (2026-05-13).** PR #31 stripped the v8 shim line (`. "$(dirname -- "$0")/_/husky.sh"`) and the shebang from `.husky/pre-commit` and `.husky/commit-msg`. Hooks now contain only the command line (`pnpm exec lint-staged` / `pnpm exec commitlint --edit "$1"`), the forward-compatible v9+ format. No deprecation warning fires on commit. See PR #31 commit message for verification notes.
   3. **Vercel preview-per-PR blocked on Neon Free-plan branch quota (open).** The Vercel/Neon Marketplace integration is configured to provision a new Neon branch per Git ref on preview deploy. Neon Free is capped at 10 branches per project, and this repo has 35+ Git branches accumulated, so every preview now fails at the integration-provisioning phase with `BUILD_FAILED: Resource provisioning failed`. Production deploys work fine because they reuse the main Neon branch. Connor must (a) prune stale Neon branches via Vercel → Storage → Neon dashboard, (b) upgrade Neon to a paid plan, or (c) disable per-PR auto-branching in the integration settings so previews share the production database. PR #33 fixed the underlying Vercel project misconfiguration (framework=null, rootDirectory=null) that masked this for months; once Neon is sorted the previews should succeed without further code changes.
 - **Code:** 5 workspace packages + 1 Next.js 16 app. 59 unit + integration tests + 1 Playwright e2e (label-gated). Three migrations on Neon dev branch (`0000_purple_lester`, `0001_rls`, `0002_app_role`). Vercel production deploys live as of 2026-05-13; preview deploys awaiting Neon-side action (see carry-over #3).
 
@@ -801,8 +801,83 @@ Do not start coding until at least #1 and the relevant spec section are read.
 
 ---
 
+## 18. Cross-environment & multi-agent operations
+
+This project is worked across three contexts:
+
+- **Desktop** (Windows 11, primary) — `C:\Users\conno\Code\Project_CEMA_v1.0.0\`. Full dev loop: `pnpm dev`, Drizzle Studio, browser testing.
+- **Laptop** (macOS or Windows) — same repo path under user home. Full dev loop available.
+- **Claude Code mobile (cloud)** — read-only / edit-only context. No `pnpm dev`, no browser, no Vercel CLI.
+
+### 18.1 Sync protocol — the single source of truth is GitHub `main`
+
+1. **First action of every session:** `git fetch origin && git status`. If behind, `git pull --rebase origin main` (linear history is enforced).
+2. **Never let a local branch sit > 24h behind `main`** without explicitly noting why. Stale branches accumulate merge conflicts and Neon-branch quota usage.
+3. **Cross-device work-in-progress:** push WIP commits to a `wip/<scope>` branch rather than leaving uncommitted changes on one machine. Use `git stash` only for very-short-lived state (< 1 hour, same device).
+4. **Never** assume the working directory on one device matches another — always pull first.
+
+### 18.2 Dual-account caution
+
+The user owns GitHub repos under **`connorbhickey`** but the local `gh` CLI may be authenticated as **`hicklax13`** (e.g., on the Windows desktop). Before any write operation (push, PR create, issue create, repo settings change):
+
+- Verify with `gh auth status` and `git config user.email`
+- If pushing to a `connorbhickey`-owned repo, switch with `gh auth switch -u connorbhickey` and ensure `git config user.email` matches that account's primary email
+- **Repo settings writes** (branch protection, environments, secrets) require admin on the owning account — `hicklax13` can read public data but receives `404 Not Found` (GitHub's "leakage-safe forbidden") on any write attempt
+
+### 18.3 Task matrix — what's doable from each device
+
+| Task                                          | Desktop | Laptop | Mobile (Cloud)                        |
+| --------------------------------------------- | ------- | ------ | ------------------------------------- |
+| Edit code (`*.ts`, `*.tsx`)                   | ✅      | ✅     | ✅                                    |
+| Edit docs (specs, plans, ADRs, runbooks)      | ✅      | ✅     | ✅                                    |
+| Run `pnpm dev` + browser test                 | ✅      | ✅     | ❌                                    |
+| Run `pnpm test` / `typecheck` / `lint`        | ✅      | ✅     | ⚠️ depends on cloud sandbox           |
+| Run `pnpm db:migrate` against Neon dev branch | ✅      | ✅     | ⚠️ requires `DATABASE_URL` in sandbox |
+| Open PR (`gh pr create`)                      | ✅      | ✅     | ✅                                    |
+| Review PR comments + reply                    | ✅      | ✅     | ✅                                    |
+| Vercel deploy (`vercel deploy`)               | ✅      | ✅     | ❌ (no CLI auth on cloud)             |
+| Drizzle Studio                                | ✅      | ✅     | ❌                                    |
+| Playwright e2e (`pnpm test:e2e`)              | ✅      | ✅     | ❌ (no browser)                       |
+| Plan iteration / spec edits                   | ✅      | ✅     | ✅ (best mobile use)                  |
+
+When working from mobile/cloud, **defer all dev-loop validation to a desktop session** before merging.
+
+### 18.4 Multi-agent coordination
+
+Multiple Claude Code agents (sessions / subagents / cloud agents) may touch this repo. Coordination rules:
+
+1. **One agent per branch.** Never have two agents working on the same branch simultaneously.
+2. **Subagents inherit context but not file locks.** When dispatching, brief the subagent on what files it owns; the parent does not edit them concurrently.
+3. **Always pull before editing.** Even within a session, if another agent pushed, `git pull --rebase` first.
+4. **Memory hygiene.** Agents save state to `~/.claude/projects/<project>/memory/`. Stale memory + current code disagreement → trust the code, update the memory.
+
+---
+
+## 19. CI failure decision tree
+
+When CI fails on a PR, this is the order of triage:
+
+| Failing check               | First action                                                        | Common root causes                                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Lint`                      | `pnpm lint` locally                                                 | Missed `cross-env ESLINT_USE_FLAT_CONFIG=false` prefix; eslint-disabled rule re-flagged                                                |
+| `Typecheck`                 | `pnpm typecheck` locally                                            | Workspace import `.js` extension (Turbopack quirk per ADR-0001 §12); Drizzle type mismatch after schema change; missing `unknown` cast |
+| `Unit tests`                | `pnpm test --filter <package>` locally                              | Test reads `.env.local` not present in CI; mock drift; `Date.now` flakiness                                                            |
+| `Build`                     | `pnpm build` locally                                                | Module-level `process.env.DATABASE_URL` access (must be lazy — see ADR-0001 §2); `next/dynamic` ssr toggle issue                       |
+| `db-migrate-check`          | check `packages/db/migrations/meta/_journal.json`                   | Migration deleted from disk but in journal; out-of-order timestamps; non-idempotent DDL                                                |
+| `security-scan` (GG / Snyk) | `gh secret list`                                                    | `GITGUARDIAN_API_KEY` / `SNYK_TOKEN` not provisioned — soft-fail expected (`continue-on-error: true`)                                  |
+| `e2e` (Playwright)          | `pnpm test:e2e` locally with `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` | Clerk test user not in dev instance; webServer timeout too low; Neon dev branch cold-start                                             |
+| `llm-eval`                  | `pnpm eval --filter <agent>` locally                                | Braintrust API key missing; fixture drift; prompt-version not pinned                                                                   |
+| `commitlint`                | `git log --oneline origin/main..HEAD`                               | Non-conventional commit message; missing scope; subject > 72 chars                                                                     |
+| Vercel preview deploy       | Vercel dashboard → deployment logs                                  | Neon branch quota exhausted (Carry-over #3); missing env var in Preview environment; framework auto-detect failure                     |
+
+**Never bypass with `--no-verify` or admin override** (hard rule #8). Always fix at the root.
+
+---
+
 ## Changelog
 
-| Date       | Change                    | By                       |
-| ---------- | ------------------------- | ------------------------ |
-| 2026-05-12 | Initial CLAUDE.md created | Claude Opus 4.7 + Connor |
+| Date       | Change                                                                    | By                       |
+| ---------- | ------------------------------------------------------------------------- | ------------------------ |
+| 2026-05-12 | Initial CLAUDE.md created                                                 | Claude Opus 4.7 + Connor |
+| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree) | Claude Opus 4.7          |
+| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed  | Claude Opus 4.7          |

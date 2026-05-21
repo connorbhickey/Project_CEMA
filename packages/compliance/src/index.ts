@@ -5,3 +5,4 @@ export {
   requireAttorneyApproval,
   type DocumentGate,
 } from './attorney-review';
+export { decryptSsnSql, encryptSsnSql, setPiiKey } from './ssn';

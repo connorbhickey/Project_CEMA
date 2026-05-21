@@ -6,17 +6,10 @@ import { expect, test } from '@playwright/test';
 const skip = !process.env.E2E_USER_EMAIL;
 test.skip(skip, 'Skipping — set E2E_USER_EMAIL + E2E_USER_PASSWORD to run');
 
-// ---------------------------------------------------------------------------
-// Helper: find the <input> or <select> inside a Field wrapper identified by
-// its label text. DealForm renders <Label>text</Label><Input> as siblings
-// with no htmlFor, so getByLabel() won't work — we use the wrapper div.
-// ---------------------------------------------------------------------------
-function fieldInput(page: import('@playwright/test').Page, labelText: string | RegExp) {
-  return page
-    .locator('div.space-y-1', { has: page.locator('label', { hasText: labelText }) })
-    .locator('input, select')
-    .first();
-}
+// As of 2026-05-21 (ADR-0001 §"Negative" #6 fix), DealForm's Field wrapper
+// uses React's useId() to thread htmlFor → id between Label and Input, so
+// Playwright's native page.getByLabel() works correctly. The previous custom
+// fieldInput() helper was removed.
 
 test('user can sign in and create a Refi-CEMA deal', async ({ page }) => {
   // ── 1. Sign in via Clerk hosted UI ──────────────────────────────────────
@@ -37,14 +30,14 @@ test('user can sign in and create a Refi-CEMA deal', async ({ page }) => {
   await page.getByRole('link', { name: /new deal/i }).click();
   await expect(page).toHaveURL(/\/deals\/new$/);
 
-  // ── 4. Fill the form using Field-wrapper locators ────────────────────────
+  // ── 4. Fill the form via native label associations ───────────────────────
   // CEMA type stays at default "refi_cema"
-  await fieldInput(page, /street address/i).fill('123 Main St');
-  await fieldInput(page, /^city$/i).fill('Brooklyn');
-  await fieldInput(page, /county/i).fill('Kings');
-  await fieldInput(page, /^zip$/i).fill('11201');
-  await fieldInput(page, /upb/i).fill('420000');
-  await fieldInput(page, /new principal/i).fill('700000');
+  await page.getByLabel(/street address/i).fill('123 Main St');
+  await page.getByLabel(/^city$/i).fill('Brooklyn');
+  await page.getByLabel(/county/i).fill('Kings');
+  await page.getByLabel(/^zip$/i).fill('11201');
+  await page.getByLabel(/upb/i).fill('420000');
+  await page.getByLabel(/new principal/i).fill('700000');
 
   // ── 5. Submit ────────────────────────────────────────────────────────────
   await page.getByRole('button', { name: /create deal/i }).click();
