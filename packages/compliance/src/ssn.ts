@@ -74,7 +74,10 @@ export async function setPiiKey(tx: Transaction): Promise<void> {
  *   tx.insert(parties).values({ …, ssnEncrypted: encryptSsnSql(ssn) })
  */
 export function encryptSsnSql(plaintext: string): SQL {
-  return sql`encode(pgp_sym_encrypt(${plaintext}, current_setting('app.pii_encryption_key')), 'base64')`;
+  // Explicit ::text casts disambiguate pgp_sym_encrypt's two overloads
+  // (text and bytea). Without them, Postgres rejects the call with
+  // "function pgp_sym_encrypt(unknown, text) does not exist".
+  return sql`encode(pgp_sym_encrypt(${plaintext}::text, current_setting('app.pii_encryption_key')::text), 'base64')`;
 }
 
 /**
@@ -89,5 +92,7 @@ export function encryptSsnSql(plaintext: string): SQL {
  * the test suite asserts this key-rotation failure mode explicitly.
  */
 export function decryptSsnSql(column: PgColumn | SQL): SQL {
-  return sql`pgp_sym_decrypt(decode(${column}, 'base64'), current_setting('app.pii_encryption_key'))`;
+  // Same disambiguation as encryptSsnSql — pgp_sym_decrypt's key argument
+  // needs an explicit ::text cast.
+  return sql`pgp_sym_decrypt(decode(${column}, 'base64'), current_setting('app.pii_encryption_key')::text)`;
 }
