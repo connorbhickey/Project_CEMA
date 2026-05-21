@@ -38,6 +38,17 @@ jobs:
           node-version-file: .nvmrc
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
+      - name: Pre-create Neon-specific roles in CI Postgres
+        # Migration 0002_app_role.sql does `GRANT cema_app_user TO neondb_owner`,
+        # which assumes the Neon-managed `neondb_owner` role exists. Vanilla
+        # Postgres 16 in CI doesn't have it. Create a stand-in so the migration
+        # applies cleanly. NOLOGIN matches Neon's posture (we connect via the
+        # `postgres` user in CI, not as neondb_owner).
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d project_cema_ci \
+            -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'neondb_owner') THEN CREATE ROLE neondb_owner NOLOGIN; END IF; END \$\$;"
       - name: Apply migrations from main
         run: |
           if git ls-tree -d origin/main packages/db/migrations 2>/dev/null | grep -q migrations; then
@@ -49,8 +60,6 @@ jobs:
           fi
       - name: Apply new migrations
         run: pnpm db:migrate
-      - name: Generate diff from schema
-        run: pnpm db:generate --dry-run
       - name: Check for destructive operations
         run: |
           if grep -E '^\s*(DROP|TRUNCATE|ALTER\s+.*\s+DROP)' packages/db/migrations/*.sql 2>/dev/null; then

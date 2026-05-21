@@ -1,12 +1,16 @@
 name: Bundle size
 
+# Disabled until size-limit is configured in apps/web/package.json per the
+# spec's Phase 1 performance work. The previous setup used
+# andresz1/size-limit-action@v1 which forces npm internally and chokes on
+# pnpm's `workspace:*` protocol. Re-enable when:
+#   1. A "size-limit" field (or .size-limit.json) is added to apps/web,
+#   2. We pick an action that supports pnpm workspaces (e.g., a custom job
+#      running `pnpm exec size-limit --json` and posting to a PR comment).
+#
+# Manual trigger only for now — no automatic runs on PR.
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/ui/**'
-      - 'packages/ai-elements/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,19 +18,7 @@ permissions:
 
 jobs:
   size:
-    name: Bundle size diff
+    name: Bundle size diff (manual)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build --filter=web
-      - uses: andresz1/size-limit-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          script: pnpm exec size-limit
-          package_manager: pnpm
-          directory: apps/web
+      - run: echo "Bundle size workflow is currently disabled. See header comment."
