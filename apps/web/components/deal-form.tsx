@@ -4,7 +4,7 @@ import { Button, Card, CardContent, Input, Label } from '@cema/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { cloneElement, type ReactElement, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { createDeal } from '@/lib/actions/create-deal';
@@ -116,12 +116,16 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children: ReactElement;
 }) {
+  // useId() returns a stable SSR-safe id (e.g. ":r0:"). We thread the same id
+  // into the Label's htmlFor and the child input's id so screen readers can
+  // associate the label with the control. This fixes ADR-0001 §"Negative" #6.
+  const id = useId();
   return (
     <div className="space-y-1">
-      <Label>{label}</Label>
-      {children}
+      <Label htmlFor={id}>{label}</Label>
+      {cloneElement(children as ReactElement<{ id?: string }>, { id })}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );

@@ -1,4 +1,5 @@
 import {
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -54,5 +55,15 @@ export const attorneyApprovals = pgTable(
     // Prevent double-approval race conditions: a given document version can only
     // ever have one approval row. A new document version requires a new approval.
     uniqueIndex('attorney_approvals_doc_version_uidx').on(t.documentId, t.documentVersion),
+    // Composite FK to documents(id, version) — ensures documentVersion actually
+    // exists on the document. Migration 0004_doc_version_fk.sql adds this.
+    // ADR-0001 §"Negative" #3 documented the original gap.
+    foreignKey({
+      columns: [t.documentId, t.documentVersion],
+      foreignColumns: [documents.id, documents.version],
+      name: 'attorney_approvals_doc_version_fkey',
+    })
+      .onDelete('cascade')
+      .onUpdate('cascade'),
   ],
 );

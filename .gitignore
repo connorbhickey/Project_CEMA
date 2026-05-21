@@ -16,6 +16,12 @@ out/
 .parcel-cache/
 *.tsbuildinfo
 .swc/
+# Next.js regenerates next-env.d.ts on every dev/build with double-quoted
+# imports; the file's own header says "This file should not be edited." Per
+# Next.js docs (https://nextjs.org/docs/app/api-reference/config/typescript)
+# the recommended pattern is to gitignore it. tsc picks it up via tsconfig
+# include patterns at typecheck time.
+apps/web/next-env.d.ts
 
 # ─── Vercel ────────────────────────────────────────────────────
 .vercel
@@ -88,3 +94,6 @@ recordings/
 generated-docs/
 # IDP intermediate files
 idp-tmp/
+
+.vercel
+.env*.local

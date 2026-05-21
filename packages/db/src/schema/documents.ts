@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -59,6 +60,10 @@ export const documents = pgTable(
     index('documents_deal_id_idx').on(t.dealId),
     index('documents_kind_idx').on(t.kind),
     index('documents_status_idx').on(t.status),
+    // Composite UNIQUE so attorney_approvals can FK on (document_id, version).
+    // Migration 0004_doc_version_fk.sql adds this constraint at the DB layer
+    // and the matching FK on attorney_approvals (see ADR-0001 §"Negative" #3).
+    unique('documents_id_version_unique').on(t.id, t.version),
     // version must be a positive integer — prevent version=0 or negative drift.
     check('documents_version_positive', sql`${t.version} >= 1`),
     check('documents_page_count_positive', sql`${t.pageCount} IS NULL OR ${t.pageCount} > 0`),

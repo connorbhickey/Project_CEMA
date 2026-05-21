@@ -325,6 +325,12 @@ fix, applied equally well to schema design.
    convention — there is no Postgres BEFORE UPDATE/DELETE trigger blocking mutations. A bug or a
    direct DB query could modify or delete rows. **Mitigation:** Phase 0 Month 2 — add Postgres
    triggers that RAISE EXCEPTION on any UPDATE or DELETE attempt against these tables.
+   **Status (2026-05-21): RESOLVED.** Migration `0003_audit_immutability.sql` adds a
+   `reject_mutation_on_immutable_table()` PL/pgSQL function and four BEFORE-row triggers (UPDATE
+   and DELETE on both `audit_events` and `attorney_approvals`). Even `neondb_owner`
+   (BYPASSRLS=true) is blocked — only DROP TRIGGER / ALTER TABLE … DISABLE TRIGGER would
+   re-enable mutation. Integration test at `apps/web/tests/integration/audit-immutability.test.ts`
+   proves the triggers fire on all four mutation paths.
 
 3. **No composite FK from `attorney_approvals(documentId, documentVersion)` to
    `documents(id, version)`.** The approval row snapshots `documentVersion` at time of approval,
@@ -332,6 +338,12 @@ fix, applied equally well to schema design.
    version references (approval for version 3 when the document only has version 2) are caught
    only at application layer. **Mitigation:** Phase 0 Month 2 schema cleanup — add a composite
    unique index on `documents(id, version)` and a FK from `attorney_approvals` to it.
+   **Status (2026-05-21): RESOLVED.** Migration `0004_doc_version_fk.sql` adds
+   `UNIQUE (id, version)` on `documents` and a composite FK from
+   `attorney_approvals (document_id, document_version)` → `documents (id, version)` with
+   `ON DELETE CASCADE ON UPDATE CASCADE`. Drizzle schema files updated (`documents.ts`,
+   `attorney-review.ts`) to reflect the new constraints. The migration is hard-fail on
+   pre-existing phantom rows, surfacing data corruption rather than silently dropping it.
 
 4. **Husky v8 shim in hook files.** The `.husky/pre-commit` and `.husky/commit-msg` files contain
    `. "$(dirname -- "$0")/_/husky.sh"`, the Husky v8 source pattern. Husky 9 emits a deprecation
@@ -355,6 +367,14 @@ fix, applied equally well to schema design.
    and decryption helpers do not yet exist. The `packages/compliance` package has `redactPii()` for
    logs but no `encryptSsn()` / `decryptSsn()` pair. **Mitigation:** Phase 1 — implement
    pgcrypto-based symmetric encryption before any party SSN is written by the application.
+   **Status (2026-05-21): RESOLVED (Phase 0/1 posture).** Migration `0005_pgcrypto.sql` enables
+   the `pgcrypto` extension. `packages/compliance/src/ssn.ts` provides three helpers:
+   `setPiiKey(tx)` (SET LOCAL the key inside a withRls callback), `encryptSsnSql(plaintext)`
+   (returns Drizzle SQL fragment wrapping `encode(pgp_sym_encrypt(...), 'base64')`), and
+   `decryptSsnSql(column)` (the inverse). Key sourced from `PII_ENCRYPTION_KEY` env var (≥ 32
+   chars, validated on call); customer-managed per-tenant keys remain Phase 2 per spec §12.1.
+   Integration test at `apps/web/tests/integration/ssn-encryption.test.ts` proves round-trip,
+   key-rotation failure mode, plaintext CHECK rejection, and missing-key throw.
 
 ---
 
