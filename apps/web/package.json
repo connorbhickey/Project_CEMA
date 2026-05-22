@@ -18,6 +18,7 @@
     "@cema/compliance": "workspace:*",
     "@cema/db": "workspace:*",
     "@cema/integrations-deepgram": "workspace:*",
+    "@cema/integrations-docusign": "workspace:*",
     "@cema/integrations-drive": "workspace:*",
     "@cema/integrations-nylas": "workspace:*",
     "@cema/integrations-slack": "workspace:*",

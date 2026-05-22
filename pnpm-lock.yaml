@@ -74,6 +74,9 @@ importers:
       '@cema/integrations-deepgram':
         specifier: workspace:*
         version: link:../../packages/integrations/deepgram
+      '@cema/integrations-docusign':
+        specifier: workspace:*
+        version: link:../../packages/integrations/docusign
       '@cema/integrations-drive':
         specifier: workspace:*
         version: link:../../packages/integrations/drive

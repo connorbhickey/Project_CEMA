@@ -30,6 +30,12 @@ export const TopicSchema = {
     driveConnectionId: z.string(),
     receivedAt: z.string().datetime(),
   }),
+  'esign.docusign.events': z.object({
+    orgId: z.string(),
+    envelopeId: z.string(),
+    event: z.string(),
+    receivedAt: z.string().datetime(),
+  }),
 } as const;
 
 export type TopicName = keyof typeof TopicSchema;
