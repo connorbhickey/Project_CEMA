@@ -24,6 +24,12 @@ export const TopicSchema = {
     slackMessageTs: z.string(),
     receivedAt: z.string().datetime(),
   }),
+  'files.drive.ingest': z.object({
+    orgId: z.string(),
+    driveFileId: z.string(),
+    driveConnectionId: z.string(),
+    receivedAt: z.string().datetime(),
+  }),
 } as const;
 
 export type TopicName = keyof typeof TopicSchema;
