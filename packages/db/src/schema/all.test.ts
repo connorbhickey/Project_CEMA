@@ -7,7 +7,7 @@ import { documents } from './documents';
 import { parties } from './parties';
 
 describe('parties + documents + attorney + audit', () => {
-  it('parties tied to a deal with a role', () => {
+  it('parties tied to a deal with a role and TCPA opt-in surface', () => {
     const cols = Object.keys(parties);
     expect(cols).toEqual(
       expect.arrayContaining([
@@ -17,6 +17,10 @@ describe('parties + documents + attorney + audit', () => {
         'fullName',
         'email',
         'phone',
+        'tcpaOptIn',
+        'tcpaOptInAt',
+        'tcpaOptInSource',
+        'recordingDisclosureConfirmedAt',
         'createdAt',
         'updatedAt',
       ]),
@@ -92,5 +96,15 @@ describe('compliance constraints', () => {
     const config = getTableConfig(parties);
     const checkNames = config.checks.map((c) => c.name);
     expect(checkNames).toContain('parties_ssn_encrypted_not_plaintext');
+  });
+
+  it('parties enforces TCPA opt-in requires timestamp invariant', () => {
+    // Hard rule #4: a party cannot be marked tcpa_opt_in=true without a
+    // tcpa_opt_in_at timestamp, so the DB rejects the inconsistent state
+    // before any application bug can call a borrower without a real consent
+    // record. App layer additionally requires tcpa_opt_in_source.
+    const config = getTableConfig(parties);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('parties_tcpa_opt_in_requires_timestamp');
   });
 });
