@@ -18,8 +18,16 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 1 fully closed out; Phase 0 Month 2 ready to begin.** Multi-tenant scaffold (Drizzle + Neon + RLS), Deal entity with attorney-review primitives, audit log + DB-level immutability triggers, packages/{config,db,compliance,auth,ui} with SSN pgcrypto helpers, Next.js 16 web app with Clerk auth + Deal CRUD. Vercel **production + preview** deploys both live as of 2026-05-21.
-- **Next step:** Execute Phase 0 Month 2 plan at `docs/superpowers/plans/2026-05-13-phase-0-month-2-telephony.md` (telephony foundation per spec §11.1).
+- **Phase:** **Phase 0 Month 2 fully closed out (2026-05-22, PRs #38–#53); Phase 0 Month 3 (email + calendar) is next.** M2 shipped the telephony foundation: 5 new workspace packages (`@cema/blob`, `@cema/queues`, `@cema/integrations-nango`, `@cema/integrations-twilio`, `@cema/integrations-deepgram`), 7 DB migrations (0006–0012), Twilio click-to-call server action + TwiML + TCPA guard, Deepgram batch transcription callback, communications + recordings UI (timeline + audio player + click-to-seek transcript), and RLS isolation proofs for M2 tables. 12 tasks skipped (Tasks 10-14, 20-22, 26, 28) because they require external vendor credentials or WDK. See `docs/adr/0002-phase-0-month-2-telephony.md` and `docs/runbooks/telephony-incident-triage.md`.
+- **Next step:** Execute Phase 0 Month 3 plan (email + calendar integration — Nylas, spec §8.3 + §11.2). Plan not yet written; write it before beginning implementation.
+- **Phase 0 Month 2 carry-overs to M3 (12 tasks):**
+  1. **Tasks 10–14 (Nango + RingCentral / Dialpad / Zoom Phone):** Requires OAuth app creation in vendor portals. Prerequisite for live inbound PBX recording ingest.
+  2. **Tasks 20–22 (WDK workflow + queue consumer + telephony settings UI):** `@vercel/workflow` not installed; requires Tasks 10-14 for OAuth. Prerequisite for durable retryable ingest pipeline.
+  3. **Task 26 (E2E webhook→DB integration test):** Depends on Tasks 11-12 + 20-21.
+  4. **Task 28 (Vercel env var sync + production smoke test):** Requires real API keys provisioned.
+  5. **Upstash idempotency:** Add `SETNX telephony:idempo:<vendor_event_id>` in webhook handlers before queue publish (spec §8.5).
+  6. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` are nullable M2. Apache AGE entity resolution is M3+.
+  7. **Recording retention cron:** Scans `retention_until < now() AND legal_hold = false`. Phase 1 or M5.
 - **Phase 0 Month 1 carry-over status (all resolved):**
   1. **RLS BYPASSRLS gap — RESOLVED (2026-05-13, PR #30).** Driver swapped to `drizzle-orm/neon-serverless`; `withRls` opens a real transaction with `SET LOCAL ROLE cema_app_user` + `SET LOCAL app.current_organization_id`. See ADR-0001 §"Phase 0 Month 2 carry-over: RLS production enforcement".
   2. **Husky v10 deprecation — RESOLVED (2026-05-13, PR #31).** v8 shim line stripped from `.husky/pre-commit` and `.husky/commit-msg`.
@@ -37,7 +45,8 @@
 - **Known issues (non-blocking):**
   - SSH commit signing on Windows is broken — git invokes `ssh-keygen -Y sign` correctly but doesn't attach the resulting signature to the commit (Windows path-handling quirk in git-for-windows 2.52). Local commits are unsigned; GitHub's squash-merge signs the merge commit on main, satisfying branch protection. Debug later if direct main commits ever become necessary.
   - `enforce_admins` on main branch protection: not yet enabled. The `hicklax13` gh CLI token lacks `admin:org` scope, so it must be toggled via the GitHub web UI at `https://github.com/connorbhickey/Project_CEMA/settings/branches`.
-- **Code:** 5 workspace packages + 1 Next.js 16 app. **79 tests passing** (65 unit + 14 integration including audit-immutability, ssn-encryption, withrls-enforcement, rls-isolation) + 1 Playwright e2e (label-gated). Six migrations on Neon dev branch (`0000_purple_lester`, `0001_rls`, `0002_app_role`, `0003_audit_immutability`, `0004_doc_version_fk`, `0005_pgcrypto`). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
+  - **No WDK workflow (M2 gap):** Twilio recording-status callback publishes to queue but nothing consumes it. Recording blob ingest and Deepgram submission require manual intervention until the M3 WDK workflow ships (Tasks 20–21).
+- **Code:** 10 workspace packages + 1 Next.js 16 app. Tests: 65+ passing across web app as of M2 close (see ADR 0002 §Test count) + 1 Playwright e2e (label-gated). 13 migrations on Neon dev branch (0000–0012). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
 
 ---
 
@@ -890,8 +899,9 @@ When CI fails on a PR, this is the order of triage:
 
 ## Changelog
 
-| Date       | Change                                                                    | By                       |
-| ---------- | ------------------------------------------------------------------------- | ------------------------ |
-| 2026-05-12 | Initial CLAUDE.md created                                                 | Claude Opus 4.7 + Connor |
-| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree) | Claude Opus 4.7          |
-| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed  | Claude Opus 4.7          |
+| Date       | Change                                                                                     | By                         |
+| ---------- | ------------------------------------------------------------------------------------------ | -------------------------- |
+| 2026-05-12 | Initial CLAUDE.md created                                                                  | Claude Opus 4.7 + Connor   |
+| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree)                  | Claude Opus 4.7            |
+| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed                   | Claude Opus 4.7            |
+| 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar | Claude Sonnet 4.6 + Connor |
