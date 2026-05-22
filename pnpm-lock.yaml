@@ -74,6 +74,9 @@ importers:
       '@cema/integrations-deepgram':
         specifier: workspace:*
         version: link:../../packages/integrations/deepgram
+      '@cema/integrations-nylas':
+        specifier: workspace:*
+        version: link:../../packages/integrations/nylas
       '@cema/integrations-twilio':
         specifier: workspace:*
         version: link:../../packages/integrations/twilio

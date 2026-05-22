@@ -9,6 +9,13 @@ export const TopicSchema = {
     vendorPayload: z.record(z.unknown()),
     receivedAt: z.string().datetime(),
   }),
+  'comms.email.ingest': z.object({
+    orgId: z.string(),
+    communicationId: z.string(),
+    nylasGrantId: z.string(),
+    nylasThreadId: z.string(),
+    receivedAt: z.string().datetime(),
+  }),
 } as const;
 
 export type TopicName = keyof typeof TopicSchema;
