@@ -260,9 +260,13 @@ packages/db/src/schema/
 └── index.ts              # MODIFIED — re-exports
 
 packages/db/migrations/
-├── 0003_communications.sql        # tables + RLS policies
-├── 0004_audit_immutability.sql    # carry-over: BEFORE UPDATE/DELETE triggers on audit_events + attorney_approvals
-└── 0005_doc_version_fk.sql        # carry-over: composite UNIQUE on documents(id, version) + FK from attorney_approvals
+# Note: 0003_audit_immutability, 0004_doc_version_fk, 0005_pgcrypto shipped in
+# PR #34 (47ac219) ahead of M2 — they cover what Task 1 below originally
+# planned (plus the bonus SSN-encryption work). M2 migrations start at 0006:
+├── 0006_parties_tcpa.sql              # parties.tcpa_opt_in + recording_disclosure_confirmed_at
+├── 0007_communications.sql            # communications + recordings tables
+├── 0008_integration_connections.sql   # org_integration_connections (Nango broker rows)
+└── 0009_rls_telephony.sql             # RLS policies on the 3 new tables
 
 apps/web/
 ├── app/
@@ -305,7 +309,9 @@ apps/web/
 
 ### Task 1 — Carry-over: audit immutability triggers + doc-version FK
 
-**Scope:** Sweep the two remaining M1 ADR carry-overs that are tiny but block compliance hygiene. Husky v10 prep already shipped in PR #31 (`37f4884`) and RLS production enforcement in PR #30 (`c852efb`); those rows in the M1 ADR are now resolved.
+> **Status (2026-05-22): DONE — shipped in PR #34 (`47ac219`).** PR #34 covered the original scope of this task (`0003_audit_immutability.sql` + `0004_doc_version_fk.sql`) and additionally swept three more M1 ADR carry-overs the plan didn't anticipate: SSN encryption helpers (`0005_pgcrypto.sql` + `packages/compliance/src/ssn.ts`), DealForm a11y wiring (ADR-0001 item #6), and the GitGuardian CI noise (ADR-0001 item #5; non-blocking with `continue-on-error: true`). Net effect: M2 begins at Task 2 below; migrations 0003-0005 are taken; first M2 migration is `0006_parties_tcpa.sql` (Task 3). See CLAUDE.md §2 for the full carry-over close-out.
+
+**Original scope (kept for historical reference):** Sweep the two remaining M1 ADR carry-overs that are tiny but block compliance hygiene. Husky v10 prep already shipped in PR #31 (`37f4884`) and RLS production enforcement in PR #30 (`c852efb`); those rows in the M1 ADR are now resolved.
 
 **Files touched:**
 
@@ -1015,8 +1021,8 @@ The Deepgram callback handler (Task 19) drives the final `ready` transition; the
 2. **Runbooks** — `docs/runbooks/telephony-incident-triage.md`, `docs/runbooks/nango-onboarding.md`.
 3. **CLAUDE.md §2 status update** + changelog row.
 4. **Spec §16.I integration catalog rows** — verify RingCentral, Dialpad, Zoom Phone, Twilio, Deepgram, Nango all marked ✓ and dated.
-5. **Test count target:** ~85 unit + 3 integration (existing 2 + new 2; M1 had 59 unit + 2 integration).
-6. **Migration count:** 0003–0009 applied across dev + preview + prod Neon branches.
+5. **Test count target:** ~90 unit (M1 end-state was 65 after PR #34 added audit-immutability, SSN-encryption, doc-version-FK tests; +~25 new in M2) + ~16 integration (M1 end-state was 14: rls-isolation, withrls-enforcement, audit-immutability, ssn-encryption; +2 new in M2: communications-rls, webhook-to-db).
+6. **Migration count:** 0003–0009 applied across dev + preview + prod Neon branches (0003-0005 from PR #34, 0006-0009 from this month).
 7. **Vercel Marketplace add-ons** provisioned + billing reviewed against §12.5 cost model (call out telephony budget envelope).
 
 ---
