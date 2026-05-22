@@ -13,3 +13,4 @@ export * from './nylas-connections';
 export * from './slack-connections';
 export * from './email-threads';
 export * from './calendar-events';
+export * from './slack-messages';
