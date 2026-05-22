@@ -19,6 +19,7 @@
     "@cema/db": "workspace:*",
     "@cema/integrations-deepgram": "workspace:*",
     "@cema/integrations-nylas": "workspace:*",
+    "@cema/integrations-slack": "workspace:*",
     "@cema/integrations-twilio": "workspace:*",
     "@cema/queues": "workspace:*",
     "@cema/ui": "workspace:*",

@@ -16,6 +16,14 @@ export const TopicSchema = {
     nylasThreadId: z.string(),
     receivedAt: z.string().datetime(),
   }),
+  'comms.slack.ingest': z.object({
+    orgId: z.string(),
+    communicationId: z.string(),
+    slackTeamId: z.string(),
+    slackChannelId: z.string(),
+    slackMessageTs: z.string(),
+    receivedAt: z.string().datetime(),
+  }),
 } as const;
 
 export type TopicName = keyof typeof TopicSchema;
