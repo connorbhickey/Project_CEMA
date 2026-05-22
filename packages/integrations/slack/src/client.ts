@@ -10,8 +10,8 @@ export async function fetchSlackUserDisplayName(
 ): Promise<string | null> {
   const res = await client.users.info({ user: userId });
   if (!res.ok || !res.user) return null;
-  const profile = (res.user as { profile?: { display_name?: string }; real_name?: string }).profile;
-  return profile?.display_name || (res.user as { real_name?: string }).real_name || null;
+  const u = res.user as { profile?: { display_name?: string }; real_name?: string };
+  return u.profile?.display_name || u.real_name || null;
 }
 
 export interface PostEphemeralReplyParams {
@@ -24,9 +24,12 @@ export async function postEphemeralReply(
   client: WebClient,
   params: PostEphemeralReplyParams,
 ): Promise<void> {
-  await client.chat.postEphemeral({
+  const res = await client.chat.postEphemeral({
     channel: params.channel,
     user: params.user,
     text: params.text,
   });
+  if (!res.ok) {
+    throw new Error(`chat.postEphemeral failed: ${res.error ?? 'unknown'}`);
+  }
 }
