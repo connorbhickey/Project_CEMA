@@ -57,6 +57,13 @@
       "when": 1779411561722,
       "tag": "0007_parties_tcpa",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779412227871,
+      "tag": "0008_communications",
+      "breakpoints": true
     }
   ]
 }

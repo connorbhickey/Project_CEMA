@@ -6,3 +6,5 @@ export * from './parties';
 export * from './documents';
 export * from './attorney-review';
 export * from './audit';
+export * from './communications';
+export * from './recordings';
