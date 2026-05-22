@@ -4,9 +4,11 @@ import { notFound } from 'next/navigation';
 import { CalendarEventCard } from '@/components/calendar-event-card';
 import { CommunicationPlayer } from '@/components/communication-player';
 import { EmailThreadViewer } from '@/components/email-thread-viewer';
+import { SlackMessageCard } from '@/components/slack-message-card';
 import { getCalendarEvent } from '@/lib/actions/get-calendar-event';
 import { getCommunication } from '@/lib/actions/get-communication';
 import { getEmail } from '@/lib/actions/get-email';
+import { getSlackMessage } from '@/lib/actions/get-slack-message';
 
 function formatE164(e164: string | null | undefined): string {
   if (!e164) return '—';
@@ -81,6 +83,31 @@ export default async function Page({ params }: { params: Promise<{ id: string; c
           calendarEvent={eventData.calendarEvent}
           dealId={dealId}
         />
+      </div>
+    );
+  }
+
+  if (comm.kind === 'slack') {
+    const slackData = await getSlackMessage(dealId, communicationId);
+    if (!slackData) notFound();
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Slack message</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{formatDate(comm.startedAt)}</p>
+        </div>
+        <SlackMessageCard
+          communication={slackData.communication}
+          slackMessage={slackData.slackMessage}
+          dealId={dealId}
+        />
+        {slackData.slackMessage?.text ? (
+          <div className="rounded-lg border p-4">
+            <pre className="text-muted-foreground whitespace-pre-wrap text-sm">
+              {slackData.slackMessage.text}
+            </pre>
+          </div>
+        ) : null}
       </div>
     );
   }
