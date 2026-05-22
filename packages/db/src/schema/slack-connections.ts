@@ -37,6 +37,7 @@ export const orgSlackConnections = pgTable(
   (t) => [
     uniqueIndex('org_slack_connections_team_uidx').on(t.slackTeamId),
     uniqueIndex('org_slack_connections_org_team_uidx').on(t.organizationId, t.slackTeamId),
+    index('org_slack_connections_org_status_idx').on(t.organizationId, t.connectionStatus),
     index('org_slack_connections_org_id_idx').on(t.organizationId),
     check(
       'org_slack_connections_status_valid',

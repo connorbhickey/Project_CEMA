@@ -127,6 +127,13 @@
       "when": 1779488016579,
       "tag": "0017_slack_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1779488343225,
+      "tag": "0018a_slack_connections_org_status_idx",
+      "breakpoints": true
     }
   ]
 }
