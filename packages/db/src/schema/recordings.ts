@@ -56,6 +56,10 @@ export const recordings = pgTable(
     // e.g. 'deepgram-nova-3', 'whisper-large-v3' — identifies the model
     // that produced the transcript. Lets us re-run when models update.
     transcriptProvider: varchar('transcript_provider', { length: 32 }),
+    // Deepgram requestId returned by submitBatch (Task 18). Stored here
+    // so the /api/webhooks/deepgram callback (Task 19) can look up which
+    // recording it belongs to. Set to NULL until the workflow submits.
+    vendorRequestId: varchar('vendor_request_id', { length: 128 }),
     // Hard rule #5: per-recording timestamp of when the two-party
     // disclosure was emitted to the callee. Mirrors
     // parties.recording_disclosure_confirmed_at but at the recording

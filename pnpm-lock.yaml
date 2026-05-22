@@ -62,12 +62,18 @@ importers:
       '@cema/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@cema/blob':
+        specifier: workspace:*
+        version: link:../../packages/blob
       '@cema/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance
       '@cema/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@cema/integrations-deepgram':
+        specifier: workspace:*
+        version: link:../../packages/integrations/deepgram
       '@cema/integrations-twilio':
         specifier: workspace:*
         version: link:../../packages/integrations/twilio
