@@ -16,6 +16,7 @@
     "@cema/auth": "workspace:*",
     "@cema/compliance": "workspace:*",
     "@cema/db": "workspace:*",
+    "@cema/integrations-twilio": "workspace:*",
     "@cema/ui": "workspace:*",
     "@clerk/nextjs": "^7.0.0",
     "@hookform/resolvers": "^3.9.0",
