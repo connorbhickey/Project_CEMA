@@ -355,21 +355,12 @@ fix, applied equally well to schema design.
    fails because `GITGUARDIAN_API_KEY` was never added to repository secrets. It is non-blocking
    (the check is allowed to fail without blocking merge) but produces visible noise. **Mitigation:**
    Either add the API key to repo secrets or remove the check if GitGuardian is not in the toolchain.
-   **Status (2026-05-21): RESOLVED — partial.** PR #34 added `continue-on-error: true` to the
-   GitGuardian step so a missing API key produces a warning rather than a failed check (matches
-   the stated intent in `docs/runbooks/github-secrets.md`). Add the actual `GITGUARDIAN_API_KEY`
-   secret when GitGuardian is properly onboarded as a toolchain vendor.
 
 6. **`DealForm` label has no `htmlFor` association.** The new-deal form's Label component does not
    use `htmlFor` pointing to the corresponding field's `id`. The Playwright e2e test worked around
    this with a custom field-finder helper. Screen readers will not correctly associate the label
    with its field. **Mitigation:** Fix `packages/ui` Label to accept and wire `htmlFor`; update
    `DealForm` to set matching `id` attributes on inputs.
-   **Status (2026-05-21): RESOLVED.** PR #34: the `Field` wrapper inside `apps/web/components/deal-form.tsx`
-   uses React's `useId()` + `cloneElement` to thread a stable SSR-safe id from the Label's
-   `htmlFor` into the child input's `id`. The Label component itself never needed changing — it
-   already extended `LabelHTMLAttributes`. The e2e helper `fieldInput()` was removed and the test
-   now uses native `page.getByLabel(...)`.
 
 7. **SSN encryption is schema-only, not implemented.** The `parties.ssn_encrypted` column exists
    and the CHECK constraint rejects plaintext SSN patterns. However, the actual pgcrypto encryption

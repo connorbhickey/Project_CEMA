@@ -28,7 +28,7 @@
   5. **Composite FK on `attorney_approvals(documentId, documentVersion)` — RESOLVED (2026-05-21, PR #34).** Migration `0004_doc_version_fk.sql` adds `UNIQUE (id, version)` to `documents` and the composite FK.
   6. **DealForm a11y wiring — RESOLVED (2026-05-21, PR #34).** `Field` wrapper threads `htmlFor`↔`id` via `useId()` + `cloneElement`; e2e simplified to native `getByLabel`.
   7. **SSN encryption helpers — RESOLVED (2026-05-21, PR #34).** Migration `0005_pgcrypto.sql` enables pgcrypto; `packages/compliance/src/ssn.ts` provides `setPiiKey(tx)`, `encryptSsnSql()`, `decryptSsnSql()`. Key sourced from `PII_ENCRYPTION_KEY` env var (≥ 32 chars); customer-managed keys remain Phase 2 per spec §12.1.
-  8. **GitGuardian secret-scan check — RESOLVED (2026-05-21, PR #34).** `continue-on-error: true` added; missing `GITGUARDIAN_API_KEY` now produces a warning rather than a failed check. Add the actual key when GitGuardian is properly onboarded.
+  8. **GitGuardian secret-scan check — RESOLVED — partial (2026-05-21, PR #34).** `continue-on-error: true` added; missing `GITGUARDIAN_API_KEY` now produces a warning rather than a failed check. Add the actual key when GitGuardian is properly onboarded.
   9. **Broken CI workflows — RESOLVED (2026-05-21, PR #35).** `db-migrate-check` now pre-creates `neondb_owner` role in CI Postgres; `bundle-size` disabled (re-enable in Phase 1 when size-limit is configured).
 - **New autonomous-PR posture (2026-05-21):**
   - Branch protection `main`: required checks unchanged (Lint, Typecheck, Unit tests, Build), `required_approving_review_count` lowered from `1` → `0` (solo-dev).
