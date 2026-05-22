@@ -120,6 +120,13 @@
       "when": 1779468900000,
       "tag": "0016_rls_email_calendar",
       "breakpoints": false
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1779488016579,
+      "tag": "0017_slack_connections",
+      "breakpoints": true
     }
   ]
 }

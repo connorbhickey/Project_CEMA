@@ -10,5 +10,6 @@ export * from './communications';
 export * from './recordings';
 export * from './integrations';
 export * from './nylas-connections';
+export * from './slack-connections';
 export * from './email-threads';
 export * from './calendar-events';
