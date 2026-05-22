@@ -99,6 +99,13 @@
       "when": 1779429797703,
       "tag": "0013_nylas_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1779468764353,
+      "tag": "0014_email_threads",
+      "breakpoints": true
     }
   ]
 }
