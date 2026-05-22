@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -83,8 +84,13 @@ export const recordings = pgTable(
       .$onUpdate(() => sql`now()`),
   },
   (t) => [
-    // FK index — Postgres does NOT auto-create.
-    index('recordings_communication_id_idx').on(t.communicationId),
+    // FK index + 1:1 invariant: today a communication has at most one
+    // recording. Enforcing UNIQUE here makes the 1:1 a DB-level guarantee
+    // rather than an application convention; the workflow's upsert keyed
+    // on communication_id stays correct, and future relaxation (multiple
+    // media artifacts per comm in Phase 3) would be an explicit schema
+    // change rather than silent data sprawl.
+    uniqueIndex('recordings_communication_id_uidx').on(t.communicationId),
     // Lifecycle cron's primary filter column (Phase 1).
     index('recordings_retention_until_idx').on(t.retentionUntil),
     // Retention must be in the future of the creation moment. Defense
@@ -96,6 +102,22 @@ export const recordings = pgTable(
     check(
       'recordings_no_delete_under_legal_hold',
       sql`${t.deletedAt} IS NULL OR ${t.legalHold} = false`,
+    ),
+    // Numeric metric invariants — mirror the communications_duration_nonneg
+    // guard. All three columns are nullable (pre-Deepgram for transcript
+    // fields; pre-ingest-finalization for bytes/duration) so the NULL
+    // case is allowed, but a negative populated value is always a bug.
+    check(
+      'recordings_recording_bytes_nonneg',
+      sql`${t.recordingBytes} IS NULL OR ${t.recordingBytes} >= 0`,
+    ),
+    check(
+      'recordings_recording_duration_nonneg',
+      sql`${t.recordingDurationSeconds} IS NULL OR ${t.recordingDurationSeconds} >= 0`,
+    ),
+    check(
+      'recordings_transcript_words_nonneg',
+      sql`${t.transcriptWordsCount} IS NULL OR ${t.transcriptWordsCount} >= 0`,
     ),
   ],
 );

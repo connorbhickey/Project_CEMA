@@ -107,15 +107,23 @@ describe('recordings schema', () => {
     expect(checkNames).toContain('recordings_no_delete_under_legal_hold');
   });
 
-  it('recordings has communication_id index for FK traversal', () => {
+  it('recordings has UNIQUE on communication_id (1:1 invariant + FK index)', () => {
     const config = getTableConfig(recordings);
     const indexNames = config.indexes.map((i) => i.config.name);
-    expect(indexNames).toContain('recordings_communication_id_idx');
+    expect(indexNames).toContain('recordings_communication_id_uidx');
   });
 
   it('recordings has retention_until index for lifecycle cron (Phase 1)', () => {
     const config = getTableConfig(recordings);
     const indexNames = config.indexes.map((i) => i.config.name);
     expect(indexNames).toContain('recordings_retention_until_idx');
+  });
+
+  it('recordings has non-negative CHECKs on bytes, duration, and word count', () => {
+    const config = getTableConfig(recordings);
+    const checkNames = config.checks.map((c) => c.name);
+    expect(checkNames).toContain('recordings_recording_bytes_nonneg');
+    expect(checkNames).toContain('recordings_recording_duration_nonneg');
+    expect(checkNames).toContain('recordings_transcript_words_nonneg');
   });
 });
