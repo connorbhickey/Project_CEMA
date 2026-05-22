@@ -68,6 +68,9 @@ importers:
       '@cema/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance
+      '@cema/contacts':
+        specifier: workspace:*
+        version: link:../../packages/contacts
       '@cema/db':
         specifier: workspace:*
         version: link:../../packages/db
