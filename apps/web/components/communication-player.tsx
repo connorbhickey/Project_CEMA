@@ -3,7 +3,6 @@
 import type { NormalizedTranscript } from '@cema/integrations-deepgram';
 import { useRef } from 'react';
 
-
 import { AudioScrubber, type AudioScrubberHandle } from './audio-scrubber';
 import { TranscriptViewer } from './transcript-viewer';
 

@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@cema/ui';
 import { notFound } from 'next/navigation';
 
-
 import { CommunicationPlayer } from '@/components/communication-player';
 import { getCommunication } from '@/lib/actions/get-communication';
 
