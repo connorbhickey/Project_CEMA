@@ -71,6 +71,13 @@
       "when": 1779412808671,
       "tag": "0009_recordings_invariants",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779414059244,
+      "tag": "0010_integration_connections",
+      "breakpoints": true
     }
   ]
 }

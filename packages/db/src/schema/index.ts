@@ -8,3 +8,4 @@ export * from './attorney-review';
 export * from './audit';
 export * from './communications';
 export * from './recordings';
+export * from './integrations';
