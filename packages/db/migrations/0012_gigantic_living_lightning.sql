@@ -1,0 +1,1 @@
+ALTER TABLE "recordings" ADD COLUMN "vendor_request_id" varchar(128);

@@ -14,8 +14,10 @@
   },
   "dependencies": {
     "@cema/auth": "workspace:*",
+    "@cema/blob": "workspace:*",
     "@cema/compliance": "workspace:*",
     "@cema/db": "workspace:*",
+    "@cema/integrations-deepgram": "workspace:*",
     "@cema/integrations-twilio": "workspace:*",
     "@cema/queues": "workspace:*",
     "@cema/ui": "workspace:*",
