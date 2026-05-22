@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   cemaTypeEnum,
+  communicationDirectionEnum,
+  communicationKindEnum,
+  communicationMediumEnum,
+  communicationStatusEnum,
   dealStatusEnum,
   documentKindEnum,
   documentStatusEnum,
   lenderSubtypeEnum,
   partyRoleEnum,
   propertyTypeEnum,
+  telephonyProviderEnum,
 } from './enums';
 
 describe('enums', () => {
@@ -95,6 +100,57 @@ describe('enums', () => {
       'executed',
       'recorded',
       'rejected',
+    ]);
+  });
+
+  it('communication kind covers spec §6.5 channels', () => {
+    expect(communicationKindEnum.enumValues).toEqual([
+      'call',
+      'email',
+      'sms',
+      'slack',
+      'teams',
+      'meeting',
+      'letter',
+      'fax',
+    ]);
+  });
+
+  it('communication direction includes internal for intra-org comms', () => {
+    expect(communicationDirectionEnum.enumValues).toEqual(['inbound', 'outbound', 'internal']);
+  });
+
+  it('communication medium covers all M2-locked channels', () => {
+    expect(communicationMediumEnum.enumValues).toEqual([
+      'phone_landline',
+      'phone_softphone',
+      'gmail',
+      'm365',
+      'slack',
+      'teams',
+      'sms_twilio',
+      'webrtc',
+      'other',
+    ]);
+  });
+
+  it('telephony provider includes the 3 PBX vendors + twilio + manual_upload', () => {
+    expect(telephonyProviderEnum.enumValues).toEqual([
+      'ringcentral',
+      'dialpad',
+      'zoom_phone',
+      'twilio',
+      'manual_upload',
+    ]);
+  });
+
+  it('communication status models the ingest lifecycle', () => {
+    expect(communicationStatusEnum.enumValues).toEqual([
+      'pending',
+      'ingested',
+      'transcribing',
+      'ready',
+      'failed',
     ]);
   });
 });
