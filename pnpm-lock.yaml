@@ -246,6 +246,31 @@ importers:
 
   packages/config: {}
 
+  packages/contacts:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(postgres@3.4.9)
+      libphonenumber-js:
+        specifier: ^1.11.0
+        version: 1.13.3
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cema/db':
+        specifier: workspace:*
+        version: link:../db
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
   packages/db:
     dependencies:
       '@neondatabase/serverless':
@@ -3198,6 +3223,9 @@ packages:
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
+
+  libphonenumber-js@1.13.3:
+    resolution: {integrity: sha512-xMkdAMqcyG7iN2WZZmGIfWbYxW4orRkny+0/AXIbwL0xll2zkDX0Vzo/BXFa6+7mh2UvJl9MbcTtHk0YXkFtBA==}
 
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
@@ -7004,6 +7032,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+
+  libphonenumber-js@1.13.3: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
