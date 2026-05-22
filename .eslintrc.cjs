@@ -21,7 +21,10 @@ module.exports = {
   },
   plugins: ['@typescript-eslint', 'import'],
   rules: {
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+    ],
     '@typescript-eslint/consistent-type-imports': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'import/order': [
