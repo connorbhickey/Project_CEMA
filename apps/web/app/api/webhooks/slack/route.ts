@@ -61,6 +61,10 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('OK', { status: 200 });
   }
 
+  if (evt.type === 'message' && 'subtype' in evt && evt.subtype) {
+    return new Response('OK', { status: 200 });
+  }
+
   const orgId = conn.organizationId;
   const client = getSlackClient(conn.slackBotToken);
   const displayName = evt.user ? await fetchSlackUserDisplayName(client, evt.user) : null;
@@ -108,7 +112,11 @@ export async function POST(req: Request): Promise<Response> {
       messageType,
     })
     .onConflictDoUpdate({
-      target: slackMessages.communicationId,
+      target: [
+        slackMessages.slackTeamId,
+        slackMessages.slackChannelId,
+        slackMessages.slackMessageTs,
+      ],
       set: { text: evt.text ?? null, updatedAt: new Date() },
     });
 
