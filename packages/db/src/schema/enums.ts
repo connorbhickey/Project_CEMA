@@ -96,3 +96,61 @@ export const submissionMethodEnum = pgEnum('submission_method', [
   'fax_only',
   'usps',
 ]);
+
+// Communication enums (spec §6.5). Values locked in M2 even though only
+// `call` / `phone_*` are populated this month — M3 (email + calendar) and
+// later phases extend usage without touching enum definitions.
+
+export const communicationKindEnum = pgEnum('communication_kind', [
+  'call',
+  'email',
+  'sms',
+  'slack',
+  'teams',
+  'meeting',
+  'letter',
+  'fax',
+]);
+
+// `internal` covers processor↔processor comms (Slack/Teams DMs inside the
+// org). Spec §6.5 lists only inbound/outbound; the M2 plan adds `internal`
+// so future intra-org capture doesn't require a schema migration.
+export const communicationDirectionEnum = pgEnum('communication_direction', [
+  'inbound',
+  'outbound',
+  'internal',
+]);
+
+export const communicationMediumEnum = pgEnum('communication_medium', [
+  'phone_landline',
+  'phone_softphone',
+  'gmail',
+  'm365',
+  'slack',
+  'teams',
+  'sms_twilio',
+  'webrtc',
+  'other',
+]);
+
+// `manual_upload` is the escape hatch for processor-uploaded recordings
+// (e.g. work-cell call captured by a vendor app that lacks an API).
+export const telephonyProviderEnum = pgEnum('telephony_provider', [
+  'ringcentral',
+  'dialpad',
+  'zoom_phone',
+  'twilio',
+  'manual_upload',
+]);
+
+// Ingest lifecycle: pending (webhook accepted) → ingested (recording in
+// Blob + communications row written) → transcribing (Deepgram submitted)
+// → ready (transcript JSON persisted). `failed` is a terminal state set
+// by the WDK workflow on unrecoverable errors.
+export const communicationStatusEnum = pgEnum('communication_status', [
+  'pending',
+  'ingested',
+  'transcribing',
+  'ready',
+  'failed',
+]);
