@@ -154,3 +154,13 @@ export const communicationStatusEnum = pgEnum('communication_status', [
   'ready',
   'failed',
 ]);
+
+export const envelopeStatusEnum = pgEnum('envelope_status', [
+  'created',
+  'sent',
+  'delivered',
+  'signed',
+  'completed',
+  'declined',
+  'voided',
+]);

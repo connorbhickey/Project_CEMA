@@ -16,3 +16,5 @@ export * from './calendar-events';
 export * from './slack-messages';
 export * from './drive-connections';
 export * from './drive-files';
+export * from './docusign-connections';
+export * from './docusign-envelopes';
