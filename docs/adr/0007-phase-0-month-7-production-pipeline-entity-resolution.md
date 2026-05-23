@@ -55,7 +55,7 @@ Added inline to `embed-communication/route.ts`. Logic:
 
 `docs/runbooks/m7-env-var-provisioning.md` — step-by-step guide for provisioning Typesense Cloud + Mem0 API keys in Vercel; includes smoke test procedure, graceful degradation verification, and rollback instructions.
 
-### Unit tests (9 new assertions)
+### Unit tests (10 new assertions)
 
 | File                                | New assertions                                       |
 | ----------------------------------- | ---------------------------------------------------- |

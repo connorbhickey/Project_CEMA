@@ -76,7 +76,7 @@
   - SSH commit signing on Windows is broken — git invokes `ssh-keygen -Y sign` correctly but doesn't attach the resulting signature to the commit (Windows path-handling quirk in git-for-windows 2.52). Local commits are unsigned; GitHub's squash-merge signs the merge commit on main, satisfying branch protection. Debug later if direct main commits ever become necessary.
   - `enforce_admins` on main branch protection: not yet enabled. The `hicklax13` gh CLI token lacks `admin:org` scope, so it must be toggled via the GitHub web UI at `https://github.com/connorbhickey/Project_CEMA/settings/branches`.
   - **No WDK workflow (M2 gap):** Twilio recording-status callback publishes to queue but nothing consumes it. Recording blob ingest and Deepgram submission require manual intervention until the M3 WDK workflow ships (Tasks 20–21).
-- **Code:** 17 workspace packages + 1 Next.js 16 app. Tests: 202 passing across 48 test files as of M5 close (see ADR 0005 §Test count) + 1 Playwright e2e (label-gated). 29 migrations on Neon dev branch (0000–0028). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
+- **Code:** 17 workspace packages + 1 Next.js 16 app. Tests: 232 passing across 55 test files (see ADR 0007 §Test count) + 1 Playwright e2e (label-gated). 31 migrations on Neon dev branch (0000–0030). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
 
 ---
 
