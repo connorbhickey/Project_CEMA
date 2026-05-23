@@ -18,9 +18,18 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 2 fully closed out (2026-05-22, PRs #38–#53); Phase 0 Month 3 (email + calendar) is next.** M2 shipped the telephony foundation: 5 new workspace packages (`@cema/blob`, `@cema/queues`, `@cema/integrations-nango`, `@cema/integrations-twilio`, `@cema/integrations-deepgram`), 7 DB migrations (0006–0012), Twilio click-to-call server action + TwiML + TCPA guard, Deepgram batch transcription callback, communications + recordings UI (timeline + audio player + click-to-seek transcript), and RLS isolation proofs for M2 tables. 12 tasks skipped (Tasks 10-14, 20-22, 26, 28) because they require external vendor credentials or WDK. See `docs/adr/0002-phase-0-month-2-telephony.md` and `docs/runbooks/telephony-incident-triage.md`.
-- **Next step:** Execute Phase 0 Month 3 plan (email + calendar integration — Nylas, spec §8.3 + §11.2). Plan not yet written; write it before beginning implementation.
-- **Phase 0 Month 2 carry-overs to M3 (12 tasks):**
+- **Phase:** **Phase 0 Month 3 fully closed out (2026-05-22, 17 tasks on `feat/m3-email-calendar`); Phase 0 Month 4 (internal messaging + files: Slack, Teams, Drive, OneDrive, Box, DocuSign, contact graph) is next.** M3 shipped the email + calendar foundation: `@cema/integrations-nylas` workspace package (Nylas SDK wrapper + HMAC-SHA256 webhook verification + thread/event fetchers), 4 DB migrations (0013–0016), Nylas webhook route with thread/event idempotency on `vendor_event_id`, 4 RSC server actions (list/get emails + calendar events), 3 UI components (EmailThreadCard, EmailThreadViewer with iframe-sandboxed HTML, CalendarEventCard), unified Communications timeline merging calls/emails/meetings, and 6 cross-org RLS isolation assertions on the M3 tables. 8 tasks skipped (Tasks A–H) because they require Nylas/Google/Microsoft OAuth app registration, Reducto/Cal.com/NeverBounce accounts, WDK installation, or production API keys. See `docs/adr/0003-phase-0-month-3-email-calendar.md`.
+- **Next step:** Execute Phase 0 Month 4 plan (internal messaging + files — Slack, Teams, Drive, OneDrive, Box, DocuSign, contact graph). Plan not yet written; write it before beginning implementation. M2 ADR is at `docs/adr/0002-phase-0-month-2-telephony.md`.
+- **Phase 0 Month 3 carry-overs to M4+ (8 tasks):**
+  1. **Tasks A–B (Nylas app + Google/Microsoft OAuth + Nango config):** Requires OAuth app registration in 3 vendor portals. Prerequisite for live email/calendar data to flow into the M3 webhook handler.
+  2. **Task C (`/settings/integrations/email-calendar` UI):** Depends on Nango OAuth flow being live (same gap shape as M2 Task 22).
+  3. **Task D (Reducto IDP for email attachment classification):** Phase 1 work — attachments stored as Nylas ID lists in M3, auto-classified into `documents` rows when Reducto comes online.
+  4. **Task E (Cal.com scheduling links):** Out of scope until the scheduling agent ships.
+  5. **Task F (NeverBounce outbound email verification):** Phase 1+ when Resend-based servicer outreach lands.
+  6. **Task G (WDK workflow for async email enrichment):** Phase 1 — AI summary / sentiment / action items consumer for the `comms.email.ingest` queue topic that M3 publishes.
+  7. **Task H (Vercel env var sync + production smoke test):** Requires real `NYLAS_API_KEY` + `NYLAS_WEBHOOK_SECRET`.
+  8. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable on email/meeting rows. Apache AGE entity resolution is M5+.
+- **Phase 0 Month 2 carry-overs to M3 (12 tasks — all carried to M4):**
   1. **Tasks 10–14 (Nango + RingCentral / Dialpad / Zoom Phone):** Requires OAuth app creation in vendor portals. Prerequisite for live inbound PBX recording ingest.
   2. **Tasks 20–22 (WDK workflow + queue consumer + telephony settings UI):** `@vercel/workflow` not installed; requires Tasks 10-14 for OAuth. Prerequisite for durable retryable ingest pipeline.
   3. **Task 26 (E2E webhook→DB integration test):** Depends on Tasks 11-12 + 20-21.
@@ -46,7 +55,7 @@
   - SSH commit signing on Windows is broken — git invokes `ssh-keygen -Y sign` correctly but doesn't attach the resulting signature to the commit (Windows path-handling quirk in git-for-windows 2.52). Local commits are unsigned; GitHub's squash-merge signs the merge commit on main, satisfying branch protection. Debug later if direct main commits ever become necessary.
   - `enforce_admins` on main branch protection: not yet enabled. The `hicklax13` gh CLI token lacks `admin:org` scope, so it must be toggled via the GitHub web UI at `https://github.com/connorbhickey/Project_CEMA/settings/branches`.
   - **No WDK workflow (M2 gap):** Twilio recording-status callback publishes to queue but nothing consumes it. Recording blob ingest and Deepgram submission require manual intervention until the M3 WDK workflow ships (Tasks 20–21).
-- **Code:** 10 workspace packages + 1 Next.js 16 app. Tests: 65+ passing across web app as of M2 close (see ADR 0002 §Test count) + 1 Playwright e2e (label-gated). 13 migrations on Neon dev branch (0000–0012). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
+- **Code:** 11 workspace packages + 1 Next.js 16 app. Tests: 91 passing across web app as of M3 close (see ADR 0003 §Test count) + 1 Playwright e2e (label-gated). 17 migrations on Neon dev branch (0000–0016). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
 
 ---
 
@@ -899,9 +908,10 @@ When CI fails on a PR, this is the order of triage:
 
 ## Changelog
 
-| Date       | Change                                                                                     | By                         |
-| ---------- | ------------------------------------------------------------------------------------------ | -------------------------- |
-| 2026-05-12 | Initial CLAUDE.md created                                                                  | Claude Opus 4.7 + Connor   |
-| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree)                  | Claude Opus 4.7            |
-| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed                   | Claude Opus 4.7            |
-| 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar | Claude Sonnet 4.6 + Connor |
+| Date       | Change                                                                                                                | By                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 2026-05-12 | Initial CLAUDE.md created                                                                                             | Claude Opus 4.7 + Connor   |
+| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree)                                             | Claude Opus 4.7            |
+| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed                                              | Claude Opus 4.7            |
+| 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar                            | Claude Sonnet 4.6 + Connor |
+| 2026-05-22 | §2 updated: M3 closed (17 tasks on feat/m3-email-calendar), M3 carry-overs listed, next step is M4 internal messaging | Claude Opus 4.7            |

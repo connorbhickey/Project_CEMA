@@ -1,8 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@cema/ui';
 import { notFound } from 'next/navigation';
 
+import { CalendarEventCard } from '@/components/calendar-event-card';
 import { CommunicationPlayer } from '@/components/communication-player';
+import { EmailThreadViewer } from '@/components/email-thread-viewer';
+import { getCalendarEvent } from '@/lib/actions/get-calendar-event';
 import { getCommunication } from '@/lib/actions/get-communication';
+import { getEmail } from '@/lib/actions/get-email';
 
 function formatE164(e164: string | null | undefined): string {
   if (!e164) return '—';
@@ -44,6 +48,43 @@ export default async function Page({ params }: { params: Promise<{ id: string; c
 
   const { communication: comm, recording, signedAudioUrl, transcript } = data;
 
+  if (comm.kind === 'email') {
+    const emailData = await getEmail(dealId, communicationId);
+    if (!emailData) notFound();
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Email Thread</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{formatDate(comm.startedAt)}</p>
+        </div>
+        <EmailThreadViewer
+          communication={emailData.communication}
+          emailThread={emailData.emailThread}
+        />
+      </div>
+    );
+  }
+
+  if (comm.kind === 'meeting') {
+    const eventData = await getCalendarEvent(dealId, communicationId);
+    if (!eventData) notFound();
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">
+            {eventData.calendarEvent?.title ?? 'Calendar Event'}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">{formatDate(comm.startedAt)}</p>
+        </div>
+        <CalendarEventCard
+          communication={eventData.communication}
+          calendarEvent={eventData.calendarEvent}
+          dealId={dealId}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -53,7 +94,6 @@ export default async function Page({ params }: { params: Promise<{ id: string; c
         <p className="text-muted-foreground mt-1 text-sm">{formatDate(comm.startedAt)}</p>
       </div>
 
-      {/* Audio player + transcript */}
       {signedAudioUrl ? (
         <CommunicationPlayer
           signedAudioUrl={signedAudioUrl}
@@ -70,7 +110,6 @@ export default async function Page({ params }: { params: Promise<{ id: string; c
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* Metadata panel */}
         <Card>
           <CardHeader>
             <CardTitle>Call details</CardTitle>
@@ -93,7 +132,6 @@ export default async function Page({ params }: { params: Promise<{ id: string; c
           </CardContent>
         </Card>
 
-        {/* AI summary placeholder */}
         <Card>
           <CardHeader>
             <CardTitle>AI summary</CardTitle>
