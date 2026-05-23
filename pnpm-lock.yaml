@@ -101,6 +101,9 @@ importers:
       '@cema/kg':
         specifier: workspace:*
         version: link:../../packages/kg
+      '@cema/memory':
+        specifier: workspace:*
+        version: link:../../packages/memory
       '@cema/queues':
         specifier: workspace:*
         version: link:../../packages/queues

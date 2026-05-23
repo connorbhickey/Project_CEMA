@@ -1,5 +1,6 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { getDb, organizations } from '@cema/db';
+import { addMemory, isMemoryConfigured, searchMemory } from '@cema/memory';
 import { classifyQueryIntent, type QueryClassification } from '@cema/search';
 import { isTypesenseConfigured, searchTypesense, type TypesenseHit } from '@cema/typesense';
 import { eq } from 'drizzle-orm';
@@ -10,6 +11,7 @@ export interface AskAnythingResult {
   classification: QueryClassification;
   hits: SearchHit[];
   hint: string | null;
+  memoryContext: string[];
 }
 
 function adaptTypesenseHit(hit: TypesenseHit): SearchHit {
@@ -22,8 +24,22 @@ function adaptTypesenseHit(hit: TypesenseHit): SearchHit {
   };
 }
 
-export async function askAnything(query: string, k = 10): Promise<AskAnythingResult> {
+export async function askAnything(
+  query: string,
+  k = 10,
+  dealId?: string,
+  sessionId?: string,
+): Promise<AskAnythingResult> {
   const classification = await classifyQueryIntent(query);
+
+  const memoryContext: string[] = [];
+
+  if (isMemoryConfigured() && dealId) {
+    const memories = await searchMemory(dealId, query);
+    for (const m of memories) {
+      memoryContext.push(m.memory);
+    }
+  }
 
   if (classification.intent === 'search') {
     const pgHits = await searchSimilar({ query, k });
@@ -45,7 +61,11 @@ export async function askAnything(query: string, k = 10): Promise<AskAnythingRes
       }
     }
 
-    return { classification, hits: mergedHits, hint: null };
+    if (isMemoryConfigured() && dealId && sessionId) {
+      void addMemory(dealId, query, sessionId);
+    }
+
+    return { classification, hits: mergedHits, hint: null, memoryContext };
   }
 
   if (classification.intent === 'action') {
@@ -53,6 +73,7 @@ export async function askAnything(query: string, k = 10): Promise<AskAnythingRes
       classification,
       hits: [],
       hint: 'Action queries are not yet executed automatically. Phase 1 will surface concrete action suggestions.',
+      memoryContext,
     };
   }
 
@@ -60,5 +81,6 @@ export async function askAnything(query: string, k = 10): Promise<AskAnythingRes
     classification,
     hits: [],
     hint: 'Analytics queries are not yet executed. Phase 1 will translate this query into SQL.',
+    memoryContext,
   };
 }

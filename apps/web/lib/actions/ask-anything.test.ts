@@ -6,6 +6,11 @@ vi.mock('@cema/typesense', () => ({
   isTypesenseConfigured: vi.fn(),
   searchTypesense: vi.fn(),
 }));
+vi.mock('@cema/memory', () => ({
+  isMemoryConfigured: vi.fn(),
+  searchMemory: vi.fn(),
+  addMemory: vi.fn(),
+}));
 vi.mock('@cema/auth', () => ({ getCurrentOrganizationId: vi.fn() }));
 vi.mock('@cema/db', () => ({
   getDb: vi.fn(() => ({
@@ -15,6 +20,7 @@ vi.mock('@cema/db', () => ({
 }));
 vi.mock('drizzle-orm', () => ({ eq: vi.fn() }));
 
+import { addMemory, isMemoryConfigured, searchMemory } from '@cema/memory';
 import { classifyQueryIntent } from '@cema/search';
 import { isTypesenseConfigured, searchTypesense } from '@cema/typesense';
 
@@ -50,17 +56,20 @@ describe('askAnything', () => {
     });
     vi.mocked(searchSimilar).mockResolvedValueOnce([]);
     vi.mocked(isTypesenseConfigured).mockReturnValue(false);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
 
     const result = await askAnything('');
     expect(result.classification.intent).toBe('search');
     expect(result.hits).toEqual([]);
     expect(result.hint).toBeNull();
+    expect(result.memoryContext).toEqual([]);
   });
 
   it('dispatches to searchSimilar for search intent', async () => {
     vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
     vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
     vi.mocked(isTypesenseConfigured).mockReturnValue(false);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
 
     const result = await askAnything('Wells Fargo payoff letter format');
     expect(searchSimilar).toHaveBeenCalledWith({
@@ -71,6 +80,43 @@ describe('askAnything', () => {
     expect(result.hint).toBeNull();
   });
 
+  it('prepends memory context when memory is configured and dealId provided', async () => {
+    vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
+    vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
+    vi.mocked(isTypesenseConfigured).mockReturnValue(false);
+    vi.mocked(isMemoryConfigured).mockReturnValue(true);
+    vi.mocked(searchMemory).mockResolvedValueOnce([
+      { id: 'mem-1', memory: 'payoff was confirmed at $500k', score: 0.9 },
+    ]);
+
+    const result = await askAnything('payoff', 10, 'deal-1', 'session-1');
+    expect(searchMemory).toHaveBeenCalledWith('deal-1', 'payoff');
+    expect(result.memoryContext).toEqual(['payoff was confirmed at $500k']);
+  });
+
+  it('fires-and-forgets addMemory after search with dealId and sessionId', async () => {
+    vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
+    vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
+    vi.mocked(isTypesenseConfigured).mockReturnValue(false);
+    vi.mocked(isMemoryConfigured).mockReturnValue(true);
+    vi.mocked(searchMemory).mockResolvedValueOnce([]);
+    vi.mocked(addMemory).mockResolvedValue(undefined);
+
+    await askAnything('payoff summary', 10, 'deal-1', 'session-abc');
+    expect(addMemory).toHaveBeenCalledWith('deal-1', 'payoff summary', 'session-abc');
+  });
+
+  it('does not call addMemory when sessionId is absent', async () => {
+    vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
+    vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
+    vi.mocked(isTypesenseConfigured).mockReturnValue(false);
+    vi.mocked(isMemoryConfigured).mockReturnValue(true);
+    vi.mocked(searchMemory).mockResolvedValueOnce([]);
+
+    await askAnything('payoff summary', 10, 'deal-1');
+    expect(addMemory).not.toHaveBeenCalled();
+  });
+
   it('merges Typesense-only hits when Typesense is configured', async () => {
     const { getDb } = await import('@cema/db');
     const { getCurrentOrganizationId } = await import('@cema/auth');
@@ -78,6 +124,7 @@ describe('askAnything', () => {
     vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
     vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
     vi.mocked(isTypesenseConfigured).mockReturnValue(true);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
     vi.mocked(getCurrentOrganizationId).mockResolvedValueOnce('clerk-org-1');
     vi.mocked(getDb).mockReturnValue({
       query: { organizations: { findFirst: vi.fn().mockResolvedValueOnce({ id: 'org-uuid-1' }) } },
@@ -101,6 +148,7 @@ describe('askAnything', () => {
     vi.mocked(classifyQueryIntent).mockResolvedValueOnce(SEARCH);
     vi.mocked(searchSimilar).mockResolvedValueOnce(PG_HITS);
     vi.mocked(isTypesenseConfigured).mockReturnValue(true);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
     vi.mocked(getCurrentOrganizationId).mockResolvedValueOnce('clerk-org-1');
     vi.mocked(getDb).mockReturnValue({
       query: { organizations: { findFirst: vi.fn().mockResolvedValueOnce({ id: 'org-uuid-1' }) } },
@@ -114,6 +162,7 @@ describe('askAnything', () => {
 
   it('returns hint and no hits for action intent', async () => {
     vi.mocked(classifyQueryIntent).mockResolvedValueOnce(ACTION);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
 
     const result = await askAnything('Call Bob at Wells Fargo');
     expect(result.hits).toEqual([]);
@@ -123,6 +172,7 @@ describe('askAnything', () => {
 
   it('returns hint and no hits for analytics intent', async () => {
     vi.mocked(classifyQueryIntent).mockResolvedValueOnce(ANALYTICS);
+    vi.mocked(isMemoryConfigured).mockReturnValue(false);
 
     const result = await askAnything('How many CEMAs closed last month?');
     expect(result.hits).toEqual([]);
