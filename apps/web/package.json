@@ -27,6 +27,7 @@
     "@cema/integrations-slack": "workspace:*",
     "@cema/integrations-twilio": "workspace:*",
     "@cema/queues": "workspace:*",
+    "@cema/search": "workspace:*",
     "@cema/ui": "workspace:*",
     "@clerk/nextjs": "^7.0.0",
     "@hookform/resolvers": "^3.9.0",

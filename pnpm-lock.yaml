@@ -101,6 +101,9 @@ importers:
       '@cema/queues':
         specifier: workspace:*
         version: link:../../packages/queues
+      '@cema/search':
+        specifier: workspace:*
+        version: link:../../packages/search
       '@cema/ui':
         specifier: workspace:*
         version: link:../../packages/ui
