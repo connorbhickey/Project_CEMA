@@ -18,15 +18,15 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 6 fully closed out (2026-05-23, on `feat/m6-knowledge-graph-search-memory`); Phase 0 Month 7 is next.** M6 shipped five subsystems: `@cema/kg` (pure-Postgres `kg_edges` adjacency table replacing Apache AGE); `@cema/typesense` (Typesense client + `isTypesenseConfigured()` env-gate; wired into `askAnything` with pgvector-first merge + dedup); embed queue consumers (`/api/queues/embed-communication` + `/api/queues/embed-document`); pgvector HNSW indexes (m=16, ef=64 on `communications.embedding` and `documents.embedding`); `@cema/memory` (Mem0 wrapper with `isMemoryConfigured()` env-gate; `addMemory` fire-and-forget + `searchMemory` context recall wired into `askAnything`). 2 DB migrations (0029–0030). 2 server actions (linkContactToParty, getDealGraph). `/deals/[id]/graph` page. 223 tests across 54 files. See `docs/adr/0006-phase-0-month-6-knowledge-graph-search-memory.md`.
-- **Next step:** Plan and execute Phase 0 Month 7. Top priority: provision Typesense Cloud + Mem0 API keys in Vercel env vars to activate M6 live integrations.
-- **Phase 0 Month 6 carry-overs to M7+ (5 items — see ADR 0006 for full list):**
-  1. **Typesense live cluster provisioning:** `TYPESENSE_API_KEY`, `TYPESENSE_HOST` env vars needed in Vercel. `isTypesenseConfigured()` gates all calls until then.
+- **Phase:** **Phase 0 Month 7 fully closed out (2026-05-23, on `feat/m7-production-pipeline-entity-resolution`); Phase 0 Month 8 is next.** M7 shipped four subsystems: webhook publish triggers (`comms.embed` from Nylas email + calendar + Slack inserts); Typesense sync in embed consumers (`indexCommunication` in embed-communication, `indexDocument` in embed-document); communication→party entity resolution (`contact_identities` + `kg_edges` → `fromPartyId`/`toPartyIds`, fire-and-forget in embed-communication); daily backfill cron (`/api/cron/backfill-embeddings`, `BATCH_SIZE=100`, `0 2 * * *`). 1 new migration (none — M7 is code-only). 232 tests across 55 test files. See `docs/adr/0007-phase-0-month-7-production-pipeline-entity-resolution.md`.
+- **Next step:** Plan and execute Phase 0 Month 8. Top priority: provision Typesense Cloud + Mem0 API keys in Vercel (runbook: `docs/runbooks/m7-env-var-provisioning.md`) to activate M6/M7 live integrations.
+- **Phase 0 Month 7 carry-overs to M8+ (5 items — see ADR 0007 for full list):**
+  1. **Typesense Cloud provisioning:** `TYPESENSE_API_KEY`, `TYPESENSE_HOST` env vars needed in Vercel. `isTypesenseConfigured()` gates all calls until then.
   2. **Mem0 live provisioning:** `MEM0_API_KEY` env var needed in Vercel. `isMemoryConfigured()` gates all calls until then.
-  3. **Production embedding pipeline:** Embed queue consumers deployed but embeddings not yet flowing (need comms/docs insert to publish to `comms.embed` / `docs.embed` topics or a backfill job).
-  4. **Vercel env var sync + production smoke test:** After Typesense + Mem0 API keys provisioned.
-  5. **All M2–M5 carry-overs still pending** (see below).
-- **Phase 0 Month 4 carry-overs to M7+ (14 items — see ADR 0004 for full list):**
+  3. **Telephony entity resolution:** `from_party_id`/`to_party_ids` on telephony comms (`kind='phone'` in `contact_identities`). Carry-over to M8.
+  4. **Vercel env var sync + production smoke test:** After Typesense + Mem0 API keys provisioned per runbook.
+  5. **All M2–M6 carry-overs still pending** (see below).
+- **Phase 0 Month 4 carry-overs to M8+ (14 items — see ADR 0004 for full list):**
   1. **Teams messaging:** Requires Azure app registration. Mirrors Slack tasks.
   2. **OneDrive / Box / Dropbox / Egnyte / NetDocs / iManage:** All require vendor accounts. File integration breadth is Phase 1.
   3. **Adobe Sign / PandaDoc / Snapdocs / Pavaso / Stavvy:** Secondary eSign + RON vendors. Phase 2.
@@ -39,9 +39,9 @@
   10. **Drive push notification replay protection:** Upstash SETNX (Phase 1 security hardening).
   11. **`contact_identities` org integrity constraint:** Phase 1.
   12. **Drive Blob retention policy:** Phase 1.
-  13. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable. `kg_edges` entity resolution is M7+.
+  13. **Communication ↔ Party resolution:** Email/Slack comms now resolved via M7. Telephony (`kind='phone'`) still pending — M8+.
   14. **All M2–M3 carry-overs still pending** (Nango + PBX vendors; WDK telephony workflow; Upstash telephony idempotency; Nylas OAuth app; Cal.com; NeverBounce; recording retention cron).
-- **Phase 0 Month 3 carry-overs (8 tasks — all carried to M7):**
+- **Phase 0 Month 3 carry-overs (8 tasks — all carried to M8):**
   1. **Tasks A–B (Nylas app + Google/Microsoft OAuth + Nango config):** Requires OAuth app registration in 3 vendor portals.
   2. **Task C (`/settings/integrations/email-calendar` UI):** Depends on Nango OAuth flow being live.
   3. **Task D (Reducto IDP for email attachment classification):** Phase 1.
@@ -49,15 +49,15 @@
   5. **Task F (NeverBounce outbound email verification):** Phase 1+.
   6. **Task G (WDK workflow for async email enrichment):** Phase 1.
   7. **Task H (Vercel env var sync + production smoke test):** Requires real `NYLAS_API_KEY` + `NYLAS_WEBHOOK_SECRET`.
-  8. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable on email/meeting rows. `kg_edges` entity resolution is M7+.
-- **Phase 0 Month 2 carry-overs (12 tasks — all carried to M7):**
+  8. **Communication ↔ Party resolution:** Email/Slack resolved in M7. Telephony still nullable — M8+.
+- **Phase 0 Month 2 carry-overs (12 tasks — all carried to M8):**
   1. **Tasks 10–14 (Nango + RingCentral / Dialpad / Zoom Phone):** Requires OAuth app creation in vendor portals.
   2. **Tasks 20–22 (WDK workflow + queue consumer + telephony settings UI):** `@vercel/workflow` not installed.
   3. **Task 26 (E2E webhook→DB integration test):** Depends on Tasks 11-12 + 20-21.
   4. **Task 28 (Vercel env var sync + production smoke test):** Requires real API keys.
   5. **Upstash idempotency:** Add `SETNX telephony:idempo:<vendor_event_id>` in webhook handlers (spec §8.5).
-  6. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` nullable. `kg_edges` entity resolution M7+.
-  7. **Recording retention cron:** Phase 1 or M7.
+  6. **Communication ↔ Party resolution:** Telephony `from_party_id`/`to_party_ids` nullable. `kind='phone'` entity resolution M8+.
+  7. **Recording retention cron:** Phase 1 or M8.
 - **Phase 0 Month 1 carry-over status (all resolved):**
   1. **RLS BYPASSRLS gap — RESOLVED (2026-05-13, PR #30).** Driver swapped to `drizzle-orm/neon-serverless`; `withRls` opens a real transaction with `SET LOCAL ROLE cema_app_user` + `SET LOCAL app.current_organization_id`. See ADR-0001 §"Phase 0 Month 2 carry-over: RLS production enforcement".
   2. **Husky v10 deprecation — RESOLVED (2026-05-13, PR #31).** v8 shim line stripped from `.husky/pre-commit` and `.husky/commit-msg`.
@@ -939,3 +939,4 @@ When CI fails on a PR, this is the order of triage:
 | 2026-05-22 | §2 updated: M3 closed (17 tasks on feat/m3-email-calendar), M3 carry-overs listed, next step is M4 internal messaging | Claude Opus 4.7            |
 | 2026-05-23 | §2 updated: M5 closed (feat/m5-search-memory), M5 carry-overs listed, next step is M6                                 | Claude Sonnet 4.6 + Connor |
 | 2026-05-23 | §2 updated: M6 closed (feat/m6-knowledge-graph-search-memory), M6 carry-overs listed, next step is M7                 | Claude Sonnet 4.6 + Connor |
+| 2026-05-23 | §2 updated: M7 closed (feat/m7-production-pipeline-entity-resolution), M7 carry-overs listed, next step is M8         | Claude Sonnet 4.6 + Connor |
