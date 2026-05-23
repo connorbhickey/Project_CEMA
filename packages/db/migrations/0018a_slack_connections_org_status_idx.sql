@@ -1,0 +1,1 @@
+CREATE INDEX "org_slack_connections_org_status_idx" ON "org_slack_connections" USING btree ("organization_id","connection_status");

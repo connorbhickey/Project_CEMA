@@ -120,6 +120,55 @@
       "when": 1779468900000,
       "tag": "0016_rls_email_calendar",
       "breakpoints": false
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1779488016579,
+      "tag": "0017_slack_connections",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1779488343225,
+      "tag": "0018a_slack_connections_org_status_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1779488549784,
+      "tag": "0019_slack_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1779490183409,
+      "tag": "0020_drive_connections_and_files",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1779491548766,
+      "tag": "0021_docusign_connections_and_envelopes",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779493183332,
+      "tag": "0022_contacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1779493250000,
+      "tag": "0023_rls_m4",
+      "breakpoints": false
     }
   ]
 }

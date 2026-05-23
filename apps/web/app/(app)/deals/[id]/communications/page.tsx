@@ -5,9 +5,11 @@ import { notFound } from 'next/navigation';
 import { CalendarEventCard } from '@/components/calendar-event-card';
 import { CommunicationCard } from '@/components/communication-card';
 import { EmailThreadCard } from '@/components/email-thread-card';
+import { SlackMessageCard } from '@/components/slack-message-card';
 import { listCalendarEvents } from '@/lib/actions/list-calendar-events';
 import { listCommunications } from '@/lib/actions/list-communications';
 import { listEmails } from '@/lib/actions/list-emails';
+import { listSlackMessages } from '@/lib/actions/list-slack-messages';
 
 type Communication = typeof communications.$inferSelect;
 
@@ -28,8 +30,14 @@ interface MeetingItem {
   communication: Communication;
   calendarEvent: Awaited<ReturnType<typeof listCalendarEvents>>[number]['calendarEvent'];
 }
+interface SlackItem {
+  kind: 'slack';
+  sortKey: number;
+  communication: Communication;
+  slackMessage: Awaited<ReturnType<typeof listSlackMessages>>[number]['slackMessage'];
+}
 
-type TimelineItem = CallItem | EmailItem | MeetingItem;
+type TimelineItem = CallItem | EmailItem | MeetingItem | SlackItem;
 
 function sortKey(date: Date | null): number {
   return date?.getTime() ?? 0;
@@ -38,10 +46,11 @@ function sortKey(date: Date | null): number {
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id: dealId } = await params;
 
-  const [calls, emails, meetings] = await Promise.all([
+  const [calls, emails, meetings, slacks] = await Promise.all([
     listCommunications(dealId),
     listEmails(dealId),
     listCalendarEvents(dealId),
+    listSlackMessages(dealId),
   ]);
 
   if (calls === null) notFound();
@@ -64,6 +73,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       communication: row.communication,
       calendarEvent: row.calendarEvent,
     })),
+    ...slacks.map<SlackItem>((row) => ({
+      kind: 'slack',
+      sortKey: sortKey(row.communication.startedAt),
+      communication: row.communication,
+      slackMessage: row.slackMessage,
+    })),
   ].sort((a, b) => b.sortKey - a.sortKey);
 
   return (
@@ -74,7 +89,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground text-sm font-medium">No communications yet</p>
           <p className="text-muted-foreground mt-1 text-xs">
-            Calls, emails, and meetings linked to this deal will appear here.
+            Calls, emails, meetings, and Slack messages linked to this deal will appear here.
           </p>
         </div>
       ) : (
@@ -95,6 +110,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <EmailThreadCard
                     communication={item.communication}
                     emailThread={item.emailThread}
+                    dealId={dealId}
+                  />
+                </li>
+              );
+            }
+            if (item.kind === 'slack') {
+              return (
+                <li key={item.communication.id}>
+                  <SlackMessageCard
+                    communication={item.communication}
+                    slackMessage={item.slackMessage}
                     dealId={dealId}
                   />
                 </li>
