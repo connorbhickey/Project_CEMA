@@ -20,6 +20,7 @@ export async function linkContactToParty(
 ): Promise<LinkContactToPartyResult> {
   const clerkOrgId = await getCurrentOrganizationId();
   const clerkUser = await getCurrentUser();
+  if (!clerkUser) throw new Error('User not authenticated');
 
   const db = getDb();
   const [org, user] = await Promise.all([

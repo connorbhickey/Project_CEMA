@@ -19,23 +19,17 @@ import { embedText } from '@cema/embeddings';
 
 import { POST } from './route';
 
-function makeDb(overrides: Partial<ReturnType<typeof buildDb>> = {}) {
-  return buildDb(overrides);
-}
-
 function buildDb(
   overrides: {
     selectResult?: unknown[];
     updateResult?: unknown;
   } = {},
 ) {
-  const update = vi
-    .fn()
-    .mockReturnValue({
-      set: vi
-        .fn()
-        .mockReturnValue({ where: vi.fn().mockResolvedValue(overrides.updateResult ?? []) }),
-    });
+  const update = vi.fn().mockReturnValue({
+    set: vi
+      .fn()
+      .mockReturnValue({ where: vi.fn().mockResolvedValue(overrides.updateResult ?? []) }),
+  });
   const select = vi.fn().mockReturnValue({
     from: vi.fn().mockReturnValue({
       where: vi.fn().mockReturnValue({
@@ -64,14 +58,14 @@ function makeRequest(body: unknown) {
 
 describe('POST /api/queues/embed-communication', () => {
   it('returns 404 if communication not found', async () => {
-    vi.mocked(getDb).mockReturnValue(makeDb({ selectResult: [] }) as never);
+    vi.mocked(getDb).mockReturnValue(buildDb({ selectResult: [] }) as never);
 
     const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
     expect(res.status).toBe(404);
   });
 
   it('returns 200 and writes embedding', async () => {
-    vi.mocked(getDb).mockReturnValue(makeDb({ selectResult: [COMM] }) as never);
+    vi.mocked(getDb).mockReturnValue(buildDb({ selectResult: [COMM] }) as never);
     vi.mocked(embedText).mockResolvedValueOnce({
       embedding: [0.1, 0.2],
       dimensions: 2,
@@ -86,7 +80,7 @@ describe('POST /api/queues/embed-communication', () => {
 
   it('returns 200 with no-op if comm belongs to different org', async () => {
     vi.mocked(getDb).mockReturnValue(
-      makeDb({ selectResult: [{ ...COMM, organizationId: 'org-2' }] }) as never,
+      buildDb({ selectResult: [{ ...COMM, organizationId: 'org-2' }] }) as never,
     );
 
     const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
