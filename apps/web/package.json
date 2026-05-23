@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cema/attorney": "workspace:*",
     "@cema/auth": "workspace:*",
     "@cema/blob": "workspace:*",
     "@cema/compliance": "workspace:*",
