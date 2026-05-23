@@ -1,12 +1,22 @@
 // docusign-esign ships as CommonJS with an AMD define() fallback that Turbopack
 // cannot statically parse. We use a lazy require() inside the functions that
 // need it so the module is only resolved at runtime by Node.js, never traced by
-// the bundler. The @ts-expect-error below suppresses the missing-declarations
-// error; our local DocusignModule interface provides the type contract.
+// the bundler. In ESM test environments (Vitest), vi.mock() does not intercept
+// CJS require() calls, so we expose a _setDsModule() override for test injection.
 
 import type { CreateEnvelopeInput, CreateEnvelopeResult } from './types';
 
+// Module-level variable allows test injection via _setDsModule().
+// Production code never calls _setDsModule(); it always falls through to require().
+let _dsModuleOverride: DocusignModule | null = null;
+
+/** For test use only. Call before importing functions that use getDsModule(). */
+export function _setDsModule(mod: DocusignModule | null): void {
+  _dsModuleOverride = mod;
+}
+
 function getDsModule(): DocusignModule {
+  if (_dsModuleOverride) return _dsModuleOverride;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('docusign-esign') as DocusignModule;
 }
