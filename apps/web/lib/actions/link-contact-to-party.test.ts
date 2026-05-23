@@ -37,6 +37,7 @@ const ORG = { id: 'org-1', clerkOrgId: 'clerk-org-1' };
 const PARTY = { id: 'party-1', dealId: 'deal-1' };
 const CONTACT_WITH_BOTH = { primaryEmail: 'alice@example.com', primaryPhone: '+12125550001' };
 const CONTACT_EMAIL_ONLY = { primaryEmail: 'bob@example.com', primaryPhone: null };
+const CONTACT_PHONE_ONLY = { primaryEmail: null, primaryPhone: '+12125550001' };
 const CONTACT_NO_IDENTITY = { primaryEmail: null, primaryPhone: null };
 
 function makeDb() {
@@ -146,6 +147,22 @@ describe('linkContactToParty', () => {
     const insertedValues = getInsertedValues(tx);
     expect(insertedValues).toHaveLength(1);
     expect(insertedValues[0]).toMatchObject({ kind: 'email', normalizedValue: 'bob@example.com' });
+  });
+
+  it('upserts only phone identity when contact has no email', async () => {
+    const tx = makeTxWith(PARTY, CONTACT_PHONE_ONLY);
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx));
+    await linkContactToParty('contact-1', 'party-1');
+    expect(tx.insert).toHaveBeenCalledOnce();
+    const insertedValues = getInsertedValues(tx);
+    expect(insertedValues).toHaveLength(1);
+    expect(insertedValues[0]).toMatchObject({ kind: 'phone', normalizedValue: '+12125550001' });
+  });
+
+  it('propagates addEdge errors out of the transaction', async () => {
+    vi.mocked(addEdge).mockRejectedValueOnce(new Error('db error'));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWith(PARTY, null)));
+    await expect(linkContactToParty('contact-1', 'party-1')).rejects.toThrow('db error');
   });
 
   it('skips insert entirely when contact has no email or phone', async () => {

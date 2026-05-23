@@ -39,12 +39,6 @@ export async function linkContactToParty(
 
     if (!partyRow) throw new Error('Party not found');
 
-    const [contact] = await tx
-      .select({ primaryEmail: contacts.primaryEmail, primaryPhone: contacts.primaryPhone })
-      .from(contacts)
-      .where(eq(contacts.id, contactId))
-      .limit(1);
-
     await Promise.all([
       addEdge(tx as never, {
         organizationId: org.id,
@@ -63,6 +57,12 @@ export async function linkContactToParty(
         objectType: 'deal',
       }),
     ]);
+
+    const [contact] = await tx
+      .select({ primaryEmail: contacts.primaryEmail, primaryPhone: contacts.primaryPhone })
+      .from(contacts)
+      .where(eq(contacts.id, contactId))
+      .limit(1);
 
     if (contact) {
       const identityValues = [
