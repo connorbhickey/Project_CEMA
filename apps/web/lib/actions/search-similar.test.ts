@@ -25,14 +25,12 @@ vi.mock('@cema/db', () => ({
 }));
 
 vi.mock('@cema/embeddings', () => ({
-  embedText: vi
-    .fn()
-    .mockResolvedValue({
-      embedding: new Array(3072).fill(0),
-      dimensions: 3072,
-      model: 'text-embedding-3-large',
-      inputTokens: 5,
-    }),
+  embedText: vi.fn().mockResolvedValue({
+    embedding: new Array(3072).fill(0),
+    dimensions: 3072,
+    model: 'text-embedding-3-large',
+    inputTokens: 5,
+  }),
 }));
 
 vi.mock('drizzle-orm', () => ({

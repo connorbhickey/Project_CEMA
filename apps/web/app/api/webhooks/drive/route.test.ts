@@ -79,16 +79,14 @@ describe('POST /api/webhooks/drive', () => {
       select: vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi
-              .fn()
-              .mockResolvedValue([
-                {
-                  id: 'conn-1',
-                  organizationId: 'org-1',
-                  oauthRefreshToken: 'rt',
-                  driveChannelToken: 'expected',
-                },
-              ]),
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'conn-1',
+                organizationId: 'org-1',
+                oauthRefreshToken: 'rt',
+                driveChannelToken: 'expected',
+              },
+            ]),
           }),
         }),
       }),
@@ -111,16 +109,14 @@ describe('POST /api/webhooks/drive', () => {
       select: vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi
-              .fn()
-              .mockResolvedValue([
-                {
-                  id: 'conn-1',
-                  organizationId: 'org-1',
-                  oauthRefreshToken: 'rt',
-                  driveChannelToken: 'tok',
-                },
-              ]),
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'conn-1',
+                organizationId: 'org-1',
+                oauthRefreshToken: 'rt',
+                driveChannelToken: 'tok',
+              },
+            ]),
           }),
         }),
       }),

@@ -48,7 +48,6 @@ import { getDb } from '@cema/db';
 
 import { withRls } from '../with-rls';
 
-
 import { approveDocument } from './approve-document';
 import { ReviewDecisionError } from './review-errors';
 

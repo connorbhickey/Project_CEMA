@@ -135,9 +135,7 @@ describe('listReviewQueue', () => {
 
   it('returns only pending rows when stateFilter is "pending"', async () => {
     const rows = [{ queue: PENDING_QUEUE_ROW, document: DOC }];
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) =>
-      fn(makeTxWithRows(rows, [USER_1])),
-    );
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWithRows(rows, [USER_1])));
 
     const result = await listReviewQueue({ stateFilter: 'pending' });
     expect(result).toHaveLength(1);

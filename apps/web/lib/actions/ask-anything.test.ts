@@ -15,7 +15,6 @@ import { classifyQueryIntent } from '@cema/search';
 import { askAnything } from './ask-anything';
 import { searchSimilar } from './search-similar';
 
-
 const SEARCH_CLASSIFICATION = { intent: 'search' as const, confidence: 0.95, entities: [] };
 const ACTION_CLASSIFICATION = { intent: 'action' as const, confidence: 0.9, entities: [] };
 const ANALYTICS_CLASSIFICATION = { intent: 'analytics' as const, confidence: 0.88, entities: [] };
