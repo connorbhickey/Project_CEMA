@@ -74,19 +74,19 @@ function makeTxWith(partyRow: unknown, contactRow: unknown) {
       onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
     }),
   });
-  return { select: selectMock, insert: insertMock } as never;
+  return { select: selectMock, insert: insertMock };
 }
 
 /** Extracts the array passed to `.values()` on the first `.insert()` call of `tx`. */
 function getInsertedValues(tx: ReturnType<typeof makeTxWith>): unknown[] {
-  const insertFn = tx.insert as ReturnType<typeof vi.fn>;
+  const insertFn = tx.insert;
   // The mock chain is: insert(table) → { values(rows) → { onConflictDoNothing() } }
   // We pull `values` off the recorded return value of the first insert call.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const returnVal: { values: ReturnType<typeof vi.fn> } = insertFn.mock.results[0].value as {
+  const returnVal: { values: ReturnType<typeof vi.fn> } = insertFn.mock.results[0]!.value as {
     values: ReturnType<typeof vi.fn>;
   };
-  return returnVal.values.mock.calls[0][0] as unknown[];
+  return returnVal.values.mock.calls[0]![0] as unknown[];
 }
 
 beforeEach(() => {
@@ -99,13 +99,13 @@ afterEach(() => {
 
 describe('linkContactToParty', () => {
   it('throws when party is not found', async () => {
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWith(null, null)));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWith(null, null) as never));
     await expect(linkContactToParty('contact-1', 'party-99')).rejects.toThrow('Party not found');
   });
 
   it('calls addEdge twice (contact→party and party→deal) on happy path', async () => {
     vi.mocked(withRls).mockImplementationOnce((_orgId, fn) =>
-      fn(makeTxWith(PARTY, CONTACT_NO_IDENTITY)),
+      fn(makeTxWith(PARTY, CONTACT_NO_IDENTITY) as never),
     );
     await linkContactToParty('contact-1', 'party-1');
     expect(addEdge).toHaveBeenCalledTimes(2);
@@ -113,7 +113,7 @@ describe('linkContactToParty', () => {
 
   it('returns edge counts on success', async () => {
     vi.mocked(withRls).mockImplementationOnce((_orgId, fn) =>
-      fn(makeTxWith(PARTY, CONTACT_NO_IDENTITY)),
+      fn(makeTxWith(PARTY, CONTACT_NO_IDENTITY) as never),
     );
     const result = await linkContactToParty('contact-1', 'party-1');
     expect(result).toEqual({
@@ -126,7 +126,7 @@ describe('linkContactToParty', () => {
 
   it('upserts email and phone identity rows when contact has both', async () => {
     const tx = makeTxWith(PARTY, CONTACT_WITH_BOTH);
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
     await linkContactToParty('contact-1', 'party-1');
     expect(tx.insert).toHaveBeenCalledOnce();
     const insertedValues = getInsertedValues(tx);
@@ -141,7 +141,7 @@ describe('linkContactToParty', () => {
 
   it('upserts only email identity when contact has no phone', async () => {
     const tx = makeTxWith(PARTY, CONTACT_EMAIL_ONLY);
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
     await linkContactToParty('contact-1', 'party-1');
     expect(tx.insert).toHaveBeenCalledOnce();
     const insertedValues = getInsertedValues(tx);
@@ -151,7 +151,7 @@ describe('linkContactToParty', () => {
 
   it('upserts only phone identity when contact has no email', async () => {
     const tx = makeTxWith(PARTY, CONTACT_PHONE_ONLY);
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
     await linkContactToParty('contact-1', 'party-1');
     expect(tx.insert).toHaveBeenCalledOnce();
     const insertedValues = getInsertedValues(tx);
@@ -161,13 +161,13 @@ describe('linkContactToParty', () => {
 
   it('propagates addEdge errors out of the transaction', async () => {
     vi.mocked(addEdge).mockRejectedValueOnce(new Error('db error'));
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWith(PARTY, null)));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(makeTxWith(PARTY, null) as never));
     await expect(linkContactToParty('contact-1', 'party-1')).rejects.toThrow('db error');
   });
 
   it('skips insert entirely when contact has no email or phone', async () => {
     const tx = makeTxWith(PARTY, CONTACT_NO_IDENTITY);
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx));
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
     await linkContactToParty('contact-1', 'party-1');
     expect(tx.insert).not.toHaveBeenCalled();
   });
