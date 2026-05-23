@@ -21,6 +21,7 @@
     "@cema/db": "workspace:*",
     "@cema/embeddings": "workspace:*",
     "@cema/kg": "workspace:*",
+    "@cema/typesense": "workspace:*",
     "@cema/integrations-deepgram": "workspace:*",
     "@cema/integrations-docusign": "workspace:*",
     "@cema/integrations-drive": "workspace:*",

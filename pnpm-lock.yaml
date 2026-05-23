@@ -107,6 +107,9 @@ importers:
       '@cema/search':
         specifier: workspace:*
         version: link:../../packages/search
+      '@cema/typesense':
+        specifier: workspace:*
+        version: link:../../packages/typesense
       '@cema/ui':
         specifier: workspace:*
         version: link:../../packages/ui
