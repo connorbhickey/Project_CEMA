@@ -21,3 +21,4 @@ export * from './docusign-envelopes';
 export * from './contacts';
 export * from './document-review-queue';
 export * from './audit-event-reads';
+export * from './kg-edges';

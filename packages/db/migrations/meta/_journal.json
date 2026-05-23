@@ -204,6 +204,20 @@
       "when": 1779502800000,
       "tag": "0028_rls_m5",
       "breakpoints": false
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1779570000000,
+      "tag": "0029_knowledge_graph",
+      "breakpoints": false
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1779592800000,
+      "tag": "0030_pgvector_hnsw",
+      "breakpoints": false
     }
   ]
 }

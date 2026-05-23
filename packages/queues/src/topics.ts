@@ -36,6 +36,14 @@ export const TopicSchema = {
     event: z.string(),
     receivedAt: z.string().datetime(),
   }),
+  'comms.embed': z.object({
+    orgId: z.string(),
+    communicationId: z.string(),
+  }),
+  'docs.embed': z.object({
+    orgId: z.string(),
+    documentId: z.string(),
+  }),
 } as const;
 
 export type TopicName = keyof typeof TopicSchema;
