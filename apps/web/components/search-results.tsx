@@ -10,8 +10,8 @@ interface SearchResultsProps {
 }
 
 function hrefForHit(hit: SearchHit): Route {
-  if (hit.kind === 'communication') return `/communications/${hit.id}`;
-  return `/documents/${hit.id}`;
+  if (hit.kind === 'communication') return `/communications/${hit.id}` as Route;
+  return `/documents/${hit.id}` as Route;
 }
 
 export function SearchResults({ hits, query }: SearchResultsProps) {
