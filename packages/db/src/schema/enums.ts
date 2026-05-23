@@ -164,3 +164,35 @@ export const envelopeStatusEnum = pgEnum('envelope_status', [
   'declined',
   'voided',
 ]);
+
+// Attorney review queue state machine (M5 task 13).
+// Terminal states: approved, rejected — no further transitions allowed.
+export const documentReviewStateEnum = pgEnum('document_review_state', [
+  'pending',
+  'claimed',
+  'approved',
+  'rejected',
+]);
+
+// SOC 2 read-audit enums (M5 task 20).
+// `purpose` records why the actor accessed the entity — used by compliance
+// reports to distinguish operator-initiated reads from automated agent reads.
+export const auditReadPurposeEnum = pgEnum('audit_read_purpose', [
+  'view_detail',
+  'list',
+  'export',
+  'agent',
+  'admin',
+]);
+
+// `entity_type` mirrors the union of auditable entity kinds across all
+// communication, document, and deal surfaces in the workspace.
+export const auditReadEntityTypeEnum = pgEnum('audit_read_entity_type', [
+  'communication',
+  'document',
+  'recording',
+  'pii_field',
+  'contact',
+  'deal',
+  'envelope',
+]);

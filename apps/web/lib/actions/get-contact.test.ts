@@ -16,6 +16,9 @@ vi.mock('drizzle-orm', () => ({
 }));
 
 vi.mock('../with-rls', () => ({ withRls: vi.fn() }));
+vi.mock('../audit/with-read-audit', () => ({
+  withReadAudit: vi.fn().mockImplementation((_input: unknown, fn: () => unknown) => fn()),
+}));
 
 import { getDb } from '@cema/db';
 

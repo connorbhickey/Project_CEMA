@@ -18,9 +18,17 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 4 fully closed out (2026-05-22, 33 tasks on `feat/m4-messaging-files-esign-contacts`); Phase 0 Month 5 (Search + Memory) is next.** M4 shipped four canonical integrations and a Postgres-only contact entity-resolution layer: `@cema/integrations-slack`, `@cema/integrations-drive`, `@cema/integrations-docusign`, `@cema/contacts`; 7 DB migrations (0017–0023) covering Slack connections + messages, Drive connections + files, DocuSign connections + envelopes, contacts + contact_identities, and RLS; 3 webhook routes (Slack events/slash command, Drive push notification, DocuSign Connect); 10 RSC server actions (list/get Slack messages, list Drive files, send/list/get envelopes, list/get/merge contacts, list contact suggestions); 7 UI components (SlackMessageCard, DriveFileCard, EnvelopeStatusCard, SendEnvelopeButton, ContactCard, ContactDetail, ContactSuggestionSidebar); new `/contacts` index + `/contacts/[id]` + `/deals/[id]/files` pages; DocuSign `sendEnvelope` enforcing the attorney-review hard rule server-side; 3 new queue topics (`comms.slack.ingest`, `files.drive.ingest`, `esign.docusign.events`) with no consumers. 23 tasks skipped (Teams, OneDrive/Box/Dropbox/Egnyte/NetDocs/iManage, Adobe Sign/PandaDoc/Snapdocs/Pavaso/Stavvy, Reducto IDP, ClamAV, CRM Merge.dev pulls, Clay/Apollo/ZoomInfo, ML similarity, Apache AGE [M5], WDK consumers, settings OAuth UIs, env provisioning). Build fix: `docusign-esign` AMD module requires `serverExternalPackages` + lazy `require()` to compile under Turbopack. See `docs/adr/0004-phase-0-month-4-messaging-files-esign-contacts.md`.
-- **Next step:** Execute Phase 0 Month 5 plan (Search + Memory). Plan not yet written; write it before beginning implementation.
-- **Phase 0 Month 4 carry-overs to M5+ (16 items — see ADR 0004 for full list):**
+- **Phase:** **Phase 0 Month 5 fully closed out (2026-05-23, on `feat/m5-search-memory`); Phase 0 Month 6 is next.** M5 shipped four subsystems: `@cema/embeddings` (OpenAI text-embedding-3-large, 3072-dim), `@cema/search` (query intent classifier via Claude Sonnet 4.6 + pgvector cosine search); `document_review_queue` state machine (pending→claimed→approved/rejected) enforcing attorney hard rule #2; `audit_event_reads` + `withReadAudit` SOC 2 read-audit middleware; 5 DB migrations (0024–0028 covering pgvector extension, embeddings columns, review queue, audit reads, M5 RLS); 6 server actions (submitForReview, claimReview, approveDocument, rejectDocument, listAuditEventReads, askAnything); 4 UI components (ReviewQueueRow, ReviewDetailPanel, AuditEventRow, SearchResults); 3 new pages (`/attorney/queue`, `/attorney/queue/[id]`, `/admin/audit`); `/search` upgraded to route through askAnything classifier; 4 integration tests (audit tracking, pgvector similarity, attorney review flow, M5 RLS isolation); build fix: `ReviewDecisionError`/`ReviewClaimError` extracted to `review-errors.ts` (Turbopack `'use server'` exports-only-async-functions constraint). 202 tests across 48 files. See `docs/adr/0005-phase-0-month-5-search-memory.md`.
+- **Next step:** Plan and execute Phase 0 Month 6. Write the M6 plan before beginning implementation. AGE knowledge graph is the primary unblocked M5 carry-over.
+- **Phase 0 Month 5 carry-overs to M6+ (7 items — see ADR 0005 for full list):**
+  1. **Apache AGE knowledge graph (Tasks 7–12):** Requires AGE extension on Neon. Graph schema (contact/party/deal vertices), traversal queries, AGE-backed search path. Carry-over to M6.
+  2. **Typesense live cluster:** Full-text index, real-time sync. Requires Typesense Cloud account.
+  3. **Mem0 agent memory:** Per-session + per-deal memory persistence. Requires Mem0 API key.
+  4. **Production embedding calls:** Live OpenAI embedding on comms/docs insert (background consumer). Deferred until Typesense live.
+  5. **pgvector HNSW index:** Deferred until data volume justifies it.
+  6. **Vercel env var provisioning + production smoke test:** After `MEM0_API_KEY`, `TYPESENSE_API_KEY` provisioned.
+  7. **All M2–M4 carry-overs still pending** (see below).
+- **Phase 0 Month 4 carry-overs to M6+ (16 items — see ADR 0004 for full list):**
   1. **Teams messaging:** Requires Azure app registration. Mirrors Slack tasks.
   2. **OneDrive / Box / Dropbox / Egnyte / NetDocs / iManage:** All require vendor accounts. File integration breadth is Phase 1.
   3. **Adobe Sign / PandaDoc / Snapdocs / Pavaso / Stavvy:** Secondary eSign + RON vendors. Phase 2.
@@ -28,16 +36,16 @@
   5. **ClamAV malware scan:** Phase 1 security hardening.
   6. **CRM Merge.dev pulls + enrichment (Clay/Apollo/ZoomInfo):** Contact enrichment from external sources. Phase 1.
   7. **ML similarity for contact dedup:** pgvector + Apache AGE name/address dedup. Phase 1 per spec §9.1.
-  8. **Apache AGE contact knowledge graph:** Full graph linking contacts ↔ parties ↔ deals. M5.
+  8. **Apache AGE contact knowledge graph:** Full graph linking contacts ↔ parties ↔ deals. M6 (was M5, now consolidated with M5 AGE carry-over above).
   9. **WDK consumers for Slack / Drive / DocuSign topics:** Phase 1 durable workflows.
   10. **Settings OAuth UIs (Slack, Drive, DocuSign):** Depends on Nango provider configs + vendor app registrations.
   11. **Vercel env var provisioning + production smoke test:** After API keys provisioned.
   12. **Drive push notification replay protection:** Upstash SETNX (Phase 1 security hardening).
   13. **`contact_identities` org integrity constraint:** Phase 1.
   14. **Drive Blob retention policy:** Phase 1.
-  15. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable. Apache AGE entity resolution is M5+.
+  15. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable. Apache AGE entity resolution is M6+.
   16. **All M2–M3 carry-overs still pending** (Nango + PBX vendors; WDK telephony workflow; Upstash telephony idempotency; Nylas OAuth app; Cal.com; NeverBounce; recording retention cron).
-- **Phase 0 Month 3 carry-overs (8 tasks — all carried to M5):**
+- **Phase 0 Month 3 carry-overs (8 tasks — all carried to M6):**
   1. **Tasks A–B (Nylas app + Google/Microsoft OAuth + Nango config):** Requires OAuth app registration in 3 vendor portals.
   2. **Task C (`/settings/integrations/email-calendar` UI):** Depends on Nango OAuth flow being live.
   3. **Task D (Reducto IDP for email attachment classification):** Phase 1.
@@ -45,15 +53,15 @@
   5. **Task F (NeverBounce outbound email verification):** Phase 1+.
   6. **Task G (WDK workflow for async email enrichment):** Phase 1.
   7. **Task H (Vercel env var sync + production smoke test):** Requires real `NYLAS_API_KEY` + `NYLAS_WEBHOOK_SECRET`.
-  8. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable on email/meeting rows. Apache AGE entity resolution is M5+.
-- **Phase 0 Month 2 carry-overs (12 tasks — all carried to M5):**
+  8. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` still nullable on email/meeting rows. Apache AGE entity resolution is M6+.
+- **Phase 0 Month 2 carry-overs (12 tasks — all carried to M6):**
   1. **Tasks 10–14 (Nango + RingCentral / Dialpad / Zoom Phone):** Requires OAuth app creation in vendor portals.
   2. **Tasks 20–22 (WDK workflow + queue consumer + telephony settings UI):** `@vercel/workflow` not installed.
   3. **Task 26 (E2E webhook→DB integration test):** Depends on Tasks 11-12 + 20-21.
   4. **Task 28 (Vercel env var sync + production smoke test):** Requires real API keys.
   5. **Upstash idempotency:** Add `SETNX telephony:idempo:<vendor_event_id>` in webhook handlers (spec §8.5).
-  6. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` nullable. Apache AGE M3+.
-  7. **Recording retention cron:** Phase 1 or M5.
+  6. **Communication ↔ Party resolution:** `from_party_id` / `to_party_ids` nullable. Apache AGE M6+.
+  7. **Recording retention cron:** Phase 1 or M6.
 - **Phase 0 Month 1 carry-over status (all resolved):**
   1. **RLS BYPASSRLS gap — RESOLVED (2026-05-13, PR #30).** Driver swapped to `drizzle-orm/neon-serverless`; `withRls` opens a real transaction with `SET LOCAL ROLE cema_app_user` + `SET LOCAL app.current_organization_id`. See ADR-0001 §"Phase 0 Month 2 carry-over: RLS production enforcement".
   2. **Husky v10 deprecation — RESOLVED (2026-05-13, PR #31).** v8 shim line stripped from `.husky/pre-commit` and `.husky/commit-msg`.
@@ -72,7 +80,7 @@
   - SSH commit signing on Windows is broken — git invokes `ssh-keygen -Y sign` correctly but doesn't attach the resulting signature to the commit (Windows path-handling quirk in git-for-windows 2.52). Local commits are unsigned; GitHub's squash-merge signs the merge commit on main, satisfying branch protection. Debug later if direct main commits ever become necessary.
   - `enforce_admins` on main branch protection: not yet enabled. The `hicklax13` gh CLI token lacks `admin:org` scope, so it must be toggled via the GitHub web UI at `https://github.com/connorbhickey/Project_CEMA/settings/branches`.
   - **No WDK workflow (M2 gap):** Twilio recording-status callback publishes to queue but nothing consumes it. Recording blob ingest and Deepgram submission require manual intervention until the M3 WDK workflow ships (Tasks 20–21).
-- **Code:** 15 workspace packages + 1 Next.js 16 app. Tests: 158 passing across all packages as of M4 close (see ADR 0004 §Test count) + 1 Playwright e2e (label-gated). 24 migrations on Neon dev branch (0000–0023). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
+- **Code:** 17 workspace packages + 1 Next.js 16 app. Tests: 202 passing across 48 test files as of M5 close (see ADR 0005 §Test count) + 1 Playwright e2e (label-gated). 29 migrations on Neon dev branch (0000–0028). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
 
 ---
 
@@ -933,3 +941,4 @@ When CI fails on a PR, this is the order of triage:
 | 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar                            | Claude Sonnet 4.6 + Connor |
 | 2026-05-22 | §2 updated: M4 closed (33 tasks on feat/m4-messaging-files-esign-contacts), M4 carry-overs listed, next step is M5    | Claude Sonnet 4.6 + Connor |
 | 2026-05-22 | §2 updated: M3 closed (17 tasks on feat/m3-email-calendar), M3 carry-overs listed, next step is M4 internal messaging | Claude Opus 4.7            |
+| 2026-05-23 | §2 updated: M5 closed (feat/m5-search-memory), M5 carry-overs listed, next step is M6                                 | Claude Sonnet 4.6 + Connor |

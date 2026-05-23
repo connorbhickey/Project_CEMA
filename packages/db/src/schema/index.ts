@@ -19,3 +19,5 @@ export * from './drive-files';
 export * from './docusign-connections';
 export * from './docusign-envelopes';
 export * from './contacts';
+export * from './document-review-queue';
+export * from './audit-event-reads';
