@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   check,
+  customType,
   index,
   integer,
   jsonb,
@@ -11,6 +12,21 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+
+export const vector3072 = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return 'vector(3072)';
+  },
+  toDriver(value: number[]): string {
+    return `[${value.join(',')}]`;
+  },
+  fromDriver(value: string): number[] {
+    return value
+      .replace(/^\[|\]$/g, '')
+      .split(',')
+      .map(Number);
+  },
+});
 
 import { deals } from './deals';
 import {
@@ -84,6 +100,8 @@ export const communications = pgTable(
     aiSummary: text('ai_summary'),
     aiActionItems: jsonb('ai_action_items').$type<unknown[]>().default([]).notNull(),
     aiSentiment: varchar('ai_sentiment', { length: 16 }),
+    embedding: vector3072('embedding'),
+    embeddingGeneratedAt: timestamp('embedding_generated_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()

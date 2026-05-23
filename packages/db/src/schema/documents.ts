@@ -13,6 +13,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+import { vector3072 } from './communications';
 import { deals } from './deals';
 import { documentKindEnum, documentStatusEnum } from './enums';
 
@@ -45,6 +46,8 @@ export const documents = pgTable(
     pageCount: integer('page_count'),
     // IDP-extracted data stored alongside the blob (Reducto / Textract output).
     extractedData: jsonb('extracted_data').$type<Record<string, unknown>>().default({}).notNull(),
+    embedding: vector3072('embedding'),
+    embeddingGeneratedAt: timestamp('embedding_generated_at', { withTimezone: true }),
     // Recording identifiers: upstate reel/page OR NYC CRFN — mutually exclusive.
     // Hard rule #6: MUST NOT be marked 'recorded' without one of these present
     // (runtime enforcement in Task 11; schema captures the columns).
