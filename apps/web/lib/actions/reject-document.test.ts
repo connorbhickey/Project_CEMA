@@ -36,9 +36,9 @@ vi.mock('@cema/compliance', () => ({
 
 vi.mock('../with-rls', () => ({ withRls: vi.fn() }));
 
-// Mock approve-document so we can import ReviewDecisionError from reject-document
-// (which re-exports it from approve-document)
-vi.mock('./approve-document', () => ({
+// Mock review-errors so reject-document (which imports ReviewDecisionError
+// from ./review-errors) uses a predictable class in tests.
+vi.mock('./review-errors', () => ({
   ReviewDecisionError: class ReviewDecisionError extends Error {
     constructor(message: string) {
       super(message);
@@ -56,8 +56,8 @@ import { getDb } from '@cema/db';
 
 import { withRls } from '../with-rls';
 
-import { ReviewDecisionError } from './approve-document';
 import { rejectDocument } from './reject-document';
+import { ReviewDecisionError } from './review-errors';
 
 // ---------------------------------------------------------------------------
 // Test fixtures

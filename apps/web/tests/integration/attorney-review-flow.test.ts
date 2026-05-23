@@ -7,6 +7,12 @@
  *
  * Then verifies that an AttorneyApproval row exists (M4 sendEnvelope
  * depends on this).
+ *
+ * NOTE: attorney_approvals and the document/deal/org rows they reference
+ * are intentionally left behind after the test (same reason as audit_events
+ * in audit-immutability.test.ts — the immutability trigger blocks DELETE
+ * and would cascade-block deleting documents/deals/orgs too). All inserts
+ * use onConflictDoNothing so the test is re-runnable with the same UUIDs.
  */
 
 import {
@@ -18,7 +24,7 @@ import {
   organizations,
   users,
 } from '@cema/db';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const ORG_ID = '00000000-0000-0000-0000-0000000000a7';
@@ -73,19 +79,17 @@ describe.skipIf(skip)('Attorney review flow E2E', () => {
 
   afterAll(async () => {
     const db = getDb();
-    await db.delete(attorneyApprovals).where(eq(attorneyApprovals.documentId, DOC_ID));
+    // attorney_approvals is immutable (trigger blocks DELETE) and cascades to
+    // documents/deals/orgs — so we can only safely remove the queue rows.
+    // The stable UUIDs make this test re-runnable via onConflictDoNothing.
     await db.delete(documentReviewQueue).where(eq(documentReviewQueue.organizationId, ORG_ID));
-    await db.delete(documents).where(eq(documents.id, DOC_ID));
-    await db.delete(deals).where(eq(deals.id, DEAL_ID));
-    await db.delete(users).where(eq(users.id, USER_ID));
-    await db.delete(organizations).where(inArray(organizations.id, [ORG_ID]));
   });
 
   it('submitting + claiming + approving creates the AttorneyApproval row', async () => {
     const db = getDb();
 
-    // 1. Submit — direct DB manipulation since we don't have Clerk auth fixtures in tests.
-    const [queueRow] = await db
+    // 1. Submit — onConflictDoNothing + re-fetch so re-runs are idempotent.
+    await db
       .insert(documentReviewQueue)
       .values({
         organizationId: ORG_ID,
@@ -94,30 +98,38 @@ describe.skipIf(skip)('Attorney review flow E2E', () => {
         submittedById: USER_ID,
         state: 'pending',
       })
-      .returning();
+      .onConflictDoNothing();
+
+    const [queueRow] = await db
+      .select()
+      .from(documentReviewQueue)
+      .where(
+        and(eq(documentReviewQueue.documentId, DOC_ID), eq(documentReviewQueue.documentVersion, 1)),
+      )
+      .limit(1);
     expect(queueRow).toBeDefined();
+    if (!queueRow) throw new Error('precondition: queue row must exist');
 
     // 2. Claim
     await db
       .update(documentReviewQueue)
       .set({ state: 'claimed', reviewerId: USER_ID, claimedAt: new Date() })
-      .where(eq(documentReviewQueue.id, queueRow!.id));
+      .where(eq(documentReviewQueue.id, queueRow.id));
 
-    // 3. Approve — insert into attorneyApprovals + transition queue state
-    const [approval] = await db
+    // 3. Approve — onConflictDoNothing so re-runs don't fail on the unique constraint.
+    await db
       .insert(attorneyApprovals)
       .values({
         documentId: DOC_ID,
         documentVersion: 1,
         approvedById: USER_ID,
       })
-      .returning();
-    expect(approval).toBeDefined();
+      .onConflictDoNothing();
 
     await db
       .update(documentReviewQueue)
       .set({ state: 'approved', decidedAt: new Date() })
-      .where(eq(documentReviewQueue.id, queueRow!.id));
+      .where(eq(documentReviewQueue.id, queueRow.id));
 
     // 4. Verify the approval row M4 sendEnvelope would look up
     const lookup = await db
@@ -130,50 +142,39 @@ describe.skipIf(skip)('Attorney review flow E2E', () => {
   });
 
   it('rejecting requires a non-empty reason', async () => {
-    // The schema CHECK prevents NULL rejection_reason when state='rejected'?
-    // Actually no — the CHECK only forbids non-null reason in non-rejected
-    // states. The application layer enforces "reason required to reject".
-    // This test just confirms a rejected row CAN carry a reason.
     const db = getDb();
 
-    const [queueRow] = await db
+    await db
       .insert(documentReviewQueue)
       .values({
         organizationId: ORG_ID,
         documentId: DOC_ID,
-        documentVersion: 1, // would conflict; assume version bumped in real flow — for test, accept
+        documentVersion: 1,
         submittedById: USER_ID,
         state: 'pending',
       })
-      .onConflictDoNothing()
-      .returning();
+      .onConflictDoNothing();
 
-    // The first test already inserted a row at (DOC_ID, 1), so this returning
-    // may be empty. Re-fetch:
-    const [existing] = queueRow
-      ? [queueRow]
-      : await db
-          .select()
-          .from(documentReviewQueue)
-          .where(
-            and(
-              eq(documentReviewQueue.documentId, DOC_ID),
-              eq(documentReviewQueue.documentVersion, 1),
-            ),
-          )
-          .limit(1);
+    const [existing] = await db
+      .select()
+      .from(documentReviewQueue)
+      .where(
+        and(eq(documentReviewQueue.documentId, DOC_ID), eq(documentReviewQueue.documentVersion, 1)),
+      )
+      .limit(1);
     expect(existing).toBeDefined();
     if (!existing) throw new Error('precondition: queue row should exist');
 
-    // Reset to claimed for this test
+    // Reset to claimed for this test — use sql`NULL` to force explicit NULL
+    // in the generated UPDATE (Drizzle may skip JS null for nullable cols).
     await db
       .update(documentReviewQueue)
       .set({
         state: 'claimed',
         reviewerId: USER_ID,
         claimedAt: new Date(),
-        decidedAt: null,
-        rejectionReason: null,
+        decidedAt: sql`NULL`,
+        rejectionReason: sql`NULL`,
       })
       .where(eq(documentReviewQueue.id, existing.id));
 

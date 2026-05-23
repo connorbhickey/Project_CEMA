@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm';
 
 import { withRls } from '../with-rls';
 
-import { ReviewDecisionError } from './approve-document';
+import { ReviewDecisionError } from './review-errors';
 
 export async function rejectDocument(
   queueId: string,

@@ -8,12 +8,9 @@ import { eq } from 'drizzle-orm';
 
 import { withRls } from '../with-rls';
 
-export class ReviewClaimError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReviewClaimError';
-  }
-}
+// ReviewClaimError lives in review-errors.ts (not in this 'use server' file)
+// to avoid Turbopack rejecting non-async-function exports from Server Action modules.
+import { ReviewClaimError } from './review-errors';
 
 export interface ClaimReviewResult {
   queueId: string;

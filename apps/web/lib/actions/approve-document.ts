@@ -22,12 +22,9 @@ import { withRls } from '../with-rls';
 // can be sent for attorney-review-required documents.
 // ---------------------------------------------------------------------------
 
-export class ReviewDecisionError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReviewDecisionError';
-  }
-}
+// ReviewDecisionError lives in review-errors.ts (not in this 'use server' file)
+// to avoid Turbopack rejecting non-async-function exports from Server Action modules.
+import { ReviewDecisionError } from './review-errors';
 
 export interface ApproveDocumentResult {
   queueId: string;

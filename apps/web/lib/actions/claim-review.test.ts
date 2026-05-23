@@ -40,7 +40,9 @@ import { getDb } from '@cema/db';
 
 import { withRls } from '../with-rls';
 
-import { ReviewClaimError, claimReview } from './claim-review';
+
+import { claimReview } from './claim-review';
+import { ReviewClaimError } from './review-errors';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
