@@ -506,6 +506,9 @@ importers:
 
   packages/kg:
     dependencies:
+      '@cema/contacts':
+        specifier: workspace:*
+        version: link:../contacts
       '@cema/db':
         specifier: workspace:*
         version: link:../db

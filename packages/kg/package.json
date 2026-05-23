@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cema/contacts": "workspace:*",
     "@cema/db": "workspace:*",
     "drizzle-orm": "^0.45.2"
   },
