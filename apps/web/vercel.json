@@ -3,5 +3,11 @@
   "framework": "nextjs",
   "buildCommand": "cd ../.. && turbo run build --filter=web",
   "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile",
-  "ignoreCommand": "cd ../.. && git diff HEAD^ HEAD --quiet ."
+  "ignoreCommand": "cd ../.. && git diff HEAD^ HEAD --quiet .",
+  "crons": [
+    {
+      "path": "/api/cron/backfill-embeddings",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }
