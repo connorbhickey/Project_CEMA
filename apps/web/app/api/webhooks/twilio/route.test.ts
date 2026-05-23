@@ -117,11 +117,11 @@ describe('POST /api/webhooks/twilio', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 200 and publishes to the queue for a valid completed recording', async () => {
+  it('returns 200 and publishes both telephony.call.ingest and comms.embed for a valid completed recording', async () => {
     setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
     const res = await POST(makeRequest(COMPLETED_PARAMS));
     expect(res.status).toBe(200);
-    expect(publish).toHaveBeenCalledOnce();
+    expect(publish).toHaveBeenCalledTimes(2);
     const [topic, payload] = vi.mocked(publish).mock.calls[0] as [
       string,
       Record<string, unknown>,
@@ -134,6 +134,15 @@ describe('POST /api/webhooks/twilio', () => {
       vendorCallId: 'CA123',
       vendorEventId: 'RE456',
     });
+  });
+
+  it('publishes comms.embed with communicationId for completed recording', async () => {
+    setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
+    await POST(makeRequest(COMPLETED_PARAMS));
+    const calls = vi.mocked(publish).mock.calls as [string, Record<string, unknown>, unknown][];
+    const embedCall = calls.find(([topic]) => topic === 'comms.embed');
+    expect(embedCall).toBeDefined();
+    expect(embedCall![1]).toEqual({ orgId: 'org-uuid-1', communicationId: 'comm-uuid-1' });
   });
 
   it('publishes vendorPayload containing the raw Twilio params', async () => {

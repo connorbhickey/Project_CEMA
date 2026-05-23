@@ -53,5 +53,11 @@ export async function POST(req: Request) {
     vercelQueueSend,
   );
 
+  await publish(
+    'comms.embed',
+    { orgId: comm.organizationId, communicationId: comm.id },
+    vercelQueueSend,
+  );
+
   return new Response('OK', { status: 200 });
 }
