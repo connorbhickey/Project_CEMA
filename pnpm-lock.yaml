@@ -98,6 +98,9 @@ importers:
       '@cema/integrations-twilio':
         specifier: workspace:*
         version: link:../../packages/integrations/twilio
+      '@cema/kg':
+        specifier: workspace:*
+        version: link:../../packages/kg
       '@cema/queues':
         specifier: workspace:*
         version: link:../../packages/queues
