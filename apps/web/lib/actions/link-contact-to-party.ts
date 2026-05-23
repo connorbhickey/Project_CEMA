@@ -1,7 +1,7 @@
 'use server';
 
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
-import { deals, getDb, parties } from '@cema/db';
+import { contactIdentities, contacts, deals, getDb, parties } from '@cema/db';
 import { addEdge } from '@cema/kg';
 import { and, eq } from 'drizzle-orm';
 
@@ -39,6 +39,12 @@ export async function linkContactToParty(
 
     if (!partyRow) throw new Error('Party not found');
 
+    const [contact] = await tx
+      .select({ primaryEmail: contacts.primaryEmail, primaryPhone: contacts.primaryPhone })
+      .from(contacts)
+      .where(eq(contacts.id, contactId))
+      .limit(1);
+
     await Promise.all([
       addEdge(tx as never, {
         organizationId: org.id,
@@ -57,6 +63,33 @@ export async function linkContactToParty(
         objectType: 'deal',
       }),
     ]);
+
+    if (contact) {
+      const identityValues = [
+        contact.primaryEmail
+          ? {
+              contactId,
+              organizationId: org.id,
+              kind: 'email' as const,
+              normalizedValue: contact.primaryEmail.toLowerCase(),
+              source: 'party' as const,
+            }
+          : null,
+        contact.primaryPhone
+          ? {
+              contactId,
+              organizationId: org.id,
+              kind: 'phone' as const,
+              normalizedValue: contact.primaryPhone,
+              source: 'party' as const,
+            }
+          : null,
+      ].filter(<T>(v: T | null): v is T => v !== null);
+
+      if (identityValues.length > 0) {
+        await tx.insert(contactIdentities).values(identityValues).onConflictDoNothing();
+      }
+    }
 
     return { edgesCreated: 2, contactId, partyId: partyRow.id, dealId: partyRow.dealId };
   });
