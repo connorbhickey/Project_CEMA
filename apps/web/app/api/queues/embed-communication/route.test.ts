@@ -57,6 +57,12 @@ const COMM = {
   sourceThreadId: 'thread-1',
 };
 
+/** Extracts the object passed to `.set()` on the second `update()` call (party resolution). */
+function getPartyUpdatePayload(updateMock: ReturnType<typeof vi.fn>): unknown {
+  const secondReturn = updateMock.mock.results[1]!.value as { set: ReturnType<typeof vi.fn> };
+  return secondReturn.set.mock.calls[0]![0];
+}
+
 function makeRequest(body: unknown) {
   return new Request('http://localhost/api/queues/embed-communication', {
     method: 'POST',
@@ -229,9 +235,9 @@ describe('POST /api/queues/embed-communication', () => {
 
     // Should have called update twice: once for embedding, once for fromPartyId
     expect(updateMock).toHaveBeenCalledTimes(2);
-    const secondCall = updateMock.mock.calls[1];
-    // Second update is on communications table
-    expect(secondCall).toBeDefined();
+    expect(getPartyUpdatePayload(updateMock)).toEqual(
+      expect.objectContaining({ fromPartyId: 'party-1' }),
+    );
   });
 
   it('resolves fromPartyId when fromE164 matches a phone contact identity', async () => {
@@ -298,6 +304,9 @@ describe('POST /api/queues/embed-communication', () => {
 
     // Embedding update + fromPartyId update
     expect(updateMock).toHaveBeenCalledTimes(2);
+    expect(getPartyUpdatePayload(updateMock)).toEqual(
+      expect.objectContaining({ fromPartyId: 'party-1' }),
+    );
   });
 
   it('resolves toPartyIds when toE164 matches a phone contact identity', async () => {
@@ -364,5 +373,8 @@ describe('POST /api/queues/embed-communication', () => {
 
     // Embedding update + toPartyIds update
     expect(updateMock).toHaveBeenCalledTimes(2);
+    expect(getPartyUpdatePayload(updateMock)).toEqual(
+      expect.objectContaining({ toPartyIds: ['party-2'] }),
+    );
   });
 });
