@@ -1455,19 +1455,13 @@ describe('listEmails', () => {
     const rows = [{ id: 'comm-1', kind: 'email', emailThread: { subject: 'Test' } }];
     vi.mocked(withRls).mockImplementationOnce((_id, fn) =>
       fn({
-        select: vi
-          .fn()
-          .mockReturnValue({
-            from: vi
-              .fn()
-              .mockReturnValue({
-                leftJoin: vi
-                  .fn()
-                  .mockReturnValue({
-                    where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue(rows) }),
-                  }),
-              }),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue(rows) }),
+            }),
           }),
+        }),
       } as never),
     );
     const result = await listEmails(DEAL_ID);
@@ -1553,19 +1547,13 @@ describe('getEmail', () => {
   it('returns null when communication not found', async () => {
     vi.mocked(withRls).mockImplementationOnce((_id, fn) =>
       fn({
-        select: vi
-          .fn()
-          .mockReturnValue({
-            from: vi
-              .fn()
-              .mockReturnValue({
-                leftJoin: vi
-                  .fn()
-                  .mockReturnValue({
-                    where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-                  }),
-              }),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+            }),
           }),
+        }),
       } as never),
     );
     expect(await getEmail(DEAL_ID, COMM_ID)).toBeNull();
@@ -1578,19 +1566,13 @@ describe('getEmail', () => {
     };
     vi.mocked(withRls).mockImplementationOnce((_id, fn) =>
       fn({
-        select: vi
-          .fn()
-          .mockReturnValue({
-            from: vi
-              .fn()
-              .mockReturnValue({
-                leftJoin: vi
-                  .fn()
-                  .mockReturnValue({
-                    where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([row]) }),
-                  }),
-              }),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([row]) }),
+            }),
           }),
+        }),
       } as never),
     );
     const result = await getEmail(DEAL_ID, COMM_ID);

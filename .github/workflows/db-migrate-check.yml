@@ -61,8 +61,12 @@ jobs:
       - name: Apply new migrations
         run: pnpm db:migrate
       - name: Check for destructive operations
+        # Only flag operations that lose data: DROP TABLE/COLUMN/SCHEMA/DATABASE,
+        # TRUNCATE, and ALTER TABLE ... DROP COLUMN. Operations like DROP INDEX,
+        # DROP CONSTRAINT, DROP POLICY, DROP TRIGGER are reversible and non-destructive
+        # (they don't lose row data), so they should not gate this check.
         run: |
-          if grep -E '^\s*(DROP|TRUNCATE|ALTER\s+.*\s+DROP)' packages/db/migrations/*.sql 2>/dev/null; then
+          if grep -E '^\s*(DROP\s+(TABLE|COLUMN|SCHEMA|DATABASE)|TRUNCATE|ALTER\s+TABLE\s+[^;]*\s+DROP\s+COLUMN)' packages/db/migrations/*.sql 2>/dev/null; then
             echo "::error::Destructive migration detected. Mark as 'breaking' label and document migration steps."
             exit 1
           fi
