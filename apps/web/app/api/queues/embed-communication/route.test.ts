@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@cema/db', () => ({
   getDb: vi.fn(),
   communications: {},
+  emailThreads: {},
+  slackMessages: {},
 }));
 vi.mock('@cema/embeddings', () => ({ embedText: vi.fn() }));
 vi.mock('@cema/queues', () => ({
@@ -13,9 +15,14 @@ vi.mock('@cema/queues', () => ({
   },
 }));
 vi.mock('drizzle-orm', () => ({ eq: vi.fn() }));
+vi.mock('@cema/typesense', () => ({
+  indexCommunication: vi.fn().mockResolvedValue(undefined),
+  isTypesenseConfigured: vi.fn().mockReturnValue(true),
+}));
 
 import { getDb } from '@cema/db';
 import { embedText } from '@cema/embeddings';
+import { indexCommunication } from '@cema/typesense';
 
 import { POST } from './route';
 
@@ -85,5 +92,66 @@ describe('POST /api/queues/embed-communication', () => {
 
     const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
     expect(res.status).toBe(404);
+  });
+
+  it('calls indexCommunication after writing embedding', async () => {
+    // The route does 3 selects: communications, emailThreads, slackMessages
+    const db = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([COMM]),
+            }),
+          }),
+        })
+        // emailThreads select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi
+                .fn()
+                .mockResolvedValue([{ subject: 'Test Subject', snippet: 'preview text' }]),
+            }),
+          }),
+        })
+        // slackMessages select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    };
+    vi.mocked(getDb).mockReturnValue(db as never);
+    vi.mocked(embedText).mockResolvedValueOnce({
+      embedding: [0.1, 0.2],
+      dimensions: 2,
+      model: 'text-embedding-3-large',
+      inputTokens: 5,
+    });
+
+    const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
+    expect(res.status).toBe(200);
+
+    // Allow fire-and-forget to resolve
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(vi.mocked(indexCommunication)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'comm-1',
+        organization_id: 'org-1',
+        kind: 'email',
+        subject: 'Test Subject',
+        body_preview: 'preview text',
+      }),
+    );
   });
 });

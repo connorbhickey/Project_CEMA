@@ -1,6 +1,7 @@
-import { communications, getDb } from '@cema/db';
+import { communications, emailThreads, getDb, slackMessages } from '@cema/db';
 import { embedText } from '@cema/embeddings';
 import { TopicSchema } from '@cema/queues';
+import { indexCommunication } from '@cema/typesense';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: Request): Promise<Response> {
@@ -29,6 +30,30 @@ export async function POST(req: Request): Promise<Response> {
     .update(communications)
     .set({ embedding, embeddingGeneratedAt: new Date() })
     .where(eq(communications.id, communicationId));
+
+  const [[emailThread], [slackMsg]] = await Promise.all([
+    db
+      .select({ subject: emailThreads.subject, snippet: emailThreads.snippet })
+      .from(emailThreads)
+      .where(eq(emailThreads.communicationId, communicationId))
+      .limit(1),
+    db
+      .select({ text: slackMessages.text })
+      .from(slackMessages)
+      .where(eq(slackMessages.communicationId, communicationId))
+      .limit(1),
+  ]);
+
+  void indexCommunication({
+    id: comm.id,
+    organization_id: comm.organizationId,
+    subject: emailThread?.subject ?? undefined,
+    body_preview: emailThread?.snippet ?? slackMsg?.text?.slice(0, 200) ?? undefined,
+    direction: comm.direction ?? undefined,
+    kind: comm.kind,
+    vendor: comm.medium ?? undefined,
+    occurred_at: Math.floor((comm.startedAt ?? new Date()).getTime() / 1000),
+  });
 
   return new Response('OK', { status: 200 });
 }
