@@ -1,5 +1,4 @@
 import type { communications } from '@cema/db';
-import type { Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -84,10 +83,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             if (item.kind === 'call') {
               return (
                 <li key={item.call.id}>
-                  <Link
-                    href={`/deals/${dealId}/communications/${item.call.id}` as Route}
-                    className="block"
-                  >
+                  <Link href={`/deals/${dealId}/communications/${item.call.id}`} className="block">
                     <CommunicationCard comm={item.call} />
                   </Link>
                 </li>
