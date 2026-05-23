@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
+import { normalizeEmail, normalizePhone } from '@cema/contacts';
 import { contactIdentities, contacts, deals, getDb, parties } from '@cema/db';
 import { addEdge } from '@cema/kg';
 import { and, eq } from 'drizzle-orm';
@@ -65,22 +66,24 @@ export async function linkContactToParty(
       .limit(1);
 
     if (contact) {
+      const emailNorm = normalizeEmail(contact.primaryEmail);
+      const phoneNorm = normalizePhone(contact.primaryPhone);
       const identityValues = [
-        contact.primaryEmail
+        emailNorm
           ? {
               contactId,
               organizationId: org.id,
               kind: 'email' as const,
-              normalizedValue: contact.primaryEmail.toLowerCase(),
+              normalizedValue: emailNorm,
               source: 'party' as const,
             }
           : null,
-        contact.primaryPhone
+        phoneNorm
           ? {
               contactId,
               organizationId: org.id,
               kind: 'phone' as const,
-              normalizedValue: contact.primaryPhone,
+              normalizedValue: phoneNorm,
               source: 'party' as const,
             }
           : null,
