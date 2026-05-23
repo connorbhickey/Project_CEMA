@@ -190,6 +190,13 @@
       "when": 1779500285463,
       "tag": "0026_document_review_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1779501730983,
+      "tag": "0027_audit_event_reads",
+      "breakpoints": true
     }
   ]
 }
