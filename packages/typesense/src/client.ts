@@ -16,7 +16,7 @@ export function getTypesenseClient(): Client {
         {
           host: process.env.TYPESENSE_HOST ?? 'localhost',
           port: parseInt(process.env.TYPESENSE_PORT ?? '8108', 10),
-          protocol: (process.env.TYPESENSE_PROTOCOL ?? 'https'),
+          protocol: process.env.TYPESENSE_PROTOCOL ?? 'https',
         },
       ],
       apiKey,
