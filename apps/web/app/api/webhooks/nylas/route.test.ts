@@ -115,4 +115,130 @@ describe('POST /api/webhooks/nylas', () => {
     const res = await POST(makeRequest('{}', 'valid-sig'));
     expect(res.status).toBe(200);
   });
+
+  it('publishes comms.embed after email communication insert', async () => {
+    process.env.NYLAS_WEBHOOK_SECRET = SECRET;
+    vi.mocked(verifyNylasWebhookSignature).mockReturnValue(true);
+    vi.mocked(parseNylasWebhookPayload).mockReturnValue({
+      trigger: 'message.created',
+      grantId: 'g1',
+      objectData: { threadId: 'thread-1' },
+    });
+
+    const { fetchEmailThread } = await import('@cema/integrations-nylas');
+    vi.mocked(fetchEmailThread).mockResolvedValue({
+      nylasThreadId: 'thread-1',
+      nylasGrantId: 'g1',
+      subject: 'Test',
+      snippet: 'snippet',
+      fromEmail: 'from@example.com',
+      fromName: 'From',
+      toParticipants: [{ email: 'to@example.com', name: null }],
+      ccParticipants: [],
+      bodyHtml: null,
+      bodyPlain: 'text',
+      messageCount: 1,
+      hasAttachments: false,
+      nylasAttachmentIds: [],
+      firstMessageAt: new Date('2026-01-01'),
+      lastMessageAt: new Date('2026-01-01'),
+    });
+
+    vi.mocked(getDb).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ organizationId: 'org-1', providerType: 'gmail' }]),
+          }),
+        }),
+      }),
+      insert: vi
+        .fn()
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockReturnValue({
+              returning: vi.fn().mockResolvedValue([{ id: 'comm-1', organizationId: 'org-1' }]),
+            }),
+          }),
+        })
+        .mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+    } as unknown as ReturnType<typeof getDb>);
+
+    const { publish } = await import('@cema/queues');
+    const { POST } = await import('./route');
+    const res = await POST(makeRequest('{}', 'valid-sig'));
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(publish)).toHaveBeenCalledWith(
+      'comms.embed',
+      { orgId: 'org-1', communicationId: 'comm-1' },
+      expect.any(Function),
+    );
+  });
+
+  it('publishes comms.embed after calendar communication insert', async () => {
+    process.env.NYLAS_WEBHOOK_SECRET = SECRET;
+    vi.mocked(verifyNylasWebhookSignature).mockReturnValue(true);
+    vi.mocked(parseNylasWebhookPayload).mockReturnValue({
+      trigger: 'event.created',
+      grantId: 'g1',
+      objectData: { calendarId: 'cal-1', id: 'event-1' },
+    });
+
+    const { fetchCalendarEvent } = await import('@cema/integrations-nylas');
+    vi.mocked(fetchCalendarEvent).mockResolvedValue({
+      nylasEventId: 'event-1',
+      nylasCalendarId: 'cal-1',
+      nylasGrantId: 'g1',
+      title: 'Test Meeting',
+      description: null,
+      location: null,
+      eventStatus: 'confirmed',
+      startsAt: new Date('2026-01-01T10:00:00Z'),
+      endsAt: new Date('2026-01-01T11:00:00Z'),
+      isAllDay: false,
+      organizerEmail: 'organizer@example.com',
+      organizerName: 'Organizer',
+      attendees: [],
+    });
+
+    vi.mocked(getDb).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ organizationId: 'org-1', providerType: 'gmail' }]),
+          }),
+        }),
+      }),
+      insert: vi
+        .fn()
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockReturnValue({
+              returning: vi.fn().mockResolvedValue([{ id: 'comm-2', organizationId: 'org-1' }]),
+            }),
+          }),
+        })
+        .mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+    } as unknown as ReturnType<typeof getDb>);
+
+    const { publish } = await import('@cema/queues');
+    const { POST } = await import('./route');
+    const res = await POST(makeRequest('{}', 'valid-sig'));
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(publish)).toHaveBeenCalledWith(
+      'comms.embed',
+      { orgId: 'org-1', communicationId: 'comm-2' },
+      expect.any(Function),
+    );
+  });
 });
