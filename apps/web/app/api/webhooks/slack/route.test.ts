@@ -108,4 +108,58 @@ describe('POST /api/webhooks/slack', () => {
     const res = await POST(makeRequest('{}', 'v0=ok', '1716000000'));
     expect(res.status).toBe(200);
   });
+
+  it('publishes comms.embed after slack communication insert', async () => {
+    process.env.SLACK_SIGNING_SECRET = SECRET;
+    vi.mocked(verifySlackSignature).mockReturnValue(true);
+    vi.mocked(parseSlackEventPayload).mockReturnValue({
+      type: 'event_callback',
+      team_id: 'T-123',
+      api_app_id: 'A0',
+      event_id: 'Ev0',
+      event_time: 0,
+      event: { type: 'message', channel: 'C0', user: 'U0', text: 'hello', ts: '1716000000.0' },
+    });
+
+    vi.mocked(getDb).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ organizationId: 'org-1', slackBotToken: 'xoxb-tok' }]),
+          }),
+        }),
+      }),
+      insert: vi
+        .fn()
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockReturnValue({
+              returning: vi
+                .fn()
+                .mockResolvedValue([
+                  { id: 'comm-1', organizationId: 'org-1', kind: 'slack', status: 'ready' },
+                ]),
+            }),
+          }),
+        })
+        .mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+    } as unknown as ReturnType<typeof getDb>);
+
+    const { publish } = await import('@cema/queues');
+    const { POST } = await import('./route');
+    const res = await POST(makeRequest('{}', 'v0=ok', '1716000000'));
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(publish)).toHaveBeenCalledWith(
+      'comms.embed',
+      { orgId: 'org-1', communicationId: 'comm-1' },
+      expect.any(Function),
+    );
+  });
 });

@@ -133,6 +133,8 @@ export async function POST(req: Request): Promise<Response> {
     vercelQueueSend,
   );
 
+  await publish('comms.embed', { orgId, communicationId: comm.id }, vercelQueueSend);
+
   return new Response('OK', { status: 200 });
 }
 

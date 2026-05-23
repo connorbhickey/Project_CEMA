@@ -14,6 +14,10 @@ vi.mock('@cema/queues', () => ({
   },
 }));
 vi.mock('drizzle-orm', () => ({ eq: vi.fn() }));
+vi.mock('@cema/typesense', () => ({
+  indexDocument: vi.fn().mockResolvedValue(undefined),
+  isTypesenseConfigured: vi.fn().mockReturnValue(true),
+}));
 
 import { getDb } from '@cema/db';
 import { embedText } from '@cema/embeddings';
@@ -37,7 +41,26 @@ function makeDb(selectResult: unknown[] = []) {
 }
 
 const DOC_ROW = {
-  doc: { id: 'doc-1', kind: 'cema_3172', extractedData: { upb: 500000 } },
+  doc: {
+    id: 'doc-1',
+    kind: 'cema_3172',
+    status: 'draft',
+    extractedData: { upb: 500000 },
+    blobUrl: null,
+    createdAt: new Date('2026-05-23T00:00:00.000Z'),
+  },
+  dealOrgId: 'org-1',
+};
+
+const DOC_ROW_FULL = {
+  doc: {
+    id: 'doc-1',
+    kind: 'cema_3172',
+    status: 'draft',
+    extractedData: { upb: 500000 },
+    blobUrl: null,
+    createdAt: new Date('2026-05-23T00:00:00.000Z'),
+  },
   dealOrgId: 'org-1',
 };
 
@@ -78,5 +101,29 @@ describe('POST /api/queues/embed-document', () => {
 
     const res = await POST(makeRequest({ orgId: 'org-1', documentId: 'doc-1' }));
     expect(res.status).toBe(404);
+  });
+
+  it('calls indexDocument after writing embedding', async () => {
+    const { indexDocument } = await import('@cema/typesense');
+    vi.mocked(getDb).mockReturnValue(makeDb([DOC_ROW_FULL]) as never);
+    vi.mocked(embedText).mockResolvedValueOnce({
+      embedding: [0.3, 0.4],
+      dimensions: 2,
+      model: 'text-embedding-3-large',
+      inputTokens: 10,
+    });
+
+    const res = await POST(makeRequest({ orgId: 'org-1', documentId: 'doc-1' }));
+    expect(res.status).toBe(200);
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(vi.mocked(indexDocument)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'doc-1',
+        organization_id: 'org-1',
+        kind: 'cema_3172',
+      }),
+    );
   });
 });
