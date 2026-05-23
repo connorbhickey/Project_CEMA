@@ -1,9 +1,15 @@
-// docusign-esign is a CommonJS-only package with no TypeScript declarations.
-// We import it and cast to our own local interface shapes.
-// @ts-expect-error — no type declarations for docusign-esign
-import * as dsModule from 'docusign-esign';
+// docusign-esign ships as CommonJS with an AMD define() fallback that Turbopack
+// cannot statically parse. We use a lazy require() inside the functions that
+// need it so the module is only resolved at runtime by Node.js, never traced by
+// the bundler. The @ts-expect-error below suppresses the missing-declarations
+// error; our local DocusignModule interface provides the type contract.
 
 import type { CreateEnvelopeInput, CreateEnvelopeResult } from './types';
+
+function getDsModule(): DocusignModule {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('docusign-esign') as DocusignModule;
+}
 
 interface DocusignApiClientInstance {
   setBasePath(path: string): void;
@@ -66,8 +72,6 @@ interface DocusignModule {
   Signer: new () => DocusignSignerInstance;
 }
 
-const ds = dsModule as unknown as DocusignModule;
-
 export interface GetDocusignClientInput {
   baseUrl: string;
   integrationKey: string;
@@ -78,6 +82,7 @@ export interface GetDocusignClientInput {
 export async function getDocusignClient(
   input: GetDocusignClientInput,
 ): Promise<DocusignApiClientInstance> {
+  const ds = getDsModule();
   const apiClient = new ds.ApiClient();
   apiClient.setBasePath(input.baseUrl);
 
@@ -103,6 +108,7 @@ export async function createEnvelope(
   accountId: string,
   input: CreateEnvelopeInput,
 ): Promise<CreateEnvelopeResult> {
+  const ds = getDsModule();
   const envelopesApi = new ds.EnvelopesApi(apiClient);
 
   const envDef = new ds.EnvelopeDefinition();
