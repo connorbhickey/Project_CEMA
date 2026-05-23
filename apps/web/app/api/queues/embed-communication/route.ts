@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<Response> {
 
 async function resolveCommParties(
   db: ReturnType<typeof getDb>,
-  comm: { id: string; organizationId: string },
+  comm: { id: string; organizationId: string; fromE164?: string | null; toE164?: string | null },
   emailThread: {
     fromEmail: string | null;
     toParticipants: { email: string; name: string | null }[];
@@ -87,13 +87,16 @@ async function resolveCommParties(
   const emailFrom = emailThread?.fromEmail?.toLowerCase() ?? null;
   const emailsTo = (emailThread?.toParticipants ?? []).map((p) => p.email.toLowerCase());
   const slackUser = slackMsg?.authorSlackUserId ?? null;
+  const phoneFrom = comm.fromE164 ?? null;
+  const phoneTo = comm.toE164 ? [comm.toE164] : [];
 
   const lookupEmails = [
     ...new Set([emailFrom, ...emailsTo].filter((e): e is string => e !== null)),
   ];
   const lookupSlack = slackUser ? [slackUser] : [];
+  const lookupPhones = [...new Set([phoneFrom, ...phoneTo].filter((p): p is string => p !== null))];
 
-  if (lookupEmails.length === 0 && lookupSlack.length === 0) return;
+  if (lookupEmails.length === 0 && lookupSlack.length === 0 && lookupPhones.length === 0) return;
 
   // Look up contact identities
   const identityRows = await (async () => {
@@ -132,6 +135,23 @@ async function resolveCommParties(
         );
       results.push(...rows);
     }
+    if (lookupPhones.length > 0) {
+      const rows = await db
+        .select({
+          contactId: contactIdentities.contactId,
+          normalizedValue: contactIdentities.normalizedValue,
+          kind: contactIdentities.kind,
+        })
+        .from(contactIdentities)
+        .where(
+          and(
+            eq(contactIdentities.organizationId, comm.organizationId),
+            eq(contactIdentities.kind, 'phone'),
+            inArray(contactIdentities.normalizedValue, lookupPhones),
+          ),
+        );
+      results.push(...rows);
+    }
     return results;
   })();
 
@@ -153,15 +173,16 @@ async function resolveCommParties(
 
   if (edges.length === 0) return;
 
-  const emailToContact = new Map(identityRows.map((r) => [r.normalizedValue, r.contactId]));
+  const identityToContact = new Map(identityRows.map((r) => [r.normalizedValue, r.contactId]));
   const contactToParty = new Map(edges.map((e) => [e.subjectId, e.objectId]));
 
-  const fromContactId = emailFrom ? (emailToContact.get(emailFrom) ?? null) : null;
+  const fromKey = emailFrom ?? slackUser ?? phoneFrom;
+  const fromContactId = fromKey ? (identityToContact.get(fromKey) ?? null) : null;
   const fromPartyId = fromContactId ? (contactToParty.get(fromContactId) ?? null) : null;
 
-  const toPartyIds = emailsTo
-    .map((e) => {
-      const cId = emailToContact.get(e);
+  const toPartyIds = [...emailsTo, ...phoneTo]
+    .map((key) => {
+      const cId = identityToContact.get(key);
       return cId ? (contactToParty.get(cId) ?? null) : null;
     })
     .filter((p): p is string => p !== null);

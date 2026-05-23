@@ -233,4 +233,136 @@ describe('POST /api/queues/embed-communication', () => {
     // Second update is on communications table
     expect(secondCall).toBeDefined();
   });
+
+  it('resolves fromPartyId when fromE164 matches a phone contact identity', async () => {
+    const COMM_PHONE = { ...COMM, fromE164: '+12125550001', toE164: null };
+
+    const updateMock = vi
+      .fn()
+      .mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      })
+      .mockReturnValue({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      });
+
+    const selectMock = vi
+      .fn()
+      // communications select
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([COMM_PHONE]) }),
+        }),
+      })
+      // emailThread select (Promise.all)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+        }),
+      })
+      // slackMsg select (Promise.all)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+        }),
+      })
+      // contactIdentities phone lookup
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValue([
+              { contactId: 'contact-1', normalizedValue: '+12125550001', kind: 'phone' },
+            ]),
+        }),
+      })
+      // kgEdges select
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ subjectId: 'contact-1', objectId: 'party-1' }]),
+        }),
+      });
+
+    vi.mocked(getDb).mockReturnValue({ select: selectMock, update: updateMock } as never);
+    vi.mocked(embedText).mockResolvedValueOnce({
+      embedding: [0.1, 0.2],
+      dimensions: 2,
+      model: 'text-embedding-3-large',
+      inputTokens: 5,
+    });
+
+    const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
+    expect(res.status).toBe(200);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    // Embedding update + fromPartyId update
+    expect(updateMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('resolves toPartyIds when toE164 matches a phone contact identity', async () => {
+    const COMM_TO_PHONE = { ...COMM, fromE164: null, toE164: '+12125550002' };
+
+    const updateMock = vi
+      .fn()
+      .mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      })
+      .mockReturnValue({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      });
+
+    const selectMock = vi
+      .fn()
+      // communications select
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([COMM_TO_PHONE]) }),
+        }),
+      })
+      // emailThread select (Promise.all)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+        }),
+      })
+      // slackMsg select (Promise.all)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+        }),
+      })
+      // contactIdentities phone lookup
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValue([
+              { contactId: 'contact-2', normalizedValue: '+12125550002', kind: 'phone' },
+            ]),
+        }),
+      })
+      // kgEdges select
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ subjectId: 'contact-2', objectId: 'party-2' }]),
+        }),
+      });
+
+    vi.mocked(getDb).mockReturnValue({ select: selectMock, update: updateMock } as never);
+    vi.mocked(embedText).mockResolvedValueOnce({
+      embedding: [0.1, 0.2],
+      dimensions: 2,
+      model: 'text-embedding-3-large',
+      inputTokens: 5,
+    });
+
+    const res = await POST(makeRequest({ orgId: 'org-1', communicationId: 'comm-1' }));
+    expect(res.status).toBe(200);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    // Embedding update + toPartyIds update
+    expect(updateMock).toHaveBeenCalledTimes(2);
+  });
 });
