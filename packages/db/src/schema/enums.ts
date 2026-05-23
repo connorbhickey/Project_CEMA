@@ -164,3 +164,12 @@ export const envelopeStatusEnum = pgEnum('envelope_status', [
   'declined',
   'voided',
 ]);
+
+// Attorney review queue state machine (M5 task 13).
+// Terminal states: approved, rejected — no further transitions allowed.
+export const documentReviewStateEnum = pgEnum('document_review_state', [
+  'pending',
+  'claimed',
+  'approved',
+  'rejected',
+]);
