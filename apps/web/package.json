@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@cema/attorney": "workspace:*",
+    "@cema/cache": "workspace:*",
     "@cema/auth": "workspace:*",
     "@cema/blob": "workspace:*",
     "@cema/compliance": "workspace:*",

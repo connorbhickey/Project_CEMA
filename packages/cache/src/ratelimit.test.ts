@@ -13,20 +13,20 @@ vi.mock('@upstash/ratelimit', () => ({
   Ratelimit: MockRatelimit,
 }));
 
-vi.mock('./client.ts', () => ({
+vi.mock('./client', () => ({
   getRedis: vi.fn().mockReturnValue({}),
   isUpstashConfigured: vi.fn().mockReturnValue(true),
 }));
 
 describe('@cema/cache ratelimit', () => {
   it('makeWebhookLimiter returns a Ratelimit instance', async () => {
-    const { makeWebhookLimiter } = await import('./ratelimit.ts');
+    const { makeWebhookLimiter } = await import('./ratelimit');
     const limiter = makeWebhookLimiter();
     expect(limiter).toBeDefined();
   });
 
   it('checkRateLimit returns success:true when limit is not reached', async () => {
-    const { checkRateLimit } = await import('./ratelimit.ts');
+    const { checkRateLimit } = await import('./ratelimit');
     const result = await checkRateLimit('127.0.0.1');
     expect(result.success).toBe(true);
   });

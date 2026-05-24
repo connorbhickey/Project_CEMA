@@ -1,6 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 
-import { getRedis } from './client.ts';
+import { getRedis } from './client';
 
 // 30 requests per 10-second sliding window per IP — aggressive enough to block
 // replay attacks and credential-stuffing without affecting legitimate Twilio

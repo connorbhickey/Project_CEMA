@@ -68,6 +68,9 @@ importers:
       '@cema/blob':
         specifier: workspace:*
         version: link:../../packages/blob
+      '@cema/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@cema/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance

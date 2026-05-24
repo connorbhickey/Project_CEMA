@@ -1,2 +1,2 @@
-export { isUpstashConfigured, getRedis } from './client.ts';
-export { makeWebhookLimiter, checkRateLimit } from './ratelimit.ts';
+export { isUpstashConfigured, getRedis } from './client';
+export { makeWebhookLimiter, checkRateLimit } from './ratelimit';
