@@ -36,9 +36,13 @@ export async function POST(req: Request) {
   if (isUpstashConfigured()) {
     const redis = getRedis();
     const key = `telephony:idempo:${callback.recordingSid}`;
-    const acquired = await redis.set(key, '1', { nx: true, ex: 86400 });
-    if (acquired === null) {
-      return new Response('OK', { status: 200 });
+    try {
+      const acquired = await redis.set(key, '1', { nx: true, ex: 86400 });
+      if (acquired === null) {
+        return new Response('OK', { status: 200 });
+      }
+    } catch {
+      // Upstash unavailable — DB-level constraint provides fallback dedup
     }
   }
 
