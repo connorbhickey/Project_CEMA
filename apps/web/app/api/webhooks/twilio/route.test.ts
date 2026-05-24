@@ -19,8 +19,14 @@ vi.mock('@/lib/queue', () => ({
   vercelQueueSend: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@cema/cache', () => ({
+  isUpstashConfigured: vi.fn().mockReturnValue(false),
+  getRedis: vi.fn(),
+}));
+
 import { getDb } from '@cema/db';
 import { publish } from '@cema/queues';
+import { getRedis, isUpstashConfigured } from '@cema/cache';
 
 import { POST } from './route';
 
@@ -156,5 +162,25 @@ describe('POST /api/webhooks/twilio', () => {
     const vendorPayload = payload['vendorPayload'] as Record<string, string>;
     expect(vendorPayload['RecordingStatus']).toBe('completed');
     expect(vendorPayload['CallSid']).toBe('CA123');
+  });
+
+  it('returns 200 without publishing when idempotency key already exists (Upstash configured)', async () => {
+    vi.mocked(isUpstashConfigured).mockReturnValue(true);
+    vi.mocked(getRedis).mockReturnValue({
+      set: vi.fn().mockResolvedValue(null),
+    } as unknown as ReturnType<typeof getRedis>);
+
+    const res = await POST(makeRequest(COMPLETED_PARAMS));
+    expect(res.status).toBe(200);
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('publishes normally when Upstash is not configured', async () => {
+    vi.mocked(isUpstashConfigured).mockReturnValue(false);
+    setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
+
+    const res = await POST(makeRequest(COMPLETED_PARAMS));
+    expect(res.status).toBe(200);
+    expect(publish).toHaveBeenCalledOnce();
   });
 });

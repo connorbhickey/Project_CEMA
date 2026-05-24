@@ -1,3 +1,4 @@
+import { getRedis, isUpstashConfigured } from '@cema/cache';
 import { communications, getDb } from '@cema/db';
 import { parseTwilioRecordingCallback, verifyTwilioSignature } from '@cema/integrations-twilio';
 import { publish } from '@cema/queues';
@@ -28,6 +29,17 @@ export async function POST(req: Request) {
 
   if (callback.recordingStatus !== 'completed') {
     return new Response('OK', { status: 200 });
+  }
+
+  // Idempotency guard: SETNX with 24-hour TTL on RecordingSid.
+  // Returns null when key already existed (NX condition failed) → already processed.
+  if (isUpstashConfigured()) {
+    const redis = getRedis();
+    const key = `telephony:idempo:${callback.recordingSid}`;
+    const acquired = await redis.set(key, '1', { nx: true, ex: 86400 });
+    if (acquired === null) {
+      return new Response('OK', { status: 200 });
+    }
   }
 
   const [comm] = await getDb()
