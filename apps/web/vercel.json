@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/backfill-embeddings",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/recording-retention",
+      "schedule": "0 3 1 * *"
     }
   ]
 }
