@@ -505,69 +505,53 @@ it('resolves fromPartyId from comm.fromE164 when no email or slack', async () =>
   const selectMock = vi
     .fn()
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi
-            .fn()
-            .mockReturnValue({
-              limit: vi
-                .fn()
-                .mockResolvedValue([
-                  {
-                    id: 'comm-1',
-                    organizationId: 'org-1',
-                    fromE164: '+12125550001',
-                    toE164: null,
-                    aiSummary: 'call summary',
-                    sourceThreadId: null,
-                    kind: 'call',
-                    direction: 'outbound',
-                    medium: 'phone_softphone',
-                    startedAt: new Date(),
-                  },
-                ]),
-            }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'comm-1',
+              organizationId: 'org-1',
+              fromE164: '+12125550001',
+              toE164: null,
+              aiSummary: 'call summary',
+              sourceThreadId: null,
+              kind: 'call',
+              direction: 'outbound',
+              medium: 'phone_softphone',
+              startedAt: new Date(),
+            },
+          ]),
         }),
+      }),
     })
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+      }),
     }) // emailThreads
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+      }),
     }) // slackMessages
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi
-            .fn()
-            .mockResolvedValue([
-              { contactId: 'contact-1', normalizedValue: '+12125550001', kind: 'phone' },
-            ]),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi
+          .fn()
+          .mockResolvedValue([
+            { contactId: 'contact-1', normalizedValue: '+12125550001', kind: 'phone' },
+          ]),
+      }),
     }) // contactIdentities phone
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ subjectId: 'contact-1', objectId: 'party-1' }]),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ subjectId: 'contact-1', objectId: 'party-1' }]),
+      }),
     }); // kgEdges
 
-  const updateMock = vi
-    .fn()
-    .mockReturnValue({
-      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
-    });
+  const updateMock = vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+  });
 
   vi.mocked(getDb).mockReturnValueOnce({
     select: selectMock,
@@ -595,69 +579,53 @@ it('resolves toPartyIds from comm.toE164 when no email or slack', async () => {
   const selectMock = vi
     .fn()
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi
-            .fn()
-            .mockReturnValue({
-              limit: vi
-                .fn()
-                .mockResolvedValue([
-                  {
-                    id: 'comm-1',
-                    organizationId: 'org-1',
-                    fromE164: null,
-                    toE164: '+16465550002',
-                    aiSummary: 'call',
-                    sourceThreadId: null,
-                    kind: 'call',
-                    direction: 'inbound',
-                    medium: 'phone_softphone',
-                    startedAt: new Date(),
-                  },
-                ]),
-            }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'comm-1',
+              organizationId: 'org-1',
+              fromE164: null,
+              toE164: '+16465550002',
+              aiSummary: 'call',
+              sourceThreadId: null,
+              kind: 'call',
+              direction: 'inbound',
+              medium: 'phone_softphone',
+              startedAt: new Date(),
+            },
+          ]),
         }),
+      }),
     })
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+      }),
     }) // emailThreads
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+      }),
     }) // slackMessages
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi
-            .fn()
-            .mockResolvedValue([
-              { contactId: 'contact-2', normalizedValue: '+16465550002', kind: 'phone' },
-            ]),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi
+          .fn()
+          .mockResolvedValue([
+            { contactId: 'contact-2', normalizedValue: '+16465550002', kind: 'phone' },
+          ]),
+      }),
     }) // contactIdentities phone
     .mockReturnValueOnce({
-      from: vi
-        .fn()
-        .mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ subjectId: 'contact-2', objectId: 'party-2' }]),
-        }),
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ subjectId: 'contact-2', objectId: 'party-2' }]),
+      }),
     }); // kgEdges
 
-  const updateMock = vi
-    .fn()
-    .mockReturnValue({
-      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
-    });
+  const updateMock = vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+  });
 
   vi.mocked(getDb).mockReturnValueOnce({
     select: selectMock,
