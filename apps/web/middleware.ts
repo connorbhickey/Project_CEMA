@@ -16,9 +16,13 @@ export default clerkMiddleware(async (auth, req) => {
   // Rate limit inbound webhook endpoints by client IP.
   if (req.nextUrl.pathname.startsWith('/api/webhooks/') && isUpstashConfigured()) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1';
-    const { success } = await checkRateLimit(ip);
-    if (!success) {
-      return new Response('Too Many Requests', { status: 429 });
+    try {
+      const { success } = await checkRateLimit(ip);
+      if (!success) {
+        return new Response('Too Many Requests', { status: 429 });
+      }
+    } catch {
+      // Upstash unavailable — fail open rather than blocking all webhook callbacks
     }
   }
 
