@@ -20,7 +20,7 @@
 
 - **Phase:** **Phase 0 Month 8 fully closed out (2026-05-23, on `feat/m8-telephony-entity-resolution`); Phase 0 Month 9 is next.** M8 shipped three subsystems: `comms.embed` publish from Twilio recording-complete callback; `contact_identities` seeding in `linkContactToParty` (email via `normalizeEmail`, phone via `normalizePhone`, `source='party'`, `onConflictDoNothing`); phone entity resolution in `resolveCommParties` (`kind='phone'` lookup, `identityToContact` map rename, `fromKey = emailFrom ?? slackUser ?? phoneFrom`, `toPartyIds = [...emailsTo, ...phoneTo]`). No new migrations (M8 is code-only). 240 tests across 55 test files. See `docs/adr/0008-phase-0-month-8-telephony-entity-resolution.md`.
 - **Next step:** Plan and execute Phase 0 Month 9. Top priority: provision Typesense Cloud + Mem0 API keys in Vercel (runbook: `docs/runbooks/m7-env-var-provisioning.md`) to activate M6–M8 live integrations.
-- **Phase 0 Month 8 carry-overs to M9+ (3 items — see ADR 0008 for full list):**
+- **Phase 0 Month 8 carry-overs to M9+ (4 items — see ADR 0008 for full list):**
   1. **Typesense Cloud provisioning:** `TYPESENSE_API_KEY`, `TYPESENSE_HOST` env vars needed in Vercel. `isTypesenseConfigured()` gates all calls until then.
   2. **Mem0 live provisioning:** `MEM0_API_KEY` env var needed in Vercel. `isMemoryConfigured()` gates all calls until then.
   3. **Vercel env var sync + production smoke test:** After Typesense + Mem0 API keys provisioned per runbook.
@@ -40,7 +40,7 @@
   12. **Drive Blob retention policy:** Phase 1.
   13. **Communication ↔ Party resolution — RESOLVED in M8.** All channels (email, Slack, phone) now wired: `comms.embed` publishes from Twilio webhook; `contact_identities` seeded at `linkContactToParty`; `resolveCommParties` extended with `kind='phone'` lookup.
   14. **All M2–M3 carry-overs still pending** (Nango + PBX vendors; WDK telephony workflow; Upstash telephony idempotency; Nylas OAuth app; Cal.com; NeverBounce; recording retention cron).
-- **Phase 0 Month 3 carry-overs (8 tasks — all carried to M9):**
+- **Phase 0 Month 3 carry-overs (8 tasks — 7 carried to M9, 1 resolved in M8):**
   1. **Tasks A–B (Nylas app + Google/Microsoft OAuth + Nango config):** Requires OAuth app registration in 3 vendor portals.
   2. **Task C (`/settings/integrations/email-calendar` UI):** Depends on Nango OAuth flow being live.
   3. **Task D (Reducto IDP for email attachment classification):** Phase 1.
@@ -49,7 +49,7 @@
   6. **Task G (WDK workflow for async email enrichment):** Phase 1.
   7. **Task H (Vercel env var sync + production smoke test):** Requires real `NYLAS_API_KEY` + `NYLAS_WEBHOOK_SECRET`.
   8. **Communication ↔ Party resolution — RESOLVED in M8.** Telephony `from_party_id`/`to_party_ids` now wired via `kind='phone'` identity lookup.
-- **Phase 0 Month 2 carry-overs (12 tasks — all carried to M9):**
+- **Phase 0 Month 2 carry-overs (12 tasks — 11 carried to M9, 1 resolved in M8):**
   1. **Tasks 10–14 (Nango + RingCentral / Dialpad / Zoom Phone):** Requires OAuth app creation in vendor portals.
   2. **Tasks 20–22 (WDK workflow + queue consumer + telephony settings UI):** `@vercel/workflow` not installed.
   3. **Task 26 (E2E webhook→DB integration test):** Depends on Tasks 11-12 + 20-21.

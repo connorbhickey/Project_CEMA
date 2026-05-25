@@ -65,33 +65,35 @@ export async function linkContactToParty(
       .where(eq(contacts.id, contactId))
       .limit(1);
 
-    if (contact) {
-      const emailNorm = normalizeEmail(contact.primaryEmail);
-      const phoneNorm = normalizePhone(contact.primaryPhone);
-      const identityValues = [
-        emailNorm
-          ? {
-              contactId,
-              organizationId: org.id,
-              kind: 'email' as const,
-              normalizedValue: emailNorm,
-              source: 'party' as const,
-            }
-          : null,
-        phoneNorm
-          ? {
-              contactId,
-              organizationId: org.id,
-              kind: 'phone' as const,
-              normalizedValue: phoneNorm,
-              source: 'party' as const,
-            }
-          : null,
-      ].filter(<T>(v: T | null): v is T => v !== null);
+    if (!contact) {
+      throw new Error('Contact not found');
+    }
 
-      if (identityValues.length > 0) {
-        await tx.insert(contactIdentities).values(identityValues).onConflictDoNothing();
-      }
+    const emailNorm = normalizeEmail(contact.primaryEmail);
+    const phoneNorm = normalizePhone(contact.primaryPhone);
+    const identityValues = [
+      emailNorm
+        ? {
+            contactId,
+            organizationId: org.id,
+            kind: 'email' as const,
+            normalizedValue: emailNorm,
+            source: 'party' as const,
+          }
+        : null,
+      phoneNorm
+        ? {
+            contactId,
+            organizationId: org.id,
+            kind: 'phone' as const,
+            normalizedValue: phoneNorm,
+            source: 'party' as const,
+          }
+        : null,
+    ].filter(<T>(v: T | null): v is T => v !== null);
+
+    if (identityValues.length > 0) {
+      await tx.insert(contactIdentities).values(identityValues).onConflictDoNothing();
     }
 
     return { edgesCreated: 2, contactId, partyId: partyRow.id, dealId: partyRow.dealId };

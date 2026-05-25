@@ -171,4 +171,13 @@ describe('linkContactToParty', () => {
     await linkContactToParty('contact-1', 'party-1');
     expect(tx.insert).not.toHaveBeenCalled();
   });
+
+  it('throws when contact row is missing (fail-fast, rolls back edges via tx)', async () => {
+    const tx = makeTxWith(PARTY, null);
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
+    await expect(linkContactToParty('contact-missing', 'party-1')).rejects.toThrow(
+      'Contact not found',
+    );
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
 });

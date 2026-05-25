@@ -961,7 +961,7 @@ Update M3 carry-over #8 and M2 carry-over #6 similarly.
 
 Add changelog row:
 
-```
+```markdown
 | 2026-05-23 | §2 updated: M8 closed (feat/m8-telephony-entity-resolution), M8 carry-overs listed, next step is M9 | Claude Sonnet 4.6 + Connor |
 ```
 
