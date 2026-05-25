@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
+import { emitAuditEvent } from '@cema/compliance';
 import { normalizeEmail, normalizePhone } from '@cema/contacts';
 import { contactIdentities, contacts, deals, getDb, parties } from '@cema/db';
 import { addEdge } from '@cema/kg';
@@ -95,6 +96,20 @@ export async function linkContactToParty(
     if (identityValues.length > 0) {
       await tx.insert(contactIdentities).values(identityValues).onConflictDoNothing();
     }
+
+    await emitAuditEvent(tx, {
+      organizationId: org.id,
+      actorUserId: user.id,
+      action: 'party.linked',
+      entityType: 'party',
+      entityId: partyRow.id,
+      metadata: {
+        contactId,
+        dealId: partyRow.dealId,
+        edgesCreated: 2,
+        identityKinds: identityValues.map((v) => v.kind),
+      },
+    });
 
     return { edgesCreated: 2, contactId, partyId: partyRow.id, dealId: partyRow.dealId };
   });

@@ -24,10 +24,15 @@ vi.mock('@cema/kg', () => ({
   addEdge: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@cema/compliance', () => ({
+  emitAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../with-rls', () => ({ withRls: vi.fn() }));
 
-import { addEdge } from '@cema/kg';
+import { emitAuditEvent } from '@cema/compliance';
 import { getDb } from '@cema/db';
+import { addEdge } from '@cema/kg';
 
 import { withRls } from '../with-rls';
 
@@ -179,5 +184,23 @@ describe('linkContactToParty', () => {
       'Contact not found',
     );
     expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it('emits a party.linked audit event on success', async () => {
+    const tx = makeTxWith(PARTY, CONTACT_WITH_BOTH);
+    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn(tx as never));
+    await linkContactToParty('contact-1', 'party-1');
+    expect(emitAuditEvent).toHaveBeenCalledOnce();
+    const call = vi.mocked(emitAuditEvent).mock.calls[0]!;
+    expect(call[0]).toBe(tx);
+    const event = call[1];
+    expect(event.action).toBe('party.linked');
+    expect(event.entityType).toBe('party');
+    expect(event.entityId).toBe('party-1');
+    expect(event.organizationId).toBe('org-1');
+    expect(event.actorUserId).toBe('user-1');
+    expect(event.metadata?.['contactId']).toBe('contact-1');
+    expect(event.metadata?.['dealId']).toBe('deal-1');
+    expect(event.metadata?.['edgesCreated']).toBe(2);
   });
 });
