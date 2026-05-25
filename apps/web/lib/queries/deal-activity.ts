@@ -33,7 +33,6 @@ export async function getDealActivity(dealId: string): Promise<DealActivityEvent
         id: documents.id,
         kind: documents.kind,
         occurredAt: documents.createdAt,
-        subject: documents.blobUrl,
       })
       .from(documents)
       .where(eq(documents.dealId, dealId))
@@ -42,6 +41,9 @@ export async function getDealActivity(dealId: string): Promise<DealActivityEvent
   ]);
 
   // kg_edges has no dealId — traversal via contact→party→deal is Phase 1.
+  // Documents have no human-readable detail field (no `filename` column;
+  // the `kind` enum already conveys what the row is). `detail` is null
+  // for docs until M10+ adds an IDP-extracted display name.
   const events: DealActivityEvent[] = [
     ...comms.map((c) => ({
       type: 'communication' as const,
@@ -55,7 +57,7 @@ export async function getDealActivity(dealId: string): Promise<DealActivityEvent
       id: d.id,
       occurredAt: d.occurredAt,
       label: d.kind.replace(/_/g, ' '),
-      detail: d.subject ?? null,
+      detail: null,
     })),
   ];
 

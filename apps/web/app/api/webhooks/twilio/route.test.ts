@@ -168,6 +168,7 @@ describe('POST /api/webhooks/twilio', () => {
     vi.mocked(isUpstashConfigured).mockReturnValue(true);
     vi.mocked(getRedis).mockReturnValue({
       set: vi.fn().mockResolvedValue(null),
+      del: vi.fn().mockResolvedValue(0),
     } as unknown as ReturnType<typeof getRedis>);
 
     const res = await POST(makeRequest(COMPLETED_PARAMS));
@@ -175,12 +176,42 @@ describe('POST /api/webhooks/twilio', () => {
     expect(publish).not.toHaveBeenCalled();
   });
 
-  it('publishes normally when Upstash is not configured', async () => {
+  it('publishes both topics normally when Upstash is not configured', async () => {
     vi.mocked(isUpstashConfigured).mockReturnValue(false);
     setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
 
     const res = await POST(makeRequest(COMPLETED_PARAMS));
     expect(res.status).toBe(200);
-    expect(publish).toHaveBeenCalledOnce();
+    // M8 added comms.embed publish after telephony.call.ingest
+    expect(publish).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases idempotency key when communication is not found (so Twilio retry can succeed)', async () => {
+    vi.mocked(isUpstashConfigured).mockReturnValue(true);
+    const delMock = vi.fn().mockResolvedValue(1);
+    vi.mocked(getRedis).mockReturnValue({
+      set: vi.fn().mockResolvedValue('OK'),
+      del: delMock,
+    } as unknown as ReturnType<typeof getRedis>);
+    setupDbMock([]);
+
+    const res = await POST(makeRequest(COMPLETED_PARAMS));
+    expect(res.status).toBe(404);
+    expect(delMock).toHaveBeenCalledWith('telephony:idempo:RE456');
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('releases idempotency key when publish throws (so Twilio retry can succeed)', async () => {
+    vi.mocked(isUpstashConfigured).mockReturnValue(true);
+    const delMock = vi.fn().mockResolvedValue(1);
+    vi.mocked(getRedis).mockReturnValue({
+      set: vi.fn().mockResolvedValue('OK'),
+      del: delMock,
+    } as unknown as ReturnType<typeof getRedis>);
+    setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
+    vi.mocked(publish).mockRejectedValueOnce(new Error('queue down'));
+
+    await expect(POST(makeRequest(COMPLETED_PARAMS))).rejects.toThrow('queue down');
+    expect(delMock).toHaveBeenCalledWith('telephony:idempo:RE456');
   });
 });

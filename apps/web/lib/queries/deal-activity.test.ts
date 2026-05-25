@@ -51,7 +51,6 @@ describe('getDealActivity', () => {
       id: 'd1',
       kind: 'cema_3172',
       occurredAt: new Date('2026-05-11'),
-      subject: null,
     };
     vi.mocked(getDb).mockReturnValue(makeDb([comm], [doc]) as never);
 
@@ -59,6 +58,14 @@ describe('getDealActivity', () => {
     // doc (May 11) should come before comm (May 10) in desc order
     expect(events[0]!.id).toBe('d1');
     expect(events[1]!.id).toBe('c1');
+  });
+
+  it('returns null detail for document events (no filename column on documents)', async () => {
+    const doc = { id: 'd1', kind: 'cema_3172', occurredAt: new Date('2026-05-11') };
+    vi.mocked(getDb).mockReturnValue(makeDb([], [doc]) as never);
+    const events = await getDealActivity('deal-1');
+    expect(events[0]?.type).toBe('document');
+    expect(events[0]?.detail).toBeNull();
   });
 
   it('returns empty array when deal has no events', async () => {
