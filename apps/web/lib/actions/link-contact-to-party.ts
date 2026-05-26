@@ -1,7 +1,9 @@
 'use server';
 
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
-import { deals, getDb, parties } from '@cema/db';
+import { emitAuditEvent } from '@cema/compliance';
+import { normalizeEmail, normalizePhone } from '@cema/contacts';
+import { contactIdentities, contacts, deals, getDb, parties } from '@cema/db';
 import { addEdge } from '@cema/kg';
 import { and, eq } from 'drizzle-orm';
 
@@ -57,6 +59,57 @@ export async function linkContactToParty(
         objectType: 'deal',
       }),
     ]);
+
+    const [contact] = await tx
+      .select({ primaryEmail: contacts.primaryEmail, primaryPhone: contacts.primaryPhone })
+      .from(contacts)
+      .where(eq(contacts.id, contactId))
+      .limit(1);
+
+    if (!contact) {
+      throw new Error('Contact not found');
+    }
+
+    const emailNorm = normalizeEmail(contact.primaryEmail);
+    const phoneNorm = normalizePhone(contact.primaryPhone);
+    const identityValues = [
+      emailNorm
+        ? {
+            contactId,
+            organizationId: org.id,
+            kind: 'email' as const,
+            normalizedValue: emailNorm,
+            source: 'party' as const,
+          }
+        : null,
+      phoneNorm
+        ? {
+            contactId,
+            organizationId: org.id,
+            kind: 'phone' as const,
+            normalizedValue: phoneNorm,
+            source: 'party' as const,
+          }
+        : null,
+    ].filter(<T>(v: T | null): v is T => v !== null);
+
+    if (identityValues.length > 0) {
+      await tx.insert(contactIdentities).values(identityValues).onConflictDoNothing();
+    }
+
+    await emitAuditEvent(tx, {
+      organizationId: org.id,
+      actorUserId: user.id,
+      action: 'party.linked',
+      entityType: 'party',
+      entityId: partyRow.id,
+      metadata: {
+        contactId,
+        dealId: partyRow.dealId,
+        edgesCreated: 2,
+        identityKinds: identityValues.map((v) => v.kind),
+      },
+    });
 
     return { edgesCreated: 2, contactId, partyId: partyRow.id, dealId: partyRow.dealId };
   });
