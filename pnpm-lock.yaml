@@ -68,6 +68,9 @@ importers:
       '@cema/blob':
         specifier: workspace:*
         version: link:../../packages/blob
+      '@cema/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@cema/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance
@@ -125,9 +128,12 @@ importers:
       '@neondatabase/serverless':
         specifier: ^0.10.0
         version: 0.10.4
+      date-fns:
+        specifier: ^4.3.0
+        version: 4.3.0
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
       next:
         specifier: ^16.0.0
         version: 16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -237,7 +243,7 @@ importers:
         version: 0.27.3
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
@@ -255,6 +261,28 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
+  packages/cache:
+    dependencies:
+      '@upstash/ratelimit':
+        specifier: ^2.0.0
+        version: 2.0.8(@upstash/redis@1.38.0)
+      '@upstash/redis':
+        specifier: ^1.34.0
+        version: 1.38.0
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
   packages/compliance:
     dependencies:
       '@cema/db':
@@ -262,7 +290,7 @@ importers:
         version: link:../db
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
@@ -286,7 +314,7 @@ importers:
     dependencies:
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
       libphonenumber-js:
         specifier: ^1.11.0
         version: 1.13.3
@@ -317,7 +345,7 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
       postgres:
         specifier: ^3.4.4
         version: 3.4.9
@@ -429,7 +457,7 @@ importers:
         version: 0.42.22
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
@@ -495,7 +523,7 @@ importers:
         version: link:../../db
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
@@ -523,7 +551,7 @@ importers:
         version: link:../db
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+        version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
@@ -2386,6 +2414,18 @@ packages:
     resolution: {integrity: sha512-yURCknZhvywvQItHMMmFSo+fq5arCUIyz/CVk7jD89MSai7dkaX8ufjCWp3NttLojoTVbcE72ri+be/TnEbMHw==}
     engines: {node: '>=20.0.0'}
 
+  '@upstash/core-analytics@0.0.10':
+    resolution: {integrity: sha512-7qJHGxpQgQr9/vmeS1PktEwvNAF7TI4iJDi8Pu2CFZ9YUGHZH4fOP5TfYlZ4aVxfopnELiE4BS4FBjyK7V1/xQ==}
+    engines: {node: '>=16.0.0'}
+
+  '@upstash/ratelimit@2.0.8':
+    resolution: {integrity: sha512-YSTMBJ1YIxsoPkUMX/P4DDks/xV5YYCswWMamU8ZIfK9ly6ppjRnVOyBhMDXBmzjODm4UQKcxsJPvaeFAijp5w==}
+    peerDependencies:
+      '@upstash/redis': ^1.34.3
+
+  '@upstash/redis@1.38.0':
+    resolution: {integrity: sha512-wu+dZBptlLy0+MCUEoHmzrY/TnmgDey3+c7EbIGwrLqAvkP8yi5MWZHYGIFtAygmL4Bkz2TdFu+eU0vFPncIcg==}
+
   '@vercel/blob@0.27.3':
     resolution: {integrity: sha512-WizeAxzOTmv0JL7wOaxvLIU/KdBcrclM1ZUOdSlIZAxsTTTe1jsyBthStLby0Ueh7FnmKYAjLz26qRJTk5SDkQ==}
     engines: {node: '>=16.14'}
@@ -2820,6 +2860,9 @@ packages:
   data-view-byte-offset@1.0.1:
     resolution: {integrity: sha512-BS8PfmtDGnrgYdOonGZQdLZslWIeCGFP9tpan0hi1Co2Zr2NKADsvGYA8XxuG/4UWgJ6Cjtv+YJnB6MM69QGlQ==}
     engines: {node: '>= 0.4'}
+
+  date-fns@4.3.0:
+    resolution: {integrity: sha512-OYcL+3N/jyWbYdFGqoMAhytDgxP9pbYPUUiRCOgn4Fewaadk9l/Wam4Avciiyp2BgkpfQyBV9B+ehnVJych+eQ==}
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -5118,6 +5161,9 @@ packages:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
 
+  uncrypto@0.1.3:
+    resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
+
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
@@ -6908,6 +6954,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@upstash/core-analytics@0.0.10':
+    dependencies:
+      '@upstash/redis': 1.38.0
+
+  '@upstash/ratelimit@2.0.8(@upstash/redis@1.38.0)':
+    dependencies:
+      '@upstash/core-analytics': 0.0.10
+      '@upstash/redis': 1.38.0
+
+  '@upstash/redis@1.38.0':
+    dependencies:
+      uncrypto: 0.1.3
+
   '@vercel/blob@0.27.3':
     dependencies:
       async-retry: 1.3.3
@@ -7412,6 +7471,8 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
+  date-fns@4.3.0: {}
+
   debug@3.2.7:
     dependencies:
       ms: 2.1.3
@@ -7506,12 +7567,13 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.21.0
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20260523.1
       '@neondatabase/serverless': 0.10.4
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.6
+      '@upstash/redis': 1.38.0
       better-sqlite3: 12.10.0
       pg: 8.11.3
       postgres: 3.4.9
@@ -9842,6 +9904,8 @@ snapshots:
       has-bigints: 1.1.0
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
+
+  uncrypto@0.1.3: {}
 
   undici-types@5.26.5: {}
 

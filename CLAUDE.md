@@ -18,9 +18,19 @@
 
 ## 2. Current status (update as we progress)
 
-- **Phase:** **Phase 0 Month 8 fully closed out (2026-05-23, on `feat/m8-telephony-entity-resolution`); Phase 0 Month 9 is next.** M8 shipped three subsystems: `comms.embed` publish from Twilio recording-complete callback; `contact_identities` seeding in `linkContactToParty` (email via `normalizeEmail`, phone via `normalizePhone`, `source='party'`, `onConflictDoNothing`); phone entity resolution in `resolveCommParties` (`kind='phone'` lookup, `identityToContact` map rename, `fromKey = emailFrom ?? slackUser ?? phoneFrom`, `toPartyIds = [...emailsTo, ...phoneTo]`). No new migrations (M8 is code-only). 240 tests across 55 test files. See `docs/adr/0008-phase-0-month-8-telephony-entity-resolution.md`.
-- **Next step:** Plan and execute Phase 0 Month 9. Top priority: provision Typesense Cloud + Mem0 API keys in Vercel (runbook: `docs/runbooks/m7-env-var-provisioning.md`) to activate M6–M8 live integrations.
-- **Phase 0 Month 8 carry-overs to M9+ (4 items — see ADR 0008 for full list):**
+- **Phase:** **Phase 0 Month 9 fully closed out (2026-05-24, on `feat/m9-cache-hardening-activity-feed`); Phase 0 Month 10 is next.** M9 shipped five subsystems: new `@cema/cache` package (Upstash Redis client + sliding-window rate limiter, env-gated via `isUpstashConfigured()`); `apps/web/proxy.ts` (Clerk auth + env-gated rate limit on `/api/webhooks/*`, fail-open on Redis error — Next.js 16 renamed `middleware.ts` to `proxy.ts`); Twilio webhook SETNX idempotency with del-on-failure cleanup (24h TTL on `RecordingSid`, M2 carry-over §8.5); recording retention cron with CRON_SECRET auth + per-row audit events (`/api/cron/recording-retention`, monthly `0 3 1 * *`, soft-delete via `deleted_at` + zero blob URLs, `BATCH_SIZE=500`); deal activity feed (`/deals/[id]/activity` RSC page + `getDealActivity` query unioning communications + documents, sorted desc by occurredAt). 0 new migrations (code-only month). 480 tests passing across 21 packages. See `docs/adr/0009-phase-0-month-9-cache-hardening-activity-feed.md`.
+- **Previously closed (M8):** Telephony entity resolution shipped via PR #62 (`feat/m8-telephony-entity-resolution`, merged 2026-05-26 with admin-bypass after exhaustive CR review). Three subsystems: `comms.embed` publish from Twilio recording-complete callback; `contact_identities` seeding in `linkContactToParty` (email + phone normalized, with `party.linked` audit event); phone entity resolution in `resolveCommParties` (`kind='phone'` lookup). See `docs/adr/0008-phase-0-month-8-telephony-entity-resolution.md`.
+- **Next step:** Plan and execute Phase 0 Month 10. Top priority remains provisioning `TYPESENSE_API_KEY`, `TYPESENSE_HOST`, `MEM0_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET` in Vercel (runbook: `docs/runbooks/m7-env-var-provisioning.md` for the first three; extend with Upstash + cron entries) to activate M6/M7/M9 live integrations.
+- **Phase 0 Month 9 carry-overs to M10+ (8 items — see ADR 0009 for full list):**
+  1. **Upstash provisioning:** `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` env vars needed in Vercel.
+  2. **Extend SETNX idempotency to Nylas, Slack, Drive, DocuSign, Deepgram webhooks** (each has its own natural idempotency key).
+  3. **Blob cleanup job:** scan `recordings WHERE deleted_at < now() - interval '30 days'` and call Vercel Blob `del()`.
+  4. **Activity feed pagination + cursor:** current 200-row cap per source will exceed itself on long-running deals.
+  5. **`kg_edges` → deal attribution:** add `deal_id` column + backfill, then re-add edges to `getDealActivity`.
+  6. **Activity feed filters:** "show only emails", "show only documents", etc.
+  7. **Typesense + Mem0 provisioning (still pending from M7).**
+  8. **All M2–M8 carry-overs still pending.**
+- **Phase 0 Month 7 carry-overs to M8+ (5 items — see ADR 0007 for full list):**
   1. **Typesense Cloud provisioning:** `TYPESENSE_API_KEY`, `TYPESENSE_HOST` env vars needed in Vercel. `isTypesenseConfigured()` gates all calls until then.
   2. **Mem0 live provisioning:** `MEM0_API_KEY` env var needed in Vercel. `isMemoryConfigured()` gates all calls until then.
   3. **Vercel env var sync + production smoke test:** After Typesense + Mem0 API keys provisioned per runbook.
@@ -75,7 +85,7 @@
   - SSH commit signing on Windows is broken — git invokes `ssh-keygen -Y sign` correctly but doesn't attach the resulting signature to the commit (Windows path-handling quirk in git-for-windows 2.52). Local commits are unsigned; GitHub's squash-merge signs the merge commit on main, satisfying branch protection. Debug later if direct main commits ever become necessary.
   - `enforce_admins` on main branch protection: not yet enabled. The `hicklax13` gh CLI token lacks `admin:org` scope, so it must be toggled via the GitHub web UI at `https://github.com/connorbhickey/Project_CEMA/settings/branches`.
   - **No WDK workflow (M2 gap):** Twilio recording-status callback publishes to queue but nothing consumes it. Recording blob ingest and Deepgram submission require manual intervention until the M3 WDK workflow ships (Tasks 20–21).
-- **Code:** 17 workspace packages + 1 Next.js 16 app. Tests: 240 passing across 55 test files (see ADR 0008 §Test count) + 1 Playwright e2e (label-gated). 31 migrations on Neon dev branch (0000–0030). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
+- **Code:** 18 workspace packages (added `@cema/cache` in M9) + 1 Next.js 16 app. Tests: 480 passing across 21 packages (apps/web: 248 passed + 2 skipped / 57 files; package tests sum: 232 across 38 files; see ADR 0009 §Test count) + 1 Playwright e2e (label-gated). 31 migrations on Neon dev branch (0000–0030, no new migrations in M8 or M9 — both code-only months). Vercel production + preview deploys both live; CodeRabbit reviewing every PR.
 
 ---
 
@@ -928,15 +938,16 @@ When CI fails on a PR, this is the order of triage:
 
 ## Changelog
 
-| Date       | Change                                                                                                                | By                         |
-| ---------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| 2026-05-12 | Initial CLAUDE.md created                                                                                             | Claude Opus 4.7 + Connor   |
-| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree)                                             | Claude Opus 4.7            |
-| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed                                              | Claude Opus 4.7            |
-| 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar                            | Claude Sonnet 4.6 + Connor |
-| 2026-05-22 | §2 updated: M4 closed (33 tasks on feat/m4-messaging-files-esign-contacts), M4 carry-overs listed, next step is M5    | Claude Sonnet 4.6 + Connor |
-| 2026-05-22 | §2 updated: M3 closed (17 tasks on feat/m3-email-calendar), M3 carry-overs listed, next step is M4 internal messaging | Claude Opus 4.7            |
-| 2026-05-23 | §2 updated: M5 closed (feat/m5-search-memory), M5 carry-overs listed, next step is M6                                 | Claude Sonnet 4.6 + Connor |
-| 2026-05-23 | §2 updated: M6 closed (feat/m6-knowledge-graph-search-memory), M6 carry-overs listed, next step is M7                 | Claude Sonnet 4.6 + Connor |
-| 2026-05-23 | §2 updated: M7 closed (feat/m7-production-pipeline-entity-resolution), M7 carry-overs listed, next step is M8         | Claude Sonnet 4.6 + Connor |
-| 2026-05-23 | §2 updated: M8 closed (feat/m8-telephony-entity-resolution), M8 carry-overs listed, next step is M9                   | Claude Sonnet 4.6 + Connor |
+| Date       | Change                                                                                                                         | By                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| 2026-05-12 | Initial CLAUDE.md created                                                                                                      | Claude Opus 4.7 + Connor   |
+| 2026-05-21 | Added §18 (cross-environment & multi-agent ops) and §19 (CI failure tree)                                                      | Claude Opus 4.7            |
+| 2026-05-21 | §2 carry-over #2 (Husky) marked RESOLVED — was stale since PR #31 landed                                                       | Claude Opus 4.7            |
+| 2026-05-22 | §2 updated: M2 closed (PRs #38–#53), M2 carry-overs listed, next step is M3 email/calendar                                     | Claude Sonnet 4.6 + Connor |
+| 2026-05-22 | §2 updated: M4 closed (33 tasks on feat/m4-messaging-files-esign-contacts), M4 carry-overs listed, next step is M5             | Claude Sonnet 4.6 + Connor |
+| 2026-05-22 | §2 updated: M3 closed (17 tasks on feat/m3-email-calendar), M3 carry-overs listed, next step is M4 internal messaging          | Claude Opus 4.7            |
+| 2026-05-23 | §2 updated: M5 closed (feat/m5-search-memory), M5 carry-overs listed, next step is M6                                          | Claude Sonnet 4.6 + Connor |
+| 2026-05-23 | §2 updated: M6 closed (feat/m6-knowledge-graph-search-memory), M6 carry-overs listed, next step is M7                          | Claude Sonnet 4.6 + Connor |
+| 2026-05-23 | §2 updated: M7 closed (feat/m7-production-pipeline-entity-resolution), M7 carry-overs listed, next step is M8                  | Claude Sonnet 4.6 + Connor |
+| 2026-05-23 | §2 updated: M8 closed (feat/m8-telephony-entity-resolution), M8 carry-overs listed, next step is M9                            | Claude Sonnet 4.6 + Connor |
+| 2026-05-26 | §2 updated: M9 closed (feat/m9-cache-hardening-activity-feed, PR #63), M8 merged via admin-bypass (PR #62), next step is M10   | Claude Opus 4.7 + Connor   |
