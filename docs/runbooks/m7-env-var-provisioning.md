@@ -1,6 +1,9 @@
-# M7 Env Var Provisioning — Typesense Cloud + Mem0
+# Env Var Provisioning — Live Integrations (Typesense · Mem0 · Upstash · Cron)
 
-Run this runbook once per environment (preview → production) after M7 merges to main.
+Run this runbook once per environment (preview → production) to activate the
+M6/M7/M9 integrations that ship behind env-gates. Until the keys below are set,
+`isTypesenseConfigured()`, `isMemoryConfigured()`, and `isUpstashConfigured()`
+all return `false` and the app degrades gracefully (no errors, reduced features).
 
 ## Prerequisites
 
@@ -63,7 +66,58 @@ vercel env add MEM0_API_KEY production
 
 ---
 
-## 3. Deploy with new env vars
+## 3. Upstash Redis
+
+Powers the sliding-window rate limiter (`@cema/cache`) on `/api/webhooks/*` and
+SETNX webhook idempotency (M9). `isUpstashConfigured()` gates all calls, and the
+proxy fails **open** on Redis error — so missing keys never block webhooks.
+
+### 3a. Create a database
+
+1. Sign up or log in at [console.upstash.com](https://console.upstash.com)
+2. Create a **Redis** database — choose a region close to your Vercel deployment.
+3. In the database's **REST API** section, copy `UPSTASH_REDIS_REST_URL` and
+   `UPSTASH_REDIS_REST_TOKEN`.
+
+### 3b. Add env vars to Vercel
+
+```bash
+# Preview
+vercel env add UPSTASH_REDIS_REST_URL preview
+vercel env add UPSTASH_REDIS_REST_TOKEN preview
+
+# Production
+vercel env add UPSTASH_REDIS_REST_URL production
+vercel env add UPSTASH_REDIS_REST_TOKEN production
+```
+
+---
+
+## 4. CRON_SECRET (recording-retention cron)
+
+The monthly recording-retention cron (`/api/cron/recording-retention`, schedule
+`0 3 1 * *`) authenticates via `Authorization: Bearer ${CRON_SECRET}`. Vercel Cron
+attaches this header automatically **once the env var exists** — but you must
+still provision the value, and the route returns 401 on any mismatch.
+
+### 4a. Generate + add the secret
+
+```bash
+# Generate a value
+openssl rand -hex 32
+
+# Preview
+vercel env add CRON_SECRET preview
+
+# Production
+vercel env add CRON_SECRET production
+```
+
+> Set the **same** value in every environment where the cron should run.
+
+---
+
+## 5. Deploy with new env vars
 
 ```bash
 # Trigger a new Vercel deployment to pick up the new env vars
@@ -75,7 +129,7 @@ Wait for the deployment to reach **Ready** in the Vercel dashboard.
 
 ---
 
-## 4. Trigger embedding backfill
+## 6. Trigger embedding backfill
 
 After deployment, trigger the backfill cron manually (rather than waiting for 2 AM UTC):
 
@@ -88,7 +142,7 @@ Monitor the Vercel Queue dashboard to confirm embed jobs are consumed within ~5 
 
 ---
 
-## 5. Smoke test
+## 7. Smoke test
 
 1. Open the app at your Vercel preview URL.
 2. Navigate to **Search** (`/search`).
@@ -100,7 +154,7 @@ Monitor the Vercel Queue dashboard to confirm embed jobs are consumed within ~5 
 
 ---
 
-## 6. Verify env gates are active
+## 8. Verify env gates are active
 
 If either service is unavailable, the app degrades gracefully:
 
