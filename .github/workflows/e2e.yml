@@ -32,7 +32,8 @@ jobs:
           node-version-file: .nvmrc
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      # @playwright/test lives in apps/web, so resolve the binary in that workspace (not the root).
+      - run: pnpm --filter web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL }}

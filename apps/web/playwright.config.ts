@@ -9,10 +9,13 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     headless: true,
   },
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // Without E2E_USER_EMAIL the happy-path spec self-skips; don't boot `next dev` (needs full env) just to fail.
+  webServer: process.env.E2E_USER_EMAIL
+    ? {
+        command: 'pnpm dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      }
+    : undefined,
 });
