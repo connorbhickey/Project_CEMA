@@ -37,11 +37,11 @@ void Eval<NarrativeEvalInput, string>('cema-intake-savings-narrative', {
   task: async (input: NarrativeEvalInput): Promise<string> => {
     const narrative = await draftSavingsNarrative(input.application, input.savings);
     if (narrative === null) {
-      // run.mjs guarantees ANTHROPIC_API_KEY is set before this file executes, so a
+      // run.mjs guarantees AI_GATEWAY_API_KEY is set before this file executes, so a
       // null here is misconfiguration — not the "LLM intentionally off" signal that
       // null means in the deterministic write path.
       throw new Error(
-        'draftSavingsNarrative returned null — ANTHROPIC_API_KEY must be set to run this eval.',
+        'draftSavingsNarrative returned null — AI_GATEWAY_API_KEY must be set to run this eval.',
       );
     }
     return narrative;
