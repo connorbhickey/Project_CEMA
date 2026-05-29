@@ -1,7 +1,6 @@
 import { withChildSpan } from '@cema/observability';
 import { SpanStatusCode, type Span, trace } from '@opentelemetry/api';
 
-
 import { checkEligibility } from './eligibility';
 import { estimateSavings } from './savings';
 import type { IntakeDeps, IntakeResult } from './types';
