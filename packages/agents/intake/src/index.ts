@@ -7,11 +7,16 @@ export type {
   SavingsEstimate,
   RecordingTaxRateTable,
   LosAdapter,
+  IntakeDealInput,
+  IntakeAuditEvent,
+  IntakeDeps,
+  IntakeResult,
 } from './types';
 export { ELIGIBLE_PROPERTY_TYPES, EXCLUDED_LOAN_PROGRAMS } from './types';
 export { checkEligibility } from './eligibility';
 export { estimateSavings, PLACEHOLDER_RATES } from './savings';
 export { FixtureLosAdapter } from './fixture-los-adapter';
+export { runIntake } from './orchestrator';
 export {
   DEFAULT_FIXTURES,
   FIXTURE_ELIGIBLE_SINGLE_FAMILY,

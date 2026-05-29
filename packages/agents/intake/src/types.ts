@@ -113,3 +113,48 @@ export interface RecordingTaxRateTable {
 export interface LosAdapter {
   getApplication(externalId: string): Promise<NormalizedApplication>;
 }
+
+/** What the orchestrator hands its deal-creation collaborator (eligible applications only). */
+export interface IntakeDealInput {
+  application: NormalizedApplication;
+  savings: SavingsEstimate;
+}
+
+/**
+ * The audit event the orchestrator emits for every run (eligible or not), so the
+ * agent's decision is always recorded. `deal.created` is intentionally absent —
+ * that row is owned by `createDeal`, which writes it atomically with the insert.
+ */
+export interface IntakeAuditEvent {
+  action: 'intake.evaluated';
+  externalId: string;
+  eligible: boolean;
+  reasons: IneligibilityReason[];
+}
+
+/**
+ * Collaborators injected into `runIntake` so the agent core carries no app, DB,
+ * Clerk, or LLM dependency (orchestration-agnostic posture, plan Decision 1). The
+ * app wires these to the real createDeal Server Action + audit emitter; tests pass
+ * deterministic fakes.
+ */
+export interface IntakeDeps {
+  /** Loan-data surface (FixtureLosAdapter in tests; Encompass etc. in production). */
+  adapter: LosAdapter;
+  /** Creates a Deal (status='intake') from an eligible application. Owns the atomic `deal.created` audit row. */
+  createDeal: (input: IntakeDealInput) => Promise<{ dealId: string }>;
+  /** Emits the `intake.evaluated` audit event. */
+  emitAudit: (event: IntakeAuditEvent) => Promise<void>;
+  /** Recording-tax table; defaults to PLACEHOLDER_RATES when omitted. */
+  rates?: RecordingTaxRateTable;
+}
+
+/** Outcome of an intake run. */
+export interface IntakeResult {
+  externalId: string;
+  eligibility: EligibilityResult;
+  /** Computed only for eligible applications; null otherwise. */
+  savings: SavingsEstimate | null;
+  /** Set only when a Deal was created (eligible path); null otherwise. */
+  dealId: string | null;
+}
