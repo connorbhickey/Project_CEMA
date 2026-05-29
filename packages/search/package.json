@@ -12,10 +12,13 @@
   "dependencies": {
     "ai": "^4.0.0",
     "@ai-sdk/anthropic": "^1.0.0",
+    "@cema/observability": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@cema/config": "workspace:*",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"

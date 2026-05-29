@@ -13,8 +13,10 @@ vi.mock('ai', () => ({
   }),
 }));
 
+// createAnthropic is a two-level factory: createAnthropic(config) → gateway(modelId)
+// → model object (the generateObject mock above ignores it).
 vi.mock('@ai-sdk/anthropic', () => ({
-  anthropic: vi.fn().mockReturnValue({ modelId: 'claude-sonnet-4-6' }),
+  createAnthropic: vi.fn(() => () => ({ modelId: 'anthropic/claude-sonnet-4.6' })),
 }));
 
 import { classifyQueryIntent } from './classifier';
