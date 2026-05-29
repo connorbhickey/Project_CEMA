@@ -123,13 +123,13 @@ describe.skipIf(skip)('Intake Agent — app wiring (RLS write path)', () => {
     // ── Audit rows: intake.evaluated (application) + deal.created (deal) ──────
     const audits = (
       await db.select().from(auditEvents).where(eq(auditEvents.organizationId, ORG_A_ID))
-    ).filter((a) => (a.metadata).externalId === 'FIX-ELIG-SF');
+    ).filter((a) => a.metadata.externalId === 'FIX-ELIG-SF');
 
     const evaluated = audits.find((a) => a.action === 'intake.evaluated');
     expect(evaluated).toBeTruthy();
     expect(evaluated!.entityType).toBe('application');
     expect(evaluated!.entityId).toBeNull(); // no Deal UUID at evaluation time
-    expect((evaluated!.metadata).eligible).toBe(true);
+    expect(evaluated!.metadata.eligible).toBe(true);
 
     const created = audits.find((a) => a.action === 'deal.created');
     expect(created).toBeTruthy();
@@ -147,11 +147,11 @@ describe.skipIf(skip)('Intake Agent — app wiring (RLS write path)', () => {
 
     const audits = (
       await db.select().from(auditEvents).where(eq(auditEvents.organizationId, ORG_A_ID))
-    ).filter((a) => (a.metadata).externalId === 'FIX-INELIG-COOP');
+    ).filter((a) => a.metadata.externalId === 'FIX-INELIG-COOP');
 
     expect(audits).toHaveLength(1);
     expect(audits[0]!.action).toBe('intake.evaluated');
-    expect((audits[0]!.metadata).eligible).toBe(false);
+    expect(audits[0]!.metadata.eligible).toBe(false);
 
     // No deal.created row, and no Deal carrying this externalId.
     expect(audits.find((a) => a.action === 'deal.created')).toBeUndefined();
