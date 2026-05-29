@@ -91,6 +91,21 @@ export interface SavingsEstimate {
 }
 
 /**
+ * NY mortgage-recording-tax rates for the savings estimate. Table-driven so the
+ * real, attorney-confirmed table (plan §6.1) is a config swap, not a code change.
+ */
+export interface RecordingTaxRateTable {
+  /** True for non-authoritative placeholder values — propagates to SavingsEstimate.isPlaceholderRate. */
+  isPlaceholder: boolean;
+  /** Combined recording-tax rate (decimal fraction) per NY county; keys matched case-insensitively. */
+  ratesByCounty: Record<string, number>;
+  /** Rate applied when a county is absent from ratesByCounty. */
+  defaultRate: number;
+  /** Estimated CEMA-specific costs (servicer fee + attorney + title endorsement), in whole US dollars. */
+  estimatedFees: number;
+}
+
+/**
  * The single surface the Intake Agent depends on for loan data (spec §13.6).
  * Encompass / LendingPad / MeridianLink / Calyx each become an adapter impl;
  * slice 1 ships a FixtureLosAdapter so the core is testable without credentials.
