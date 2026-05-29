@@ -8,8 +8,11 @@ const generateTextMock = vi.fn<(args: unknown) => Promise<{ text: string }>>();
 vi.mock('ai', () => ({
   generateText: (args: unknown) => generateTextMock(args),
 }));
+// createAnthropic is a two-level factory: createAnthropic(config) → gateway(modelId)
+// → model object. The mock mirrors that chain so narrative.ts's Gateway binding
+// resolves; the returned model object is inert (the generateText mock ignores it).
 vi.mock('@ai-sdk/anthropic', () => ({
-  anthropic: vi.fn().mockReturnValue({ modelId: 'claude-sonnet-4-6' }),
+  createAnthropic: vi.fn(() => () => ({ modelId: 'anthropic/claude-sonnet-4.6' })),
 }));
 
 import { draftSavingsNarrative, isLlmConfigured } from './narrative';
@@ -46,13 +49,13 @@ function savings(overrides: Partial<SavingsEstimate> = {}): SavingsEstimate {
 describe('isLlmConfigured', () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it('is false when ANTHROPIC_API_KEY is empty/unset', () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', '');
+  it('is false when AI_GATEWAY_API_KEY is empty/unset', () => {
+    vi.stubEnv('AI_GATEWAY_API_KEY', '');
     expect(isLlmConfigured()).toBe(false);
   });
 
-  it('is true when ANTHROPIC_API_KEY is set', () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test');
+  it('is true when AI_GATEWAY_API_KEY is set', () => {
+    vi.stubEnv('AI_GATEWAY_API_KEY', 'test-key');
     expect(isLlmConfigured()).toBe(true);
   });
 });
@@ -68,14 +71,14 @@ describe('draftSavingsNarrative', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it('returns null and never calls the model when unconfigured', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('AI_GATEWAY_API_KEY', '');
     const result = await draftSavingsNarrative(app(), savings());
     expect(result).toBeNull();
     expect(generateTextMock).not.toHaveBeenCalled();
   });
 
   it('returns the generated narrative text when configured', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test');
+    vi.stubEnv('AI_GATEWAY_API_KEY', 'test-key');
     generateTextMock.mockResolvedValue({ text: 'This CEMA saves you about $7,000.' });
     const result = await draftSavingsNarrative(app(), savings());
     expect(result).toBe('This CEMA saves you about $7,000.');
@@ -83,13 +86,13 @@ describe('draftSavingsNarrative', () => {
   });
 
   it('trims surrounding whitespace from the model output', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test');
+    vi.stubEnv('AI_GATEWAY_API_KEY', 'test-key');
     generateTextMock.mockResolvedValue({ text: '\n  Net savings ~$7,000.  \n' });
     expect(await draftSavingsNarrative(app(), savings())).toBe('Net savings ~$7,000.');
   });
 
   it('lets a configured-but-failed model call surface (null means "off", not "broken")', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test');
+    vi.stubEnv('AI_GATEWAY_API_KEY', 'test-key');
     generateTextMock.mockRejectedValue(new Error('gateway 503'));
     await expect(draftSavingsNarrative(app(), savings())).rejects.toThrow('gateway 503');
   });

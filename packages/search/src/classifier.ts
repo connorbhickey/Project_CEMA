@@ -1,6 +1,16 @@
-import { anthropic } from '@ai-sdk/anthropic';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { withChildSpan } from '@cema/observability';
+import { trace } from '@opentelemetry/api';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+
+/** Vercel AI Gateway, Anthropic-compatible endpoint (ADR 0012) — keeps us on AI SDK v4. */
+const GATEWAY_BASE_URL = 'https://ai-gateway.vercel.sh/v1';
+
+/** Confirm against the live Gateway catalog once provisioned (ADR 0012 carry-over). */
+const GATEWAY_MODEL = 'anthropic/claude-sonnet-4.6';
+
+const tracer = trace.getTracer('@cema/search');
 
 export type QueryIntent = 'search' | 'action' | 'analytics';
 
@@ -26,10 +36,18 @@ export async function classifyQueryIntent(query: string): Promise<QueryClassific
     return { intent: 'search', confidence: 1, entities: [] };
   }
 
-  const result = await generateObject({
-    model: anthropic('claude-sonnet-4-6'),
-    schema: ClassificationSchema,
-    prompt: `You are classifying a query against a CEMA mortgage processor workspace.
+  return withChildSpan(tracer, 'search.classify_query', async (span) => {
+    span.setAttribute('gen_ai.request.model', GATEWAY_MODEL);
+
+    const gateway = createAnthropic({
+      baseURL: GATEWAY_BASE_URL,
+      apiKey: process.env.AI_GATEWAY_API_KEY,
+    });
+
+    const result = await generateObject({
+      model: gateway(GATEWAY_MODEL),
+      schema: ClassificationSchema,
+      prompt: `You are classifying a query against a CEMA mortgage processor workspace.
 
 Classify into one of:
   - "search": find existing communications, documents, contacts, or deals
@@ -41,7 +59,13 @@ Extract named entities.
 Query: ${query}
 
 Respond with a JSON object matching the schema. Most queries are 'search'.`,
-  });
+    });
 
-  return result.object;
+    // Only the non-PII classification lands on the span — never the query text
+    // or the extracted entity values (hard rule #3 / spans are logs).
+    span.setAttribute('search.intent', result.object.intent);
+    span.setAttribute('search.confidence', result.object.confidence);
+
+    return result.object;
+  });
 }

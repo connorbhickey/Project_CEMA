@@ -2,7 +2,7 @@
 /**
  * Skip-green wrapper for the savings-narrative Braintrust eval.
  *
- * The eval makes a live model call (ANTHROPIC_API_KEY) AND logs to Braintrust
+ * The eval makes a live model call (AI_GATEWAY_API_KEY) AND logs to Braintrust
  * (BRAINTRUST_API_KEY). Neither is provisioned in CI, so this mirrors the repo's
  * isXConfigured() gating: if either key is absent, log why and exit 0 — keeping the
  * non-blocking `llm-eval` job green. The compliance logic the eval grades is verified
@@ -13,7 +13,7 @@
  */
 import { spawnSync } from 'node:child_process';
 
-const REQUIRED_KEYS = ['BRAINTRUST_API_KEY', 'ANTHROPIC_API_KEY'];
+const REQUIRED_KEYS = ['BRAINTRUST_API_KEY', 'AI_GATEWAY_API_KEY'];
 const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
