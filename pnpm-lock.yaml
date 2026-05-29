@@ -628,6 +628,28 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
+  packages/observability:
+    dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.0
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../config
+      '@opentelemetry/sdk-trace-base':
+        specifier: ^2.0.0
+        version: 2.7.1(@opentelemetry/api@1.9.0)
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
   packages/queues:
     dependencies:
       zod:
