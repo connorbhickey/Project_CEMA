@@ -12,9 +12,11 @@ import { withRls } from '../../with-rls';
 
 /**
  * Wires the orchestration-agnostic Intake Agent core (`@cema/agents-intake`) to
- * this app's real persistence layer. The agent package carries no DB/Clerk/LLM
- * import (plan Decision 1); this is the seam where its injected collaborators
- * acquire concrete behaviour.
+ * this app's real persistence layer. The orchestrator core (`runIntake` + its
+ * injected collaborators) carries no DB/Clerk/LLM import (plan Decision 1); this
+ * is the seam where those collaborators acquire concrete behaviour. (The package
+ * also ships an additive, env-gated `draftSavingsNarrative` LLM module, but that
+ * is a separate export and not part of this deterministic write path.)
  *
  * Deliberately request-agnostic: it takes already-resolved internal UUIDs, never
  * Clerk handles, and never calls revalidatePath. Those request-context concerns

@@ -16,6 +16,8 @@ export type {
 export { ELIGIBLE_PROPERTY_TYPES, EXCLUDED_LOAN_PROGRAMS } from './types';
 export { checkEligibility } from './eligibility';
 export { estimateSavings, PLACEHOLDER_RATES } from './savings';
+export { isLlmConfigured, draftSavingsNarrative } from './narrative';
+export { buildSavingsNarrativePrompt } from './prompts/savings-narrative';
 export { FixtureLosAdapter } from './fixture-los-adapter';
 export { runIntake } from './orchestrator';
 export {
