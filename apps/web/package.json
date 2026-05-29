@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint app lib proxy.ts",
     "test": "vitest run",
+    "test:workflow": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
@@ -46,6 +47,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",
     "svix": "^1.45.0",
+    "workflow": "^4.2.5",
     "zod": "^3.23.0"
   },
   "devDependencies": {
@@ -55,6 +57,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@workflow/vitest": "^4.0.6",
     "autoprefixer": "^10.4.0",
     "cross-env": "^10.1.0",
     "dotenv": "^16.4.0",
