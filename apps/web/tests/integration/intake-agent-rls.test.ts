@@ -125,6 +125,13 @@ describe.skipIf(skip)('Intake Agent — app wiring (RLS write path)', () => {
       await db.select().from(auditEvents).where(eq(auditEvents.organizationId, ORG_A_ID))
     ).filter((a) => a.metadata.externalId === 'FIX-ELIG-SF');
 
+    // Exactly two rows, one of each action — no duplicate/stray emissions. This
+    // matters for an append-only log (§10.5): a double-emit can't be cleaned up,
+    // so the contract is enforced as exact, not "at least one". Ordering
+    // (evaluated before created) is proven below by entityId: null → deal.id.
+    expect(audits).toHaveLength(2);
+    expect(audits.map((a) => a.action).sort()).toEqual(['deal.created', 'intake.evaluated']);
+
     const evaluated = audits.find((a) => a.action === 'intake.evaluated');
     expect(evaluated).toBeTruthy();
     expect(evaluated!.entityType).toBe('application');
