@@ -4,12 +4,17 @@ import type { NormalizedApplication } from './types';
  * Deterministic loan-application fixtures for testing the Intake Agent without
  * any LOS credentials (plan Decision 2). Reused by the FixtureLosAdapter and the
  * Braintrust eval (plan §4 tasks 5 + 9). Each has a unique externalId.
+ *
+ * cemaType is mixed across fixtures (≈2/3 refi, 1/3 purchase) so the eval and the
+ * Deal-creation path both exercise each transaction type, roughly mirroring the
+ * real ~75/25 refi/purchase split (spec §14).
  */
 
 // ── Eligible ────────────────────────────────────────────────────────────────
 
 export const FIXTURE_ELIGIBLE_SINGLE_FAMILY: NormalizedApplication = {
   externalId: 'FIX-ELIG-SF',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'single_family',
   loanProgram: 'conventional',
@@ -21,6 +26,7 @@ export const FIXTURE_ELIGIBLE_SINGLE_FAMILY: NormalizedApplication = {
 
 export const FIXTURE_ELIGIBLE_CONDO: NormalizedApplication = {
   externalId: 'FIX-ELIG-CONDO',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'condo',
   loanProgram: 'conventional',
@@ -32,6 +38,7 @@ export const FIXTURE_ELIGIBLE_CONDO: NormalizedApplication = {
 
 export const FIXTURE_ELIGIBLE_TWO_FAMILY: NormalizedApplication = {
   externalId: 'FIX-ELIG-2FAM',
+  cemaType: 'purchase_cema',
   state: 'NY',
   propertyType: 'two_family',
   loanProgram: 'conventional',
@@ -43,6 +50,7 @@ export const FIXTURE_ELIGIBLE_TWO_FAMILY: NormalizedApplication = {
 
 export const FIXTURE_ELIGIBLE_THREE_FAMILY: NormalizedApplication = {
   externalId: 'FIX-ELIG-3FAM',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'three_family',
   loanProgram: 'conventional',
@@ -54,6 +62,7 @@ export const FIXTURE_ELIGIBLE_THREE_FAMILY: NormalizedApplication = {
 
 export const FIXTURE_ELIGIBLE_PUD: NormalizedApplication = {
   externalId: 'FIX-ELIG-PUD',
+  cemaType: 'purchase_cema',
   state: 'NY',
   propertyType: 'pud',
   loanProgram: 'conventional',
@@ -66,6 +75,7 @@ export const FIXTURE_ELIGIBLE_PUD: NormalizedApplication = {
 /** USDA is not on the VA/FHA blocklist, so it currently passes — a deliberate edge for the eval (see plan §6.2). */
 export const FIXTURE_ELIGIBLE_USDA: NormalizedApplication = {
   externalId: 'FIX-ELIG-USDA',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'single_family',
   loanProgram: 'usda',
@@ -79,6 +89,7 @@ export const FIXTURE_ELIGIBLE_USDA: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_NON_NY: NormalizedApplication = {
   externalId: 'FIX-INELIG-NONNY',
+  cemaType: 'refi_cema',
   state: 'NJ',
   propertyType: 'single_family',
   loanProgram: 'conventional',
@@ -90,6 +101,7 @@ export const FIXTURE_INELIGIBLE_NON_NY: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_COOP: NormalizedApplication = {
   externalId: 'FIX-INELIG-COOP',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'co_op',
   loanProgram: 'conventional',
@@ -101,6 +113,7 @@ export const FIXTURE_INELIGIBLE_COOP: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_VA: NormalizedApplication = {
   externalId: 'FIX-INELIG-VA',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'single_family',
   loanProgram: 'va',
@@ -112,6 +125,7 @@ export const FIXTURE_INELIGIBLE_VA: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_FHA: NormalizedApplication = {
   externalId: 'FIX-INELIG-FHA',
+  cemaType: 'purchase_cema',
   state: 'NY',
   propertyType: 'two_family',
   loanProgram: 'fha',
@@ -123,6 +137,7 @@ export const FIXTURE_INELIGIBLE_FHA: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_SECOND_LIEN: NormalizedApplication = {
   externalId: 'FIX-INELIG-2NDLIEN',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'single_family',
   loanProgram: 'conventional',
@@ -134,6 +149,7 @@ export const FIXTURE_INELIGIBLE_SECOND_LIEN: NormalizedApplication = {
 
 export const FIXTURE_INELIGIBLE_ZERO_UPB: NormalizedApplication = {
   externalId: 'FIX-INELIG-ZEROUPB',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'condo',
   loanProgram: 'conventional',
@@ -147,6 +163,7 @@ export const FIXTURE_INELIGIBLE_ZERO_UPB: NormalizedApplication = {
 
 export const FIXTURE_EDGE_FOUR_PLUS_FAMILY: NormalizedApplication = {
   externalId: 'FIX-EDGE-4PLUS',
+  cemaType: 'refi_cema',
   state: 'NY',
   propertyType: 'four_plus_family',
   loanProgram: 'conventional',
@@ -158,6 +175,7 @@ export const FIXTURE_EDGE_FOUR_PLUS_FAMILY: NormalizedApplication = {
 
 export const FIXTURE_EDGE_MIXED_USE: NormalizedApplication = {
   externalId: 'FIX-EDGE-MIXEDUSE',
+  cemaType: 'purchase_cema',
   state: 'NY',
   propertyType: 'mixed_use',
   loanProgram: 'conventional',
@@ -170,6 +188,7 @@ export const FIXTURE_EDGE_MIXED_USE: NormalizedApplication = {
 /** Trips every rule at once — exercises the multi-reason accumulation path. */
 export const FIXTURE_EDGE_MULTI_FAIL: NormalizedApplication = {
   externalId: 'FIX-EDGE-MULTIFAIL',
+  cemaType: 'purchase_cema',
   state: 'CA',
   propertyType: 'co_op',
   loanProgram: 'fha',

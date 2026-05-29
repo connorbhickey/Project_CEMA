@@ -6,6 +6,7 @@ import type { NormalizedApplication, RecordingTaxRateTable } from './types';
 function app(overrides: Partial<NormalizedApplication> = {}): NormalizedApplication {
   return {
     externalId: 'LOS-0001',
+    cemaType: 'refi_cema',
     state: 'NY',
     propertyType: 'single_family',
     loanProgram: 'conventional',

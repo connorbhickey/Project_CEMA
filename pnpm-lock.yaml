@@ -59,6 +59,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@cema/agents-intake':
+        specifier: workspace:*
+        version: link:../../packages/agents/intake
       '@cema/attorney':
         specifier: workspace:*
         version: link:../../packages/attorney

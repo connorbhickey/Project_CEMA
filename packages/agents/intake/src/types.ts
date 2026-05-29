@@ -19,6 +19,14 @@ export type PropertyType =
 /** Loan program. VA/FHA are government-backed and excluded in v1 (spec §9.3). */
 export type LoanProgram = 'conventional' | 'va' | 'fha' | 'usda';
 
+/**
+ * CEMA transaction type (spec §14 glossary). Refi-CEMA is ~75% of volume (same
+ * borrower refinances); Purchase CEMA is ~25% (buyer assumes the seller's chain).
+ * Mirrors the `deals.cemaType` NOT-NULL column, so the agent can create a Deal
+ * without inventing this classification.
+ */
+export type CemaType = 'refi_cema' | 'purchase_cema';
+
 /** CEMA-eligible property types (v1). Anything not in this set fails closed. */
 export const ELIGIBLE_PROPERTY_TYPES: readonly PropertyType[] = [
   'single_family',
@@ -39,6 +47,8 @@ export const EXCLUDED_LOAN_PROGRAMS: readonly LoanProgram[] = ['va', 'fha'] as c
 export interface NormalizedApplication {
   /** Stable identifier in the source LOS. */
   externalId: string;
+  /** CEMA transaction type (refi vs purchase) — drives the Deal's `cemaType`. */
+  cemaType: CemaType;
   /** USPS two-letter state code of the subject property (e.g. "NY"). */
   state: string;
   /** Subject-property type. */

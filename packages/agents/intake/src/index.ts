@@ -1,6 +1,7 @@
 export type {
   PropertyType,
   LoanProgram,
+  CemaType,
   NormalizedApplication,
   IneligibilityReason,
   EligibilityResult,

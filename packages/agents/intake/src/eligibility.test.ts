@@ -7,6 +7,7 @@ import type { LoanProgram, NormalizedApplication, PropertyType } from './types';
 function eligibleApp(overrides: Partial<NormalizedApplication> = {}): NormalizedApplication {
   return {
     externalId: 'LOS-0001',
+    cemaType: 'refi_cema',
     state: 'NY',
     propertyType: 'single_family',
     loanProgram: 'conventional',
