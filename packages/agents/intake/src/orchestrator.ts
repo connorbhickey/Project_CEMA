@@ -1,4 +1,6 @@
+import { withChildSpan } from '@cema/observability';
 import { SpanStatusCode, type Span, trace } from '@opentelemetry/api';
+
 
 import { checkEligibility } from './eligibility';
 import { estimateSavings } from './savings';
@@ -11,21 +13,6 @@ import type { IntakeDeps, IntakeResult } from './types';
  * tests or other consumers adds no behavior.
  */
 const tracer = trace.getTracer('@cema/agents-intake');
-
-/** Wrap one awaited boundary in a child span, recording failures on it before rethrow. */
-function withChildSpan<T>(name: string, fn: () => Promise<T>): Promise<T> {
-  return tracer.startActiveSpan(name, async (span) => {
-    try {
-      return await fn();
-    } catch (err) {
-      span.recordException(err as Error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
-      throw err;
-    } finally {
-      span.end();
-    }
-  });
-}
 
 /**
  * Runs the Intake Agent end-to-end for one application (spec §9.3).
@@ -57,7 +44,7 @@ export async function runIntake(externalId: string, deps: IntakeDeps): Promise<I
   return tracer.startActiveSpan('intake.run', async (span: Span) => {
     span.setAttribute('intake.external_id', externalId);
     try {
-      const application = await withChildSpan('intake.fetch_application', () =>
+      const application = await withChildSpan(tracer, 'intake.fetch_application', () =>
         deps.adapter.getApplication(externalId),
       );
       span.setAttributes({
@@ -73,7 +60,7 @@ export async function runIntake(externalId: string, deps: IntakeDeps): Promise<I
       span.setAttribute('intake.eligible', eligibility.eligible);
       span.setAttribute('intake.reasons', eligibility.reasons);
 
-      await withChildSpan('intake.emit_audit', () =>
+      await withChildSpan(tracer, 'intake.emit_audit', () =>
         deps.emitAudit({
           action: 'intake.evaluated',
           externalId,
@@ -90,7 +77,7 @@ export async function runIntake(externalId: string, deps: IntakeDeps): Promise<I
       const savings = estimateSavings(application, deps.rates);
       span.setAttribute('intake.is_placeholder_rate', savings.isPlaceholderRate);
 
-      const { dealId } = await withChildSpan('intake.create_deal', () =>
+      const { dealId } = await withChildSpan(tracer, 'intake.create_deal', () =>
         deps.createDeal({ application, savings }),
       );
       span.setAttribute('intake.deal_id', dealId);
