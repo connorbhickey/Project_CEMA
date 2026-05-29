@@ -9,6 +9,10 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "ai": "^4.0.0",
+    "@ai-sdk/anthropic": "^1.0.0"
+  },
   "devDependencies": {
     "@cema/config": "workspace:*",
     "@types/node": "^22.0.0",

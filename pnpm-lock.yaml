@@ -197,6 +197,13 @@ importers:
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
   packages/agents/intake:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.0.0
+        version: 1.2.12(zod@3.25.76)
+      ai:
+        specifier: ^4.0.0
+        version: 4.3.19(react@19.2.6)(zod@3.25.76)
     devDependencies:
       '@cema/config':
         specifier: workspace:*
