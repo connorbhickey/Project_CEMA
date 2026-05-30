@@ -73,7 +73,7 @@ export function buildOutreachDeps(args: BuildOutreachDepsArgs): OutreachDeps {
             .where(eq(servicerCemaDepartments.servicerId, loan.servicerId))
             .limit(1);
           departmentEmail = dept?.email ?? null;
-          acceptedSubmissionMethods = (dept?.accepted ?? []);
+          acceptedSubmissionMethods = dept?.accepted ?? [];
         }
 
         // Count sent touches via communications rows we own (sourceThreadId scopes to this deal's
