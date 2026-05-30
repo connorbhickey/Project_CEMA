@@ -62,6 +62,9 @@ importers:
       '@cema/agents-intake':
         specifier: workspace:*
         version: link:../../packages/agents/intake
+      '@cema/agents-servicer-outreach':
+        specifier: workspace:*
+        version: link:../../packages/agents/servicer-outreach
       '@cema/attorney':
         specifier: workspace:*
         version: link:../../packages/attorney
