@@ -245,6 +245,43 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
+  packages/agents/servicer-outreach:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.0.0
+        version: 1.2.12(zod@4.3.6)
+      '@cema/observability':
+        specifier: workspace:*
+        version: link:../../observability
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.0
+      ai:
+        specifier: ^4.0.0
+        version: 4.3.19(react@19.2.6)(zod@4.3.6)
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../../config
+      '@opentelemetry/context-async-hooks':
+        specifier: ^2.0.0
+        version: 2.7.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base':
+        specifier: ^2.0.0
+        version: 2.7.1(@opentelemetry/api@1.9.0)
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      braintrust:
+        specifier: ^3.13.0
+        version: 3.13.0(@aws-sdk/credential-provider-web-identity@3.972.13)(zod@4.3.6)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
   packages/attorney:
     devDependencies:
       '@cema/config':
