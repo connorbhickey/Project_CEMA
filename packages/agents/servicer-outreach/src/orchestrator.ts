@@ -80,6 +80,15 @@ export async function runOutreach(dealId: string, deps: OutreachDeps): Promise<O
         dealId,
       };
 
+      // Idempotency note: `recordTouch` enforces uniqueness at the DB level via
+      // `communications.vendorEventId` UNIQUE index, so a duplicate insert is
+      // rejected. The window between `channel.send` and `recordTouch` means two
+      // concurrent evaluators could both deliver the email if they both pass the
+      // nextOutreachAction decision before either commits a row. This is a known
+      // limitation while the action is DORMANT (FixtureChannelAdapter, no real
+      // delivery). A pre-send Upstash SETNX claim keyed on the same vendorEventId
+      // will close this window when a real ResendChannelAdapter + Upstash are
+      // provisioned (ADR carry-over).
       const result = await withChildSpan(tracer, 'outreach.send_touch', () =>
         deps.channel.send(packet),
       );

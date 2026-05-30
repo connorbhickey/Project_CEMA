@@ -6,6 +6,7 @@ import {
   type OutreachResult,
 } from '@cema/agents-servicer-outreach';
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
+import { redactPii } from '@cema/compliance';
 import { getDb, organizations, users } from '@cema/db';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { eq } from 'drizzle-orm';
@@ -62,8 +63,10 @@ export async function runOutreachFromDeal(dealId: string): Promise<OutreachResul
       span.setStatus({ code: SpanStatusCode.OK });
       return result;
     } catch (err) {
+      // PII-safe: redact the error message before recording in the trace (CLAUDE.md §10.3).
+      const safeMessage = redactPii((err as Error).message ?? String(err));
       span.recordException(err as Error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: safeMessage });
       throw err;
     } finally {
       span.end();
