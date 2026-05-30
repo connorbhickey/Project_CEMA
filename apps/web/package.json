@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cema/agents-intake": "workspace:*",
+    "@cema/agents-servicer-outreach": "workspace:*",
     "@cema/attorney": "workspace:*",
     "@cema/auth": "workspace:*",
     "@cema/blob": "workspace:*",
