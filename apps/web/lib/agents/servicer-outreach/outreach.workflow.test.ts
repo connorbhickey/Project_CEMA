@@ -1,7 +1,6 @@
 import type { OutreachResult } from '@cema/agents-servicer-outreach';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-
 vi.mock('workflow', () => ({ sleep: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('./outreach.steps', () => ({ runOutreachStep: vi.fn() }));
 

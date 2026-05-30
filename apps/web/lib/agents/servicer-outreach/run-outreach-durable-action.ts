@@ -9,7 +9,6 @@ import { start } from 'workflow/api';
 
 import { outreachWorkflow } from './outreach.workflow';
 
-
 const tracer = trace.getTracer('@cema/web');
 
 /**
@@ -45,7 +44,7 @@ export async function runOutreachFromDealDurable(dealId: string): Promise<Outrea
       if (!user) throw new Error('User not synced yet');
 
       const run = await start(outreachWorkflow, [dealId, org.id, user.id]);
-      const result = (await run.returnValue);
+      const result = await run.returnValue;
 
       span.setAttribute('outreach.action', result.action.kind);
       span.setAttribute('outreach.touch_sent', result.touchSent !== null);
