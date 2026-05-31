@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cema/agents-collateral-idp": "workspace:*",
     "@cema/agents-intake": "workspace:*",
     "@cema/agents-servicer-outreach": "workspace:*",
     "@cema/attorney": "workspace:*",
