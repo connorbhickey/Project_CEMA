@@ -1,0 +1,27 @@
+{
+  "name": "@cema/agents-chain-of-title",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "eval": "node evals/run.mjs"
+  },
+  "dependencies": {
+    "@cema/agents-collateral-idp": "workspace:*",
+    "@cema/observability": "workspace:*",
+    "@opentelemetry/api": "^1.9.0"
+  },
+  "devDependencies": {
+    "@cema/config": "workspace:*",
+    "@opentelemetry/context-async-hooks": "^2.0.0",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "braintrust": "^3.13.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
