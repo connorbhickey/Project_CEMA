@@ -13,8 +13,10 @@ const tracer = trace.getTracer('@cema/agents-collateral-idp');
  * documents, runs each blob through the (dormant) vendor adapter, and
  * deterministically classifies + extracts every readable segment into an
  * InstrumentRecord -- enriching the source documents row 1:1 in place. A
- * segment with null text or sub-threshold confidence is routed to the
- * unreadable bucket (surfaced for human review) and never persisted.
+ * segment whose extraction confidence is below UNREADABLE_CONFIDENCE_THRESHOLD
+ * is routed to the unreadable bucket (surfaced for human review) and never
+ * persisted; null `text` with structured `fields` at adequate confidence is a
+ * normal readable shape (classify reads `fields.documentType ?? text`).
  *
  * Split audit: idp.evaluated is emitted on EVERY run before any write;
  * idp.documents_classified is written co-transactionally with the enrich
