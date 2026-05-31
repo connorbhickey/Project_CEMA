@@ -1,0 +1,10 @@
+{
+  "extends": "@cema/config/tsconfig/node.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["src/**/*", "evals/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
