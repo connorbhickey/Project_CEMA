@@ -271,7 +271,7 @@ carry-over (the `Promise<Result>` contract becomes return-`runId` at activation)
   throws → record exception + span error + rethrow (let the durable step retry); a
   test asserts every classified gate-kind satisfies `documents_attorney_gate_required`.
 - **Chain:** **zero instruments → `ambiguous`** (cannot _prove_ clean →
-  attorney_review, never a silent pass); lone mortgage + no assignments (common
+  `attorney_review`, never a silent pass); lone mortgage + no assignments (common
   refi-CEMA) → `clean` only if it _is_ the current holder; cyclic / duplicate edges →
   `ambiguous`.
 
