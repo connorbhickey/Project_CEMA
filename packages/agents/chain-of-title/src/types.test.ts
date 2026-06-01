@@ -1,4 +1,4 @@
-import type { InstrumentRecord } from '@cema/agents-collateral-idp';
+import type { InstrumentRecord } from '@cema/collateral';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -41,9 +41,9 @@ describe('chain-of-title type tuples', () => {
   });
 
   // Compile-time field-drift guard: this literal must satisfy the InstrumentRecord
-  // shape re-exported from @cema/agents-collateral-idp. If IDP renames/adds a
+  // shape exported from @cema/collateral. If the shared vocabulary renames/adds a
   // required field, this file stops compiling -- forcing a conscious update here.
-  it('matches the collateral-idp InstrumentRecord shape', () => {
+  it('matches the @cema/collateral InstrumentRecord shape', () => {
     const sample: InstrumentRecord = {
       documentId: 'doc-1',
       instrumentKind: 'aom',
