@@ -187,10 +187,18 @@ promoted it to the shared `@cema/collateral` package — carry-over #5, resolved
    0013 carry-over #5). Single-pass makes the in-request `await run.returnValue` far
    less acute than M12's long-sleeping cadence, but it should still become
    fire-and-forget at activation.
-4. **Deal-scoped attorney-review surface** — a UI that surfaces gate-required
-   instruments for attorney action; the gate boolean is set but nothing renders it. The
-   live action's `revalidatePath('/deals/[id]/documents')` targets a not-yet-existent
-   route (a harmless no-op until that page is built).
+4. **Deal-scoped attorney-review surface — RESOLVED (rendering half; 2026-06-01, M14
+   Slice 3, PRs #104 + #105).** The IDP set the gate boolean but nothing rendered it, and
+   the live action's `revalidatePath('/deals/[id]/documents')` targeted a
+   not-yet-existent route (a harmless no-op until the page existed). The **rendering half
+   is now resolved**: a deal-scoped review surface at `/deals/[id]/documents` (RSC page +
+   two RLS loaders `getDealDocumentsReview` / `getDealChainFindings` + the
+   `DealDocumentReviewActions` client island) renders every gate-required instrument and
+   offers a UI-driven `submitForReview` on gate-required docs that still lack a queue row
+   (Decision 2 — the IDP sets `attorneyReviewRequired` but does not auto-enqueue). The
+   IDP action's `revalidatePath('/deals/[id]/documents')` is therefore no longer a no-op.
+   **New fast-follow carry-over:** auto-enqueue gate-required docs from the IDP
+   `persistDocuments` path so review rows appear without a manual submit.
 5. **Promote `InstrumentRecord` to a shared `@cema/collateral` package — RESOLVED
    (2026-05-31, M14 Slice 4, PRs #101 + #102).** The shared collateral vocabulary
    (`DOCUMENT_KINDS`/`DocumentKind`, `GATE_REQUIRED_KINDS`, `RecordingRef`,
