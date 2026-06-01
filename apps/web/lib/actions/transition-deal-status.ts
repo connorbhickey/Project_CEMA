@@ -6,6 +6,7 @@ import { dealStatusEnum, deals, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
+import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
 
 // ---------------------------------------------------------------------------
@@ -15,8 +16,10 @@ import { withRls } from '../with-rls';
 // is the trigger surface for the Layer-3 agents (M14). There is deliberately
 // NO transition state-machine here: the spec does not define a legal
 // deal_status edge set, and inventing one risks blocking legitimate flows.
-// The action simply records the change and audits it. A future guard can be
-// layered on once the spec settles the lifecycle graph.
+// The action simply records the change, audits it, and — only after the write
+// commits — fans out to the agent dispatcher (best-effort; see
+// onDealStatusChanged). A future guard can be layered on once the spec settles
+// the lifecycle graph.
 //
 // PII-safe by construction: the only audit metadata is the {from, to} pair of
 // deal_status enum values (hard rule #3) — never party names or amounts.
@@ -95,6 +98,12 @@ export async function transitionDealStatus(
 
   if (result.changed) {
     revalidatePath('/deals');
+    // Post-commit agent dispatch. onDealStatusChanged swallows its own errors,
+    // so a failed agent run can never undo the (already-committed) status
+    // change. Awaited in-request because the agent actions are session-backed
+    // (cron/queue have no request session, and there is no durable backend
+    // yet); at durable activation this becomes fire-and-forget.
+    await onDealStatusChanged(dealId, result.to);
   }
 
   return result;

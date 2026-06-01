@@ -46,6 +46,13 @@ vi.mock('next/cache', () => ({
 
 vi.mock('../with-rls', () => ({ withRls: vi.fn() }));
 
+// The post-commit agent dispatch is exercised by its own suite
+// (on-deal-status-changed.test.ts). Here we mock it to keep this unit focused
+// on the write+audit path and to sever the heavy agent import graph.
+vi.mock('../agents/on-deal-status-changed', () => ({
+  onDealStatusChanged: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
@@ -54,6 +61,7 @@ import { emitAuditEvent } from '@cema/compliance';
 import { getDb } from '@cema/db';
 import { revalidatePath } from 'next/cache';
 
+import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
 
 import { transitionDealStatus } from './transition-deal-status';
@@ -152,6 +160,7 @@ describe('transitionDealStatus', () => {
     expect(updateSpy).not.toHaveBeenCalled();
     expect(emitAuditEvent).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(onDealStatusChanged).not.toHaveBeenCalled();
   });
 
   it('writes the new status, emits a PII-safe audit event, and revalidates on a real change', async () => {
@@ -174,6 +183,8 @@ describe('transitionDealStatus', () => {
       }),
     );
     expect(revalidatePath).toHaveBeenCalledWith('/deals');
+    // Post-commit dispatch fires with the new status only on a real change.
+    expect(onDealStatusChanged).toHaveBeenCalledWith('deal-1', 'eligibility');
   });
 
   it('sets completedAt when transitioning to completed (deals_completed_at_required CHECK)', async () => {
