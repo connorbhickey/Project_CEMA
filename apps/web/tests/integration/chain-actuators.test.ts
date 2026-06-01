@@ -1,5 +1,13 @@
 import type { RouteDecision } from '@cema/agents-chain-of-title';
-import { auditEvents, deals, getDb, organizations, users } from '@cema/db';
+import {
+  auditEvents,
+  chainBreakReviewQueue,
+  deals,
+  documents,
+  getDb,
+  organizations,
+  users,
+} from '@cema/db';
 import { and, eq } from 'drizzle-orm';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -76,6 +84,20 @@ describe.skipIf(skip)('Chain-of-Title route actuators (Neon integration)', () =>
         createdById: USER_ID,
       })
       .onConflictDoNothing();
+    // The attorney_review break attaches to a real document — chain_break_review_queue
+    // .document_id FKs documents.id. In production this id is always an IDP-persisted
+    // document; here we seed it so the enqueue's FK is satisfied.
+    await db
+      .insert(documents)
+      .values({
+        id: ATTY_DOC_ID,
+        dealId: DEAL_ID,
+        kind: 'note',
+        status: 'draft',
+        attorneyReviewRequired: false,
+        version: 1,
+      })
+      .onConflictDoNothing();
   });
 
   // audit_events is append-only (immutability trigger) and breakHash is
@@ -114,24 +136,73 @@ describe.skipIf(skip)('Chain-of-Title route actuators (Neon integration)', () =>
     ]);
   });
 
-  it('openAttorneyReview writes a PII-safe chain.break_routed audit (with documentId)', async () => {
+  it('openAttorneyReview enqueues a chain_break_review_queue row (Tier 2)', async () => {
     const deps = buildChainDeps({ organizationId: ORG_ID, actorUserId: USER_ID });
+    const db = getDb();
+    const hash = breakHash(attorneyDecision);
 
     await deps.openAttorneyReview(attorneyDecision);
 
-    const hash = breakHash(attorneyDecision);
-    const rows = await breakRoutedAuditsFor(DEAL_ID);
-    const matching = rows.filter((e) => (e.metadata as { breakHash?: string }).breakHash === hash);
-    expect(matching.length).toBeGreaterThanOrEqual(1);
+    const rows = await db
+      .select()
+      .from(chainBreakReviewQueue)
+      .where(
+        and(eq(chainBreakReviewQueue.dealId, DEAL_ID), eq(chainBreakReviewQueue.breakHash, hash)),
+      );
+    expect(rows).toHaveLength(1);
+    const row = rows[0]!;
+    expect(row.state).toBe('pending');
+    expect(row.breakKind).toBe('lost_note');
+    expect(row.documentId).toBe(ATTY_DOC_ID);
+    expect(row.reason).toBe(attorneyDecision.reason);
+    expect(row.submittedById).toBe(USER_ID);
+    expect(row.organizationId).toBe(ORG_ID);
+    expect(row.reviewerId).toBeNull();
+    expect(row.decidedAt).toBeNull();
+    expect(row.resolutionNote).toBeNull();
+  });
 
-    const row = matching[0]!;
-    expect(row.entityId).toBe(DEAL_ID);
-    expect(row.metadata).toEqual({
+  it('openAttorneyReview audits with a queueId only on a real insert (idempotent replay)', async () => {
+    const deps = buildChainDeps({ organizationId: ORG_ID, actorUserId: USER_ID });
+    const db = getDb();
+    const hash = breakHash(attorneyDecision);
+
+    // Ensure the row exists (onConflictDoNothing makes this idempotent across
+    // runs) and capture its id.
+    await deps.openAttorneyReview(attorneyDecision);
+    const [row] = await db
+      .select()
+      .from(chainBreakReviewQueue)
+      .where(
+        and(eq(chainBreakReviewQueue.dealId, DEAL_ID), eq(chainBreakReviewQueue.breakHash, hash)),
+      );
+    expect(row).toBeDefined();
+
+    const auditsForHash = async () =>
+      (await breakRoutedAuditsFor(DEAL_ID)).filter(
+        (e) => (e.metadata as { breakHash?: string }).breakHash === hash,
+      );
+
+    // Replay: the row already exists -> onConflictDoNothing -> no insert -> no
+    // new audit. The count must not grow (idempotent). NOTE: audit_events is
+    // append-only, so older Tier-1 audits (no queueId) may also match this hash;
+    // we therefore identify "our" audit by queueId rather than by position.
+    const before = await auditsForHash();
+    await deps.openAttorneyReview(attorneyDecision);
+    const after = await auditsForHash();
+    expect(after.length).toBe(before.length);
+
+    // The real-insert audit (whenever it fired) carries the queueId + PII-safe
+    // metadata, and nothing else.
+    const tagged = after.find((e) => (e.metadata as { queueId?: string }).queueId === row!.id);
+    expect(tagged).toBeDefined();
+    expect(tagged!.metadata).toEqual({
       source: 'chain-of-title',
       kind: 'attorney_review',
       documentId: ATTY_DOC_ID,
       reason: attorneyDecision.reason,
       breakHash: hash,
+      queueId: row!.id,
     });
   });
 });

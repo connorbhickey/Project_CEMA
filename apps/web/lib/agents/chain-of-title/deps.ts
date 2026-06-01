@@ -7,7 +7,7 @@ import type {
   RouteDecision,
 } from '@cema/agents-chain-of-title';
 import { emitAuditEvent } from '@cema/compliance';
-import { documents } from '@cema/db';
+import { chainBreakReviewQueue, documents } from '@cema/db';
 import { eq } from 'drizzle-orm';
 
 import { withRls } from '../../with-rls';
@@ -40,12 +40,11 @@ function toInstrument(row: { id: string; extractedData: unknown }): InstrumentRe
  * split audit (chain.analyzed / chain.routed counts).
  */
 export function buildChainDeps({ organizationId, actorUserId }: BuildDepsArgs): ChainDeps {
-  // Tier 1 actuator: persist one PII-safe chain.break_routed audit per routed
-  // break, keyed by a deterministic breakHash. Both seams share this body --
-  // they record the same audit shape and differ only by decision.kind, which is
-  // already in the metadata. The seams stay distinct so Tier 2 can diverge (a
-  // re_chase re-invokes Outreach; an attorney_review opens a review-queue row)
-  // without touching the orchestrator's per-break dispatch.
+  // re_chase actuator (unchanged from Tier 1): persist one PII-safe
+  // chain.break_routed audit per routed break, keyed by a deterministic
+  // breakHash. The actual re-chase effect is the collateral pipeline's
+  // deal-grained, idempotent Outreach hand-off (the pipeline is the only live
+  // chain trigger) -- so this seam stays audit-only.
   const recordBreakRouted = (decision: RouteDecision): Promise<void> =>
     withRls(organizationId, async (tx) => {
       await emitAuditEvent(tx, {
@@ -64,6 +63,55 @@ export function buildChainDeps({ organizationId, actorUserId }: BuildDepsArgs): 
       });
     });
 
+  // attorney_review actuator (Tier 2): idempotently enqueue a chain_break_review_queue
+  // row keyed (deal_id, break_hash). The chain.break_routed audit fires only on a
+  // REAL insert (onConflictDoNothing returns []), so a chain re-analysis stays
+  // idempotent -- mirrors the IDP auto-enqueue (collateral-idp/deps.ts). The
+  // co-transactional audit + row cannot diverge.
+  const enqueueAttorneyReview = (decision: RouteDecision): Promise<void> =>
+    withRls(organizationId, async (tx) => {
+      // attorney_review decisions always carry a concrete BreakKind; guard the
+      // invariant rather than silently dropping a gate-relevant break (hard rule #2).
+      if (decision.breakKind === null) {
+        throw new Error('openAttorneyReview requires a RouteDecision with a non-null breakKind');
+      }
+      const hash = breakHash(decision);
+      const [queued] = await tx
+        .insert(chainBreakReviewQueue)
+        .values({
+          organizationId,
+          dealId: decision.dealId,
+          breakHash: hash,
+          breakKind: decision.breakKind,
+          documentId: decision.documentId,
+          reason: decision.reason,
+          submittedById: actorUserId,
+          state: 'pending',
+        })
+        .onConflictDoNothing({
+          target: [chainBreakReviewQueue.dealId, chainBreakReviewQueue.breakHash],
+        })
+        .returning({ id: chainBreakReviewQueue.id });
+
+      if (queued) {
+        await emitAuditEvent(tx, {
+          organizationId,
+          actorUserId,
+          action: 'chain.break_routed',
+          entityType: 'deal',
+          entityId: decision.dealId,
+          metadata: {
+            source: 'chain-of-title',
+            kind: decision.kind,
+            documentId: decision.documentId,
+            reason: decision.reason,
+            breakHash: hash,
+            queueId: queued.id,
+          },
+        });
+      }
+    });
+
   return {
     loadInstruments: (dealId: string): Promise<readonly InstrumentRecord[]> =>
       withRls(organizationId, async (tx) => {
@@ -75,7 +123,7 @@ export function buildChainDeps({ organizationId, actorUserId }: BuildDepsArgs): 
       }),
 
     routeReChase: recordBreakRouted,
-    openAttorneyReview: recordBreakRouted,
+    openAttorneyReview: enqueueAttorneyReview,
 
     emitAudit: (event: ChainAuditEvent): Promise<void> =>
       withRls(organizationId, async (tx) => {

@@ -1,5 +1,13 @@
 import type { InstrumentRecord } from '@cema/collateral';
-import { deals, documentReviewQueue, documents, getDb, organizations, users } from '@cema/db';
+import {
+  chainBreakReviewQueue,
+  deals,
+  documentReviewQueue,
+  documents,
+  getDb,
+  organizations,
+  users,
+} from '@cema/db';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +28,7 @@ vi.mock('@cema/auth', () => ({
 // because the loaders transitively import '@/lib/with-rls'.
 const { getDealChainFindings } = await import('../../lib/queries/deal-chain-findings');
 const { getDealDocumentsReview } = await import('../../lib/queries/deal-documents-review');
+const { getDealChainBreakReviews } = await import('../../lib/queries/deal-chain-break-reviews');
 
 const ORG_A = '00000000-0000-0000-0000-0000000000a1';
 const ORG_B = '00000000-0000-0000-0000-0000000000b1';
@@ -27,6 +36,7 @@ const USER_A = '00000000-0000-0000-0000-000000000a01';
 const DEAL_A = '00000000-0000-0000-0000-0000000000e1';
 const DOC_MORT = '00000000-0000-0000-0000-0000000000d1';
 const DOC_AOM = '00000000-0000-0000-0000-0000000000d2';
+const CBR_HASH = 'a1b2c3d4'; // a chain_break_review_queue row keyed on this break
 
 function inst(
   documentId: string,
@@ -99,6 +109,22 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
         },
       ])
       .onConflictDoNothing();
+    // A persisted attorney_review break for DEAL_A so getDealChainBreakReviews
+    // has a row to return (the loader is read-only; the actuator's enqueue is
+    // covered by chain-actuators.test.ts).
+    await db
+      .insert(chainBreakReviewQueue)
+      .values({
+        organizationId: ORG_A,
+        dealId: DEAL_A,
+        breakHash: CBR_HASH,
+        breakKind: 'lost_note',
+        documentId: DOC_MORT,
+        reason: 'A promissory note has no anchoring mortgage; attorney review required.',
+        submittedById: USER_A,
+        state: 'pending',
+      })
+      .onConflictDoNothing();
   });
 
   afterAll(async () => {
@@ -106,6 +132,7 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
     // Only clean queue rows we might have created; leave seed rows in place
     // (onConflictDoNothing makes the suite idempotent across runs).
     await db.delete(documentReviewQueue).where(eq(documentReviewQueue.documentId, DOC_AOM));
+    await db.delete(chainBreakReviewQueue).where(eq(chainBreakReviewQueue.breakHash, CBR_HASH));
   });
 
   it('returns deal-scoped documents, gate-required first, with the AOM instrument', async () => {
@@ -127,6 +154,16 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
     expect(findings.routes[0]!.kind).toBe('advisory_pass');
   });
 
+  it('returns deal-scoped chain-break review rows', async () => {
+    currentClerkOrgId = 'org_review_a';
+    const rows = await getDealChainBreakReviews(DEAL_A);
+    const mine = rows.find((r) => r.breakHash === CBR_HASH);
+    expect(mine).toBeDefined();
+    expect(mine!.breakKind).toBe('lost_note');
+    expect(mine!.state).toBe('pending');
+    expect(mine!.reviewerId).toBeNull();
+  });
+
   it('is invisible to another org (RLS isolation)', async () => {
     currentClerkOrgId = 'org_review_b';
     expect(await getDealDocumentsReview(DEAL_A)).toEqual([]);
@@ -135,5 +172,6 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
       status: null,
       routes: [],
     });
+    expect(await getDealChainBreakReviews(DEAL_A)).toEqual([]);
   });
 });
