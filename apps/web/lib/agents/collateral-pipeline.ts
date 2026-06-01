@@ -5,6 +5,8 @@ import type { OutreachResult } from '@cema/agents-servicer-outreach';
 import { redactPii } from '@cema/compliance';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 
+import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
+
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
 import { runCollateralIdpFromDeal } from './collateral-idp/run-collateral-idp-action';
 import { hasReChase, type CollateralPipelineResult } from './collateral-pipeline-core';
@@ -37,6 +39,12 @@ export async function runCollateralPipeline(dealId: string): Promise<CollateralP
       let outreach: OutreachResult | null = null;
 
       if (idp.documents.length > 0) {
+        // Index the deal's classified instruments into the KG as PII-safe
+        // deal_has_instrument edges (idempotent). Independent of the chain
+        // analysis — it only reads the IDP-written extractedData.
+        const instrumentEdgeCount = await indexDealInstrumentEdges(dealId);
+        span.setAttribute('pipeline.instrument_edge_count', instrumentEdgeCount);
+
         chain = await runChainOfTitleFromDeal(dealId);
         span.setAttribute('pipeline.chain_status', chain.status);
 

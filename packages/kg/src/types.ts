@@ -6,6 +6,7 @@ export type Predicate =
   | 'contact_is_party' // contact → party  (same person, different representations)
   | 'party_is_on_deal' // party → deal     (exists via parties.deal_id but also stored as edge)
   | 'deal_has_document' // deal → document
+  | 'deal_has_instrument' // deal → document (an IDP-classified collateral instrument)
   | 'deal_has_communication'; // deal → communication
 
 export interface AddEdgeInput {
