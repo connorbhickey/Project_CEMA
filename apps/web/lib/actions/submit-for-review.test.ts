@@ -41,7 +41,8 @@ import { getDb } from '@cema/db';
 
 import { withRls } from '../with-rls';
 
-import { DocumentNotReviewableError, submitForReview } from './submit-for-review';
+import { submitForReview } from './submit-for-review';
+import { DocumentNotReviewableError } from './submit-for-review-errors';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
