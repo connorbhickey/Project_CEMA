@@ -208,13 +208,21 @@ open.
 
 ## Carry-overs (deferred to M14+)
 
-1. **Real route actuators.** `routeReChase` / `openAttorneyReview` are dormant no-ops;
-   routing is durable solely via the `chain.routed` audit event (counts in metadata)
-   plus the in-memory `RouteDecision[]` returned to the caller. Wiring the real
-   re-chase trigger (hand off to the Servicer Outreach Agent) + a first-class
-   attorney/processor review surface that renders re-chase vs. attorney-review items —
-   each dispatched idempotently, keyed `chain:<dealId>:break:<hash>` — is deferred.
-   Until then findings are audited but not rendered or acted on.
+1. **Real route actuators — rendering half RESOLVED (2026-06-01, M14 Slice 3, PRs
+   [#104](https://github.com/connorbhickey/Project_CEMA/pull/104) +
+   [#105](https://github.com/connorbhickey/Project_CEMA/pull/105)); actuator half still
+   OPEN.** `routeReChase` / `openAttorneyReview` remain dormant no-ops; routing is durable
+   solely via the `chain.routed` audit event (counts in metadata) plus the in-memory
+   `RouteDecision[]` returned to the caller. The **rendering half is now resolved**: the
+   deal-scoped review surface at `/deals/[id]/documents` recomputes the chain live from the
+   IDP-persisted `documents.extractedData` (the `getDealChainFindings` loader → `analyzeChain`
+   - `route`, Decision 1 — pure/clockless, no persisted `RouteDecision`, 0 migrations) and
+     renders the chain status plus grouped `re_chase` / `attorney_review` findings (each
+     finding's PII-free `RouteDecision.reason` + `documentId`). The **actuator half remains
+     open**: wiring the real re-chase trigger (hand off to the Servicer Outreach Agent — note
+     the `re_chase` loop-back inside `runCollateralPipeline` from M14 Slice 1 / ADR 0017 is the
+     pipeline path; the per-break dispatch keyed `chain:<dealId>:break:<hash>` is still
+     deferred) + making `openAttorneyReview` a first-class actuator are M14 Slice 2+ work.
 2. **Wire a trigger.** Nothing invokes `runChainOfTitleFromDeal` yet. The natural
    trigger is "Collateral IDP finished persisting instruments for a deal" — a post-IDP
    hook or a `deal_status` transition. M14 owns this.
