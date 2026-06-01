@@ -1,5 +1,22 @@
 import type { ChainBreakReviewState } from '@cema/attorney';
 
+/**
+ * Authorization for a chain-break transition. Claiming (`-> claimed`) is open to
+ * any org member; releasing / resolving / dismissing is restricted to the
+ * reviewer who holds the claim — mirroring the document-review actions
+ * (approve-document / reject-document), which gate terminal moves on
+ * `reviewerId === user.id`. Pure + node-testable; RLS only enforces org
+ * isolation, not per-claimer ownership within the org.
+ */
+export function isChainBreakActorAuthorized(
+  toState: ChainBreakReviewState,
+  reviewerId: string | null,
+  userId: string,
+): boolean {
+  if (toState === 'claimed') return true;
+  return reviewerId === userId;
+}
+
 export interface ChainBreakTransitionFields {
   state: ChainBreakReviewState;
   reviewerId?: string | null;

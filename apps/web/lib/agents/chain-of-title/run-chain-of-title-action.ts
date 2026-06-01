@@ -15,9 +15,10 @@ const tracer = trace.getTracer('@cema/web-chain-of-title');
 /**
  * Server Action entry to the Chain-of-Title core. Resolves the Clerk org +
  * user, builds the real DB-backed deps, and runs the analyzer for one deal.
- * Errors are PII-redacted before they leave the boundary. No revalidatePath:
- * the deal-scoped attorney/route surface is a carry-over (#4); nothing renders
- * the routes yet.
+ * Errors are PII-redacted before they leave the boundary. No revalidatePath
+ * here: this analyzer run is triggered by the collateral pipeline, not a user
+ * navigation; the deal review surface (/deals/[id]/documents) recomputes the
+ * chain live and the Tier 2 transition action revalidates after a claim/resolve.
  */
 export async function runChainOfTitleFromDeal(dealId: string): Promise<ChainResult> {
   return tracer.startActiveSpan('chain.run_from_deal', async (span) => {

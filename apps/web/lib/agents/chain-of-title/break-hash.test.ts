@@ -29,6 +29,16 @@ describe('breakHash', () => {
     expect(breakHash({ ...base, reason: 'attorney review required.' })).not.toBe(h);
   });
 
+  it('is STABLE when only breakKind changes (breakKind is not hash material)', () => {
+    // RouteDecision.breakKind is deliberately excluded from the hash material so
+    // the hash stays byte-identical across deploys. If this ever fails, every
+    // persisted chain_break_review_queue row would orphan on the next recompute.
+    const h = breakHash(base);
+    expect(breakHash({ ...base, breakKind: 'lost_note' })).toBe(h);
+    expect(breakHash({ ...base, breakKind: 'ambiguous_assignment' })).toBe(h);
+    expect(breakHash({ ...base, breakKind: null })).toBe(h);
+  });
+
   it('handles a null documentId (a gap break has no document) deterministically', () => {
     const nullDoc = { ...base, documentId: null };
     expect(breakHash(nullDoc)).toMatch(/^[0-9a-f]{8}$/);

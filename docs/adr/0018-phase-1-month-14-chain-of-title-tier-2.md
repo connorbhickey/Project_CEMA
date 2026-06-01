@@ -88,8 +88,10 @@ lawyer. Verified against the Neon dev branch in isolation (migration 0031 applie
 CHECKs are a second backstop. No change to the gate-critical document path.
 
 **Negative / tradeoffs:** there is now a second review queue + a second (small) read path.
-The UI does not yet enforce claimer-only resolution (any org member can act on a claimed
-break — acceptable within one RLS-scoped org for v1). A break's `document_id` FK means an
+Claimer-only resolution is enforced at the **action** boundary (`isChainBreakActorAuthorized`
+— only the claiming reviewer may resolve/dismiss/release, mirroring approve/reject-document);
+the **UI** still shows the buttons to non-claimers, who get a rejection error rather than a
+hidden control (a v1 nicety, carry-over #2). A break's `document_id` FK means an
 `attorney_review` break with a `documentId` that is not a real `documents` row would throw
 on enqueue (cannot happen in production — the id always comes from an IDP-persisted
 document — but it is a hard coupling). Durable-workflow activation is still Connor-gated.
@@ -98,8 +100,10 @@ document — but it is a hard coupling). Durable-workflow activation is still Co
 
 1. **Cross-deal attorney inbox** — a console listing all open chain-break items across
    deals (mirror the document `listReviewQueue`); the deal-scoped surface links into it.
-2. **Claimer-only resolution** — gate resolve/dismiss/release on the claimer (UI +
-   action), once the loader returns `reviewerIsCurrentUser` (mirror `getDealDocumentsReview`).
+2. **Claimer-only resolution — UI half.** The **action** already enforces it
+   (`isChainBreakActorAuthorized`); the remaining nicety is hiding the buttons from
+   non-claimers, which needs the loader to return `reviewerIsCurrentUser` (mirror
+   `getDealDocumentsReview`). Today a non-claimer sees the buttons and gets a rejection error.
 3. **`re_chase` audit once-per-break** — the re_chase `chain.break_routed` audit fires per
    run (no row to guard on); the effect is already idempotent. Tighten if audit volume matters.
 4. **Auto-reconciliation policy** — orphans are surfaced but never auto-closed; a future
@@ -107,3 +111,16 @@ document — but it is a hard coupling). Durable-workflow activation is still Co
 5. **Durable activation (Connor)** — WDK backend + `VERCEL_OIDC_TOKEN`; the enqueue is
    already idempotent, so the durable path is low-risk.
 6. **`kg_edges`** (ADR 0015 #6) — persist chain edges to the knowledge graph (separate work).
+7. **Dispatcher hardening (shared infra).** `onDealStatusChanged` swallows agent-dispatch
+   errors to `console.error` (ADR 0017, by design — the audited status write must survive a
+   downstream agent failure). Tier 2 makes this gate-relevant for the first time: a failed
+   `openAttorneyReview` enqueue means attorney_review breaks were detected but not queued,
+   visible only as a redacted log line. It self-heals (idempotent re-run on the next
+   `title_work`), but a failed dispatch on a gate-bearing status deserves a `logError`/Sentry
+   error ID + a PII-safe `deal.agent_dispatch_failed` audit. Affects all four agents → its
+   own change, not this slice.
+8. **Type-design polish** (from review): promote `RouteDecision` to a discriminated union on
+   `kind` (makes the `breakKind`/`kind` coupling compile-time, deletes the runtime null-guard
+   in `deps.ts`); annotate app-layer `breakKind` as `BreakKind` instead of `string`
+   (`merge-chain-review.ts`, `chain-break-audit.ts`); optional lifecycle-coherence CHECK
+   (`pending` ⇒ null reviewer/claimedAt; `claimed` ⇒ non-null).

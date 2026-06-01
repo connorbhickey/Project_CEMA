@@ -72,6 +72,10 @@ export const chainBreakReviewQueue = pgTable(
     // Defense-in-depth (mirrors documents_attorney_gate_required): only
     // attorney-routed breaks land here. missing_assignment routes to re_chase,
     // never to this queue — catch a routing regression at the DB boundary.
+    // This literal set is kept in lockstep with @cema/agents-chain-of-title's
+    // route() by the drift guard in that package's route.test.ts ("attorney-routed
+    // break kinds match the chain_break_review_queue CHECK") — @cema/db cannot
+    // import the agent package, so the test is the cross-package contract.
     check(
       'chain_break_review_queue_break_kind_is_attorney_routed',
       sql`${t.breakKind} IN ('lost_note', 'ambiguous_assignment', 'unrecorded_instrument')`,

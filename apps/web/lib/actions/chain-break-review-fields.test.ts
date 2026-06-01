@@ -1,8 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
-import { chainBreakReviewTransitionFields } from './chain-break-review-fields';
+import {
+  chainBreakReviewTransitionFields,
+  isChainBreakActorAuthorized,
+} from './chain-break-review-fields';
 
 const NOW = new Date('2026-06-01T00:00:00.000Z');
+
+describe('isChainBreakActorAuthorized', () => {
+  it('lets any org member claim (no reviewer yet)', () => {
+    expect(isChainBreakActorAuthorized('claimed', null, 'user-1')).toBe(true);
+  });
+
+  it('lets only the claiming reviewer resolve / dismiss / release', () => {
+    expect(isChainBreakActorAuthorized('resolved', 'user-1', 'user-1')).toBe(true);
+    expect(isChainBreakActorAuthorized('dismissed', 'user-1', 'user-1')).toBe(true);
+    expect(isChainBreakActorAuthorized('pending', 'user-1', 'user-1')).toBe(true);
+  });
+
+  it('blocks a non-claimer from resolving / dismissing / releasing', () => {
+    expect(isChainBreakActorAuthorized('resolved', 'user-1', 'user-2')).toBe(false);
+    expect(isChainBreakActorAuthorized('dismissed', 'user-1', 'user-2')).toBe(false);
+    expect(isChainBreakActorAuthorized('pending', 'user-1', 'user-2')).toBe(false);
+  });
+});
 
 describe('chainBreakReviewTransitionFields', () => {
   it('claim sets reviewerId + claimedAt (not decidedAt/note)', () => {

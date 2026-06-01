@@ -68,4 +68,17 @@ describe('route', () => {
     expect(decision?.kind).toBe('advisory_pass');
     expect(decision?.breakKind).toBeNull();
   });
+
+  it('attorney-routed break kinds match the chain_break_review_queue CHECK', () => {
+    // Drift guard: the chain_break_review_queue.break_kind CHECK hard-codes this
+    // exact set (packages/db/src/schema/chain-break-review-queue.ts). @cema/db
+    // cannot import this package, so if a new break kind routes to
+    // attorney_review here, that CHECK (+ a migration) must be updated in lockstep
+    // or the enqueue will fail at runtime.
+    const attorneyRouted = BREAK_KINDS.filter(
+      (kind) =>
+        route('deal-1', [{ kind, documentId: 'd1', detail: 'x' }])[0]?.kind === 'attorney_review',
+    ).sort();
+    expect(attorneyRouted).toEqual(['ambiguous_assignment', 'lost_note', 'unrecorded_instrument']);
+  });
 });

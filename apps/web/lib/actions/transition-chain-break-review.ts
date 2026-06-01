@@ -11,7 +11,10 @@ import { chainBreakAuditMetadata } from '../agents/chain-of-title/chain-break-au
 import { withRls } from '../with-rls';
 
 import { ChainBreakReviewError } from './chain-break-errors';
-import { chainBreakReviewTransitionFields } from './chain-break-review-fields';
+import {
+  chainBreakReviewTransitionFields,
+  isChainBreakActorAuthorized,
+} from './chain-break-review-fields';
 
 const AUDIT_ACTION: Record<ChainBreakReviewState, string> = {
   claimed: 'chain_break.claimed',
@@ -50,7 +53,7 @@ export async function transitionChainBreakReview(
   const user = await db.query.users.findFirst({ where: eq(users.clerkUserId, clerkUser.id) });
   if (!user) throw new ChainBreakReviewError('User not synced yet');
 
-  const { row, fromState, dealId } = await withRls(org.id, async (tx) => {
+  const result = await withRls(org.id, async (tx) => {
     const [existing] = await tx
       .select()
       .from(chainBreakReviewQueue)
@@ -62,24 +65,37 @@ export async function transitionChainBreakReview(
         `Cannot move chain break from ${existing.state} to ${toState}`,
       );
     }
+    // Claiming is open; releasing/resolving/dismissing is the claimer's alone
+    // (mirrors approve-document / reject-document). RLS only isolates by org.
+    if (!isChainBreakActorAuthorized(toState, existing.reviewerId, user.id)) {
+      throw new ChainBreakReviewError(
+        'Only the reviewer who claimed this chain break can change it',
+      );
+    }
 
     await tx
       .update(chainBreakReviewQueue)
       .set(chainBreakReviewTransitionFields(toState, user.id, new Date(), note))
       .where(eq(chainBreakReviewQueue.id, queueId));
 
-    return { row: existing, fromState: existing.state, dealId: existing.dealId };
+    // Co-transactional audit (mirrors openAttorneyReview): the transition and its
+    // audit commit together or not at all (§10.5). chainBreakAuditMetadata never
+    // carries the PII resolution_note (hard rule #3).
+    await emitAuditEvent(tx, {
+      organizationId: org.id,
+      actorUserId: user.id,
+      action: AUDIT_ACTION[toState],
+      entityType: 'deal',
+      entityId: existing.dealId,
+      metadata: {
+        queueId: existing.id,
+        ...chainBreakAuditMetadata(existing, existing.state, toState),
+      },
+    });
+
+    return { queueId: existing.id, dealId: existing.dealId };
   });
 
-  await emitAuditEvent(db, {
-    organizationId: org.id,
-    actorUserId: user.id,
-    action: AUDIT_ACTION[toState],
-    entityType: 'deal',
-    entityId: dealId,
-    metadata: { queueId: row.id, ...chainBreakAuditMetadata(row, fromState, toState) },
-  });
-
-  revalidatePath(`/deals/${dealId}/documents`);
-  return { queueId: row.id, state: toState };
+  revalidatePath(`/deals/${result.dealId}/documents`);
+  return { queueId: result.queueId, state: toState };
 }
