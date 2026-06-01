@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation';
 
+import { DealChainBreakReviewActions } from '@/components/deal-chain-break-review-actions';
 import { DealDocumentReviewActions } from '@/components/deal-document-review-actions';
 import { getDeal } from '@/lib/actions/get-deal';
+import { mergeChainReview } from '@/lib/agents/chain-of-title/merge-chain-review';
+import { getDealChainBreakReviews } from '@/lib/queries/deal-chain-break-reviews';
 import { getDealChainFindings } from '@/lib/queries/deal-chain-findings';
 import { getDealDocumentsReview } from '@/lib/queries/deal-documents-review';
 
@@ -10,13 +13,18 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const dealDetail = await getDeal(id);
   if (!dealDetail) notFound();
 
-  const [items, findings] = await Promise.all([
+  const [items, findings, breakReviews] = await Promise.all([
     getDealDocumentsReview(id),
     getDealChainFindings(id),
+    getDealChainBreakReviews(id),
   ]);
 
   const reChase = findings.routes.filter((r) => r.kind === 're_chase');
   const attorneyReview = findings.routes.filter((r) => r.kind === 'attorney_review');
+  // Join live attorney_review findings to their persisted queue rows; surface
+  // open rows whose break is no longer detected as orphans (manual dismissal).
+  const { items: reviewItems, orphans } = mergeChainReview(attorneyReview, breakReviews);
+  const hasBreaks = reChase.length > 0 || reviewItems.length > 0 || orphans.length > 0;
 
   return (
     <div className="space-y-8">
@@ -111,7 +119,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </span>
             </div>
 
-            {reChase.length === 0 && attorneyReview.length === 0 ? (
+            {!hasBreaks ? (
               <p className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 No chain breaks detected.
               </p>
@@ -137,20 +145,58 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   </div>
                 ) : null}
 
-                {attorneyReview.length > 0 ? (
+                {reviewItems.length > 0 ? (
                   <div>
                     <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-                      Attorney review ({attorneyReview.length})
+                      Attorney review ({reviewItems.length})
                     </h3>
                     <ul className="space-y-2" role="list">
-                      {attorneyReview.map((r, i) => (
-                        <li key={`ar-${i}`} className="rounded-lg border p-3 text-sm">
-                          <p>{r.reason}</p>
-                          {r.documentId ? (
+                      {reviewItems.map((item) => (
+                        <li key={item.breakHash} className="rounded-lg border p-3 text-sm">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="flex-1">{item.decision.reason}</p>
+                            <span className="text-muted-foreground rounded bg-gray-100 px-2 py-0.5 text-xs">
+                              {item.review?.state ?? 'pending enqueue'}
+                            </span>
+                          </div>
+                          {item.decision.documentId ? (
                             <p className="text-muted-foreground mt-1 text-xs">
-                              Document: {r.documentId}
+                              Document: {item.decision.documentId}
                             </p>
                           ) : null}
+                          <div className="mt-2">
+                            <DealChainBreakReviewActions
+                              queueId={item.review?.id ?? null}
+                              state={item.review?.state ?? null}
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {orphans.length > 0 ? (
+                  <div>
+                    <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
+                      No longer detected ({orphans.length})
+                    </h3>
+                    <p className="text-muted-foreground mb-2 text-xs">
+                      Previously flagged breaks not present in the current chain. Dismiss after
+                      confirming the underlying issue is resolved — these are never auto-closed.
+                    </p>
+                    <ul className="space-y-2" role="list">
+                      {orphans.map((o) => (
+                        <li key={o.id} className="rounded-lg border border-dashed p-3 text-sm">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="flex-1">{o.breakKind}</span>
+                            <span className="text-muted-foreground rounded bg-gray-100 px-2 py-0.5 text-xs">
+                              {o.state}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <DealChainBreakReviewActions queueId={o.id} state={o.state} />
+                          </div>
                         </li>
                       ))}
                     </ul>
