@@ -91,9 +91,15 @@ export interface ChainAnalysis {
 
 // A routing verdict for one break (or one advisory_pass for a clean chain).
 // `reason` is a static PII-free template -- safe to persist/display.
+// `breakKind` is the underlying break this decision routes (null for an
+// advisory_pass) -- carried so a downstream actuator can persist the specific
+// kind (e.g. the chain_break_review_queue.break_kind column) without re-deriving
+// it. It is deliberately NOT part of the breakHash material (reason already
+// encodes the kind, so the hash stays stable -- see break-hash.ts).
 export interface RouteDecision {
   readonly dealId: string;
   readonly kind: RouteKind;
+  readonly breakKind: BreakKind | null;
   readonly documentId: string | null;
   readonly reason: string;
 }

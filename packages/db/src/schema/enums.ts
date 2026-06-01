@@ -174,6 +174,15 @@ export const documentReviewStateEnum = pgEnum('document_review_state', [
   'rejected',
 ]);
 
+// Chain-of-Title Tier 2 review queue states (M14). resolved = defect remedied;
+// dismissed = not a real defect. See packages/attorney/src/chain-break-state.ts.
+export const chainBreakReviewStateEnum = pgEnum('chain_break_review_state', [
+  'pending',
+  'claimed',
+  'resolved',
+  'dismissed',
+]);
+
 // SOC 2 read-audit enums (M5 task 20).
 // `purpose` records why the actor accessed the entity — used by compliance
 // reports to distinguish operator-initiated reads from automated agent reads.

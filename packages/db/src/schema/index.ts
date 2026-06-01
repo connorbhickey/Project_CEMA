@@ -20,5 +20,6 @@ export * from './docusign-connections';
 export * from './docusign-envelopes';
 export * from './contacts';
 export * from './document-review-queue';
+export * from './chain-break-review-queue';
 export * from './audit-event-reads';
 export * from './kg-edges';

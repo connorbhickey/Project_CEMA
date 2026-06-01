@@ -42,13 +42,29 @@ const CHAIN_RECHASE: ChainResult = {
   dealId: 'deal-1',
   status: 'broken',
   breaks: [],
-  routes: [{ dealId: 'deal-1', kind: 're_chase', documentId: null, reason: 'gap' }],
+  routes: [
+    {
+      dealId: 'deal-1',
+      kind: 're_chase',
+      breakKind: 'missing_assignment',
+      documentId: null,
+      reason: 'gap',
+    },
+  ],
 };
 const CHAIN_ATTORNEY: ChainResult = {
   dealId: 'deal-1',
   status: 'ambiguous',
   breaks: [],
-  routes: [{ dealId: 'deal-1', kind: 'attorney_review', documentId: null, reason: 'fork' }],
+  routes: [
+    {
+      dealId: 'deal-1',
+      kind: 'attorney_review',
+      breakKind: 'ambiguous_assignment',
+      documentId: null,
+      reason: 'fork',
+    },
+  ],
 };
 
 const OUTREACH: OutreachResult = {

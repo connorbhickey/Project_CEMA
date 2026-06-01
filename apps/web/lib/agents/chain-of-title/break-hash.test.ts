@@ -6,6 +6,7 @@ import { breakHash } from './break-hash';
 const base: RouteDecision = {
   dealId: '00000000-0000-0000-0000-0000000000ac',
   kind: 're_chase',
+  breakKind: 'missing_assignment',
   documentId: '00000000-0000-0000-0000-0000000000dc',
   reason:
     'A gap in the recorded assignment sequence was detected; re-chase the servicer for the missing assignment.',
@@ -26,6 +27,16 @@ describe('breakHash', () => {
     expect(breakHash({ ...base, kind: 'attorney_review' })).not.toBe(h);
     expect(breakHash({ ...base, documentId: '00000000-0000-0000-0000-0000000000de' })).not.toBe(h);
     expect(breakHash({ ...base, reason: 'attorney review required.' })).not.toBe(h);
+  });
+
+  it('is STABLE when only breakKind changes (breakKind is not hash material)', () => {
+    // RouteDecision.breakKind is deliberately excluded from the hash material so
+    // the hash stays byte-identical across deploys. If this ever fails, every
+    // persisted chain_break_review_queue row would orphan on the next recompute.
+    const h = breakHash(base);
+    expect(breakHash({ ...base, breakKind: 'lost_note' })).toBe(h);
+    expect(breakHash({ ...base, breakKind: 'ambiguous_assignment' })).toBe(h);
+    expect(breakHash({ ...base, breakKind: null })).toBe(h);
   });
 
   it('handles a null documentId (a gap break has no document) deterministically', () => {
