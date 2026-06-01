@@ -98,8 +98,11 @@ document — but it is a hard coupling). Durable-workflow activation is still Co
 
 ## Carry-overs (deferred)
 
-1. **Cross-deal attorney inbox** — a console listing all open chain-break items across
-   deals (mirror the document `listReviewQueue`); the deal-scoped surface links into it.
+1. **Cross-deal attorney inbox — RESOLVED (2026-06-01, PR #112).** `/attorney/chain-queue`
+   lists every open (`pending`|`claimed`) chain-break across all deals for the org
+   (`getOrgChainBreakReviews`, RLS-scoped), rows linking into each deal's `/deals/[id]/documents`
+   surface to act; a "Chain reviews" sidebar entry + a pure `chainQueueSummary` header helper.
+   Mirrors the document `listReviewQueue` inbox.
 2. **Claimer-only resolution — UI half.** The **action** already enforces it
    (`isChainBreakActorAuthorized`); the remaining nicety is hiding the buttons from
    non-claimers, which needs the loader to return `reviewerIsCurrentUser` (mirror
