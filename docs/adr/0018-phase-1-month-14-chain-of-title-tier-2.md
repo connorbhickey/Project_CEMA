@@ -111,14 +111,16 @@ document — but it is a hard coupling). Durable-workflow activation is still Co
 5. **Durable activation (Connor)** — WDK backend + `VERCEL_OIDC_TOKEN`; the enqueue is
    already idempotent, so the durable path is low-risk.
 6. **`kg_edges`** (ADR 0015 #6) — persist chain edges to the knowledge graph (separate work).
-7. **Dispatcher hardening (shared infra).** `onDealStatusChanged` swallows agent-dispatch
-   errors to `console.error` (ADR 0017, by design — the audited status write must survive a
-   downstream agent failure). Tier 2 makes this gate-relevant for the first time: a failed
-   `openAttorneyReview` enqueue means attorney_review breaks were detected but not queued,
-   visible only as a redacted log line. It self-heals (idempotent re-run on the next
-   `title_work`), but a failed dispatch on a gate-bearing status deserves a `logError`/Sentry
-   error ID + a PII-safe `deal.agent_dispatch_failed` audit. Affects all four agents → its
-   own change, not this slice.
+7. **Dispatcher hardening — RESOLVED (2026-06-01, PR #111).** `onDealStatusChanged` now
+   records a durable, PII-safe `deal.agent_dispatch_failed` audit (metadata: the `deal_status`
+   enum + trigger token only) on a swallowed agent-dispatch failure, and prefixes the log with
+   a stable `ERROR_IDS.AGENT_DISPATCH_FAILED` token (new `apps/web/lib/constants/error-ids.ts`).
+   The audit is itself best-effort (the same outage that failed the agent can fail the insert)
+   and never escapes; the dispatcher still never rethrows. Org + actor are threaded in from
+   `transitionDealStatus` for the audit's `withRls` scope. **Still deferred:** full Sentry
+   routing — no Sentry client is wired in `apps/web` yet (the error-id token is the seam it
+   keys on); it folds into the separate observability task that also owns the
+   `with-read-audit.ts` Sentry TODO.
 8. **Type-design polish** (from review): promote `RouteDecision` to a discriminated union on
    `kind` (makes the `breakKind`/`kind` coupling compile-time, deletes the runtime null-guard
    in `deps.ts`); annotate app-layer `breakKind` as `BreakKind` instead of `string`
