@@ -183,8 +183,12 @@ describe('transitionDealStatus', () => {
       }),
     );
     expect(revalidatePath).toHaveBeenCalledWith('/deals');
-    // Post-commit dispatch fires with the new status only on a real change.
-    expect(onDealStatusChanged).toHaveBeenCalledWith('deal-1', 'eligibility');
+    // Post-commit dispatch fires with the new status (+ org/actor context for
+    // the dispatch-failure audit) only on a real change.
+    expect(onDealStatusChanged).toHaveBeenCalledWith('deal-1', 'eligibility', {
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
   });
 
   it('sets completedAt when transitioning to completed (deals_completed_at_required CHECK)', async () => {

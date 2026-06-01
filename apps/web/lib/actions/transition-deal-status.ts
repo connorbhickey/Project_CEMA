@@ -102,8 +102,13 @@ export async function transitionDealStatus(
     // so a failed agent run can never undo the (already-committed) status
     // change. Awaited in-request because the agent actions are session-backed
     // (cron/queue have no request session, and there is no durable backend
-    // yet); at durable activation this becomes fire-and-forget.
-    await onDealStatusChanged(dealId, result.to);
+    // yet); at durable activation this becomes fire-and-forget. The org + actor
+    // are threaded in so the dispatcher can record a PII-safe
+    // deal.agent_dispatch_failed audit if an agent run fails.
+    await onDealStatusChanged(dealId, result.to, {
+      organizationId: org.id,
+      actorUserId: user.id,
+    });
   }
 
   return result;
