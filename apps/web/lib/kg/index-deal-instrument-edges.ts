@@ -8,7 +8,6 @@ import { instrumentEdges } from './instrument-edges';
 import { isInstrumentRecord } from '@/lib/queries/deal-chain-findings';
 import { withRls } from '@/lib/with-rls';
 
-
 /**
  * Indexes a deal's IDP-classified collateral instruments into the knowledge
  * graph as PII-safe deal -> document edges (predicate deal_has_instrument), so a
