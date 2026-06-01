@@ -194,9 +194,12 @@ are dormant no-ops — routing is durable solely via the `chain.routed` audit ev
 findings are audited but neither rendered nor acted on; nothing triggers the agent yet;
 and **head-gap verification is structurally out of reach** because `InstrumentRecord`
 carries no original-mortgagee field (the first assignment's assignor cannot be checked
-against the anchor's lender — see carry-over #5). `InstrumentRecord` remains in the IDP
-package and is consumed type-only here rather than promoted to a shared
-`@cema/collateral` package (a deliberate shortcut). Operationally, the durable-wrap PR
+against the anchor's lender — see carry-over #5). At M13 this consumed `InstrumentRecord`
+type-only from the IDP package rather than a shared package (a deliberate shortcut);
+**M14 Slice 4 (PRs [#101](https://github.com/connorbhickey/Project_CEMA/pull/101) +
+[#102](https://github.com/connorbhickey/Project_CEMA/pull/102)) resolved this** by
+promoting the vocabulary to the new `@cema/collateral` package, which Chain-of-Title now
+type-imports directly (no agent-to-agent coupling). Operationally, the durable-wrap PR
 ([#94](https://github.com/connorbhickey/Project_CEMA/pull/94)) again tripped the CodeQL
 "Unknown directive" false positives on `'use step'` / `'use workflow'` and sat
 `BLOCKED` on `require_conversation_resolution` until both threads were resolved — the

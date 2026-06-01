@@ -169,8 +169,8 @@ enforced three independent ways.
 **Negative / tradeoffs:** the `IdpAdapter` is dormant — a real OCR/IDP vendor and
 multi-instrument-per-blob handling are not wired, so nothing produces real
 `RawExtraction` yet; the durable wrap and both Server Actions are dormant (no trigger
-invokes the agent); `InstrumentRecord` currently lives in the IDP package and must be
-promoted to a shared package before Chain-of-Title can type-import it.
+invokes the agent). (`InstrumentRecord` lived in the IDP package at M13; M14 Slice 4
+promoted it to the shared `@cema/collateral` package — carry-over #5, resolved.)
 
 ## Carry-overs
 
@@ -191,8 +191,15 @@ promoted to a shared package before Chain-of-Title can type-import it.
    instruments for attorney action; the gate boolean is set but nothing renders it. The
    live action's `revalidatePath('/deals/[id]/documents')` targets a not-yet-existent
    route (a harmless no-op until that page is built).
-5. **Promote `InstrumentRecord` to a shared `@cema/collateral` package** — Chain-of-Title
-   (Phase 2) type-imports it; it currently lives in the IDP package.
+5. **Promote `InstrumentRecord` to a shared `@cema/collateral` package — RESOLVED
+   (2026-05-31, M14 Slice 4, PRs #101 + #102).** The shared collateral vocabulary
+   (`DOCUMENT_KINDS`/`DocumentKind`, `GATE_REQUIRED_KINDS`, `RecordingRef`,
+   `InstrumentRecord`) + its DB drift-guard test now live in the new 24th workspace
+   package `@cema/collateral`; IDP re-exports them (public API byte-identical) and
+   Chain-of-Title type-imports them directly from `@cema/collateral` — no agent-to-agent
+   coupling. `@cema/collateral` carries no runtime `@cema/db` dependency (drift guard
+   uses it as a devDep only). `UNREADABLE_CONFIDENCE_THRESHOLD` stayed in IDP (OCR-tuning,
+   not shared vocabulary).
 6. **Persist chain edges to `kg_edges`** — when Chain-of-Title lands, attribute
    instrument relationships to the deal's knowledge graph.
 7. **Provision `BRAINTRUST_API_KEY`** — the live eval skips-green; the offline
