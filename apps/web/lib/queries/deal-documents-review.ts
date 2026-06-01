@@ -36,6 +36,9 @@ export async function getDealDocumentsReview(dealId: string): Promise<DealDocume
   });
   if (!org) return [];
 
+  // Resolved outside withRls: a globally-unique clerkUserId lookup for the
+  // UI-only `reviewerIsCurrentUser` flag (never a security gate), mirroring
+  // submit-for-review.ts. Move inside withRls if `users` ever gets an RLS policy.
   let currentUserId: string | null = null;
   if (clerkUser) {
     const u = await db.query.users.findFirst({
