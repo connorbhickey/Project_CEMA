@@ -1,6 +1,6 @@
 {
-  "id": "b8f2a1c4-7e3d-4f9a-b5c6-d2e1f0a9b8c7",
-  "prevId": "61edc78b-4bb6-4e27-ab23-fe41ad9277e7",
+  "id": "bd21b02d-97fc-40f6-8a8b-4827e6562a91",
+  "prevId": "b8f2a1c4-7e3d-4f9a-b5c6-d2e1f0a9b8c7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5192,6 +5192,258 @@
       },
       "isRLSEnabled": false
     },
+    "public.chain_break_review_queue": {
+      "name": "chain_break_review_queue",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "break_hash": {
+          "name": "break_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "break_kind": {
+          "name": "break_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "chain_break_review_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "submitted_by_id": {
+          "name": "submitted_by_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "reviewer_id": {
+          "name": "reviewer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolution_note": {
+          "name": "resolution_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "chain_break_review_queue_deal_break_uidx": {
+          "name": "chain_break_review_queue_deal_break_uidx",
+          "columns": [
+            {
+              "expression": "deal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "break_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "chain_break_review_queue_org_state_idx": {
+          "name": "chain_break_review_queue_org_state_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "chain_break_review_queue_reviewer_idx": {
+          "name": "chain_break_review_queue_reviewer_idx",
+          "columns": [
+            {
+              "expression": "reviewer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "chain_break_review_queue_organization_id_organizations_id_fk": {
+          "name": "chain_break_review_queue_organization_id_organizations_id_fk",
+          "tableFrom": "chain_break_review_queue",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "chain_break_review_queue_deal_id_deals_id_fk": {
+          "name": "chain_break_review_queue_deal_id_deals_id_fk",
+          "tableFrom": "chain_break_review_queue",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "chain_break_review_queue_document_id_documents_id_fk": {
+          "name": "chain_break_review_queue_document_id_documents_id_fk",
+          "tableFrom": "chain_break_review_queue",
+          "tableTo": "documents",
+          "columnsFrom": [
+            "document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "chain_break_review_queue_submitted_by_id_users_id_fk": {
+          "name": "chain_break_review_queue_submitted_by_id_users_id_fk",
+          "tableFrom": "chain_break_review_queue",
+          "tableTo": "users",
+          "columnsFrom": [
+            "submitted_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "chain_break_review_queue_reviewer_id_users_id_fk": {
+          "name": "chain_break_review_queue_reviewer_id_users_id_fk",
+          "tableFrom": "chain_break_review_queue",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chain_break_review_queue_decided_at_requires_terminal": {
+          "name": "chain_break_review_queue_decided_at_requires_terminal",
+          "value": "(\"chain_break_review_queue\".\"decided_at\" IS NULL) OR (\"chain_break_review_queue\".\"state\" IN ('resolved', 'dismissed'))"
+        },
+        "chain_break_review_queue_resolution_note_requires_terminal": {
+          "name": "chain_break_review_queue_resolution_note_requires_terminal",
+          "value": "(\"chain_break_review_queue\".\"resolution_note\" IS NULL) OR (\"chain_break_review_queue\".\"state\" IN ('resolved', 'dismissed'))"
+        },
+        "chain_break_review_queue_break_kind_is_attorney_routed": {
+          "name": "chain_break_review_queue_break_kind_is_attorney_routed",
+          "value": "\"chain_break_review_queue\".\"break_kind\" IN ('lost_note', 'ambiguous_assignment', 'unrecorded_instrument')"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.audit_event_reads": {
       "name": "audit_event_reads",
       "schema": "",
@@ -5563,6 +5815,16 @@
       "values": [
         "refi_cema",
         "purchase_cema"
+      ]
+    },
+    "public.chain_break_review_state": {
+      "name": "chain_break_review_state",
+      "schema": "public",
+      "values": [
+        "pending",
+        "claimed",
+        "resolved",
+        "dismissed"
       ]
     },
     "public.communication_direction": {
