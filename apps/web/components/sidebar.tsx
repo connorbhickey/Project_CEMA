@@ -4,7 +4,8 @@ import Link from 'next/link';
 const NAV: { href: Route; label: string }[] = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/deals', label: 'Deals' },
-  { href: '/contacts' as Route, label: 'Contacts' },
+  { href: '/contacts', label: 'Contacts' },
+  { href: '/attorney/chain-queue', label: 'Chain reviews' },
   { href: '/settings/org', label: 'Settings' },
 ];
 
