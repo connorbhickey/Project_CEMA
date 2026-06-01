@@ -1,77 +1,27 @@
-// The full document_kind enum, re-declared locally so this package never
-// imports @cema/db at runtime (the WDK '"use workflow"' sandbox VM cannot load
-// it). A drift guard (types.test.ts) keeps this in lockstep with the DB enum.
-export const DOCUMENT_KINDS = [
-  'note',
-  'mortgage',
-  'aom',
-  'allonge',
-  'cema_3172',
-  'exhibit_a',
-  'exhibit_b',
-  'exhibit_c',
-  'exhibit_d',
-  'consolidated_note',
-  'gap_note',
-  'gap_mortgage',
-  'aff_255',
-  'aff_275',
-  'mt_15',
-  'nyc_rpt',
-  'tp_584',
-  'acris_cover_pages',
-  'county_cover_sheet',
-  'payoff_letter',
-  'authorization',
-  'title_commitment',
-  'title_policy',
-  'endorsement_111',
-  'other',
-] as const;
+// The shared collateral-document vocabulary (DOCUMENT_KINDS/DocumentKind, the
+// attorney-gate set GATE_REQUIRED_KINDS, RecordingRef, InstrumentRecord) now
+// lives in @cema/collateral so it can be consumed without coupling to this
+// agent package. Re-exported here so this package's public API is byte-identical
+// for existing importers (adapter.ts, classify.ts, extract.ts, orchestrator.ts
+// all import these from './types').
+export {
+  DOCUMENT_KINDS,
+  GATE_REQUIRED_KINDS,
+  type DocumentKind,
+  type RecordingRef,
+  type InstrumentRecord,
+} from '@cema/collateral';
 
-export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
-
-// The 14 kinds that legally require an attorney-review gate (hard rule #2 +
-// the documents_attorney_gate_required DB check constraint). classify() sets
-// attorneyReviewRequired=true for exactly these.
-export const GATE_REQUIRED_KINDS = [
-  'cema_3172',
-  'exhibit_a',
-  'exhibit_b',
-  'exhibit_c',
-  'exhibit_d',
-  'gap_note',
-  'gap_mortgage',
-  'consolidated_note',
-  'aom',
-  'allonge',
-  'aff_255',
-  'aff_275',
-  'mt_15',
-  'county_cover_sheet',
-] as const satisfies readonly DocumentKind[];
+// Local bindings (the re-export above does not create them) for use in the
+// interfaces below. Kept near the top so the ESLint import/first rule stays
+// satisfied.
+import type { DocumentKind, InstrumentRecord } from '@cema/collateral';
 
 // A segment whose extraction confidence is below this floor is treated as
 // unreadable and is NOT classified/persisted (it surfaces for human review).
+// Stays in this package: it is an OCR-confidence tuning knob, not part of the
+// shared instrument vocabulary.
 export const UNREADABLE_CONFIDENCE_THRESHOLD = 0.5;
-
-export interface RecordingRef {
-  readonly reelPage: string | null;
-  readonly crfn: string | null;
-}
-
-export interface InstrumentRecord {
-  readonly documentId: string;
-  readonly instrumentKind: DocumentKind;
-  readonly assignor: string | null;
-  readonly assignee: string | null;
-  readonly executedAt: string | null;
-  readonly recordedAt: string | null;
-  readonly amount: number | null;
-  readonly recordingRef: RecordingRef;
-  readonly county: string | null;
-  readonly references: string | null;
-}
 
 // What the (dormant) vendor IDP adapter returns per blob segment. Pure data:
 // the raw OCR text, a flat field bag, and a 0..1 confidence.

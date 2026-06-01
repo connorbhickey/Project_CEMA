@@ -253,6 +253,9 @@ importers:
 
   packages/agents/collateral-idp:
     dependencies:
+      '@cema/collateral':
+        specifier: workspace:*
+        version: link:../../collateral
       '@cema/observability':
         specifier: workspace:*
         version: link:../../observability
@@ -263,9 +266,6 @@ importers:
       '@cema/config':
         specifier: workspace:*
         version: link:../../config
-      '@cema/db':
-        specifier: workspace:*
-        version: link:../../db
       '@opentelemetry/context-async-hooks':
         specifier: ^2.0.0
         version: 2.7.1(@opentelemetry/api@1.9.0)
@@ -439,6 +439,24 @@ importers:
       '@cema/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
+  packages/collateral:
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cema/db':
+        specifier: workspace:*
+        version: link:../db
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19

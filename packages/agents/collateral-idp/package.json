@@ -11,12 +11,12 @@
     "eval": "node evals/run.mjs"
   },
   "dependencies": {
+    "@cema/collateral": "workspace:*",
     "@cema/observability": "workspace:*",
     "@opentelemetry/api": "^1.9.0"
   },
   "devDependencies": {
     "@cema/config": "workspace:*",
-    "@cema/db": "workspace:*",
     "@opentelemetry/context-async-hooks": "^2.0.0",
     "@opentelemetry/sdk-trace-base": "^2.0.0",
     "@types/node": "^22.0.0",
