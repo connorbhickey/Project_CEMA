@@ -8,6 +8,8 @@ import { organizations } from './tenants';
 //
 // NodeType values: 'contact' | 'party' | 'deal' | 'document' | 'communication'
 // Predicate values: 'contact_is_party' | 'party_is_on_deal' | 'deal_has_document'
+//                 | 'deal_has_instrument' | 'deal_has_communication'
+// (predicate is free-form text — a new value needs no migration)
 //
 // Traversal uses WITH RECURSIVE CTEs — see @cema/kg.
 // ---------------------------------------------------------------------------

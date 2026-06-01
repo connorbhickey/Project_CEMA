@@ -20,6 +20,12 @@ vi.mock('./servicer-outreach/run-outreach-action', () => ({
   runOutreachFromDeal: vi.fn(),
 }));
 
+vi.mock('../kg/index-deal-instrument-edges', () => ({
+  indexDealInstrumentEdges: vi.fn(),
+}));
+
+import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
+
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
 import { runCollateralIdpFromDeal } from './collateral-idp/run-collateral-idp-action';
 import { runCollateralPipeline } from './collateral-pipeline';
@@ -77,6 +83,7 @@ beforeEach(() => {
   vi.mocked(runCollateralIdpFromDeal).mockResolvedValue(IDP_ONE);
   vi.mocked(runChainOfTitleFromDeal).mockResolvedValue(CHAIN_CLEAN);
   vi.mocked(runOutreachFromDeal).mockResolvedValue(OUTREACH);
+  vi.mocked(indexDealInstrumentEdges).mockResolvedValue(2);
 });
 
 afterEach(() => {
@@ -92,12 +99,16 @@ describe('runCollateralPipeline', () => {
     expect(result).toEqual({ dealId: 'deal-1', idp: IDP_EMPTY, chain: null, outreach: null });
     expect(runChainOfTitleFromDeal).not.toHaveBeenCalled();
     expect(runOutreachFromDeal).not.toHaveBeenCalled();
+    expect(indexDealInstrumentEdges).not.toHaveBeenCalled();
   });
 
   it('runs Chain-of-Title after IDP but skips Outreach when the chain has no re_chase', async () => {
     vi.mocked(runChainOfTitleFromDeal).mockResolvedValue(CHAIN_ATTORNEY);
 
     const result = await runCollateralPipeline('deal-1');
+
+    // The deal's instruments are indexed into the KG once IDP classifies them.
+    expect(indexDealInstrumentEdges).toHaveBeenCalledWith('deal-1');
 
     expect(result).toEqual({
       dealId: 'deal-1',
