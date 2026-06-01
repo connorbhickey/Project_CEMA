@@ -9,6 +9,9 @@ export const ERROR_IDS = {
   /** A post-commit Layer-3 agent dispatch (onDealStatusChanged) threw and was
    *  swallowed so the already-committed deal-status write survives. */
   AGENT_DISPATCH_FAILED: 'AGENT_DISPATCH_FAILED',
+  /** A post-commit internal-comms notification (notifyInternal) threw and was
+   *  swallowed so the already-committed deal-status write survives. */
+  INTERNAL_COMM_NOTIFY_FAILED: 'INTERNAL_COMM_NOTIFY_FAILED',
 } as const;
 
 export type ErrorId = (typeof ERROR_IDS)[keyof typeof ERROR_IDS];

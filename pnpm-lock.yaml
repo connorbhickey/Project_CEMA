@@ -71,6 +71,9 @@ importers:
       '@cema/agents-intake':
         specifier: workspace:*
         version: link:../../packages/agents/intake
+      '@cema/agents-internal-comms':
+        specifier: workspace:*
+        version: link:../../packages/agents/internal-comms
       '@cema/agents-servicer-outreach':
         specifier: workspace:*
         version: link:../../packages/agents/servicer-outreach
@@ -200,7 +203,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@workflow/vitest':
         specifier: ^4.0.6
-        version: 4.0.6(@opentelemetry/api@1.9.0)(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)
+        version: 4.0.6(@opentelemetry/api@1.9.0)(vite@5.4.21(@types/node@22.19.19)(lightningcss@1.32.0))(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)
       autoprefixer:
         specifier: ^10.4.0
         version: 10.5.0(postcss@8.5.14)
@@ -9939,7 +9942,7 @@ snapshots:
       - '@swc/helpers'
       - supports-color
 
-  '@workflow/vitest@4.0.6(@opentelemetry/api@1.9.0)(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)':
+  '@workflow/vitest@4.0.6(@opentelemetry/api@1.9.0)(vite@5.4.21(@types/node@22.19.19)(lightningcss@1.32.0))(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)':
     dependencies:
       '@workflow/builders': 4.0.6(@opentelemetry/api@1.9.0)
       '@workflow/core': 4.2.5(@opentelemetry/api@1.9.0)
@@ -9947,6 +9950,8 @@ snapshots:
       '@workflow/world': 4.1.2(zod@3.25.76)
       '@workflow/world-local': 4.1.2(@opentelemetry/api@1.9.0)
       vitest: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+    optionalDependencies:
+      vite: 5.4.21(@types/node@22.19.19)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@swc/helpers'
