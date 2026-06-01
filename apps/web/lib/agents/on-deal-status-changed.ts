@@ -22,13 +22,6 @@ export interface DealStatusDispatchContext {
   actorUserId: string;
 }
 
-/** Strip CR/LF with the quantifier-free form CodeQL recognizes as a
- *  js/log-injection sanitizer (a `+` makes the matched set infinite and defeats
- *  recognition). redactPii first (hard rule #3), then collapse newlines. */
-function safeLogLine(raw: string): string {
-  return redactPii(raw).replace(/[\r\n]/g, ' ');
-}
-
 /**
  * Post-commit agent dispatcher. Called AFTER a deal-status change has committed
  * and been audited, it fires the Layer-3 agent wired to the new status (if any).
@@ -79,13 +72,17 @@ export async function onDealStatusChanged(
       span.setStatus({ code: SpanStatusCode.ERROR, message });
       // PII-safe AND log-injection-safe: redact the WHOLE emitted line (hard
       // rule #3, not just the exception message) and strip every CR/LF so an
-      // untrusted dealId can never forge a second log entry. The ERROR_IDS token
-      // makes this greppable (and the seam a future Sentry router keys on).
+      // untrusted dealId can never forge a second log entry. The redact+replace
+      // MUST stay INLINE in the direct dataflow to console.error: the
+      // quantifier-free /[\r\n]/g is the form CodeQL recognizes as a
+      // js/log-injection sanitizer, and it stops recognizing it once it is
+      // hidden behind a helper. The ERROR_IDS token makes the line greppable
+      // (and is the seam a future Sentry router keys on).
       // eslint-disable-next-line no-console
       console.error(
-        safeLogLine(
+        redactPii(
           `[${ERROR_IDS.AGENT_DISPATCH_FAILED}] ${trigger} failed for deal ${dealId}: ${message}`,
-        ),
+        ).replace(/[\r\n]/g, ' '),
       );
 
       // Durable, queryable failure record. Metadata is PII-safe by construction:
@@ -106,11 +103,13 @@ export async function onDealStatusChanged(
         );
       } catch (auditErr) {
         const auditMessage = auditErr instanceof Error ? auditErr.message : String(auditErr);
+        // Same inline redact + CR/LF strip (see note above) — keep the sanitizer
+        // in the direct dataflow to the sink so CodeQL recognizes it.
         // eslint-disable-next-line no-console
         console.error(
-          safeLogLine(
+          redactPii(
             `[${ERROR_IDS.AGENT_DISPATCH_FAILED}] failed to record dispatch-failure audit for deal ${dealId}: ${auditMessage}`,
-          ),
+          ).replace(/[\r\n]/g, ' '),
         );
       }
     } finally {
