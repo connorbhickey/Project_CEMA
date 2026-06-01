@@ -8,7 +8,6 @@ import { ReviewDetailPanel } from './review-detail-panel';
 import { submitForReview } from '@/lib/actions/submit-for-review';
 import { reviewActionMode } from '@/lib/review-action-mode';
 
-
 interface Props {
   documentId: string;
   attorneyReviewRequired: boolean;
