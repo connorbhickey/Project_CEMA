@@ -22,6 +22,7 @@
     "@cema/auth": "workspace:*",
     "@cema/blob": "workspace:*",
     "@cema/cache": "workspace:*",
+    "@cema/collateral": "workspace:*",
     "@cema/compliance": "workspace:*",
     "@cema/contacts": "workspace:*",
     "@cema/db": "workspace:*",

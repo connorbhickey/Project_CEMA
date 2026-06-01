@@ -83,6 +83,9 @@ importers:
       '@cema/cache':
         specifier: workspace:*
         version: link:../../packages/cache
+      '@cema/collateral':
+        specifier: workspace:*
+        version: link:../../packages/collateral
       '@cema/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance
