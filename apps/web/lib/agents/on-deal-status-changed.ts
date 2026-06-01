@@ -45,12 +45,13 @@ export async function onDealStatusChanged(dealId: string, toStatus: DealStatus):
       const message = redactPii(err instanceof Error ? err.message : String(err));
       span.setStatus({ code: SpanStatusCode.ERROR, message });
       // PII-safe AND log-injection-safe: redact the WHOLE emitted line (hard
-      // rule #3, not just the exception message) and collapse any CR/LF so an
-      // untrusted dealId can never forge a second log entry (CodeQL
-      // js/log-injection).
+      // rule #3, not just the exception message) and strip every CR/LF so an
+      // untrusted dealId can never forge a second log entry. The quantifier-free
+      // /[\r\n]/g is the form CodeQL recognizes as a js/log-injection sanitizer
+      // (a `+` makes the matched set infinite and defeats its recognition).
       const logLine = redactPii(
         `[deal.status_dispatch] ${trigger} failed for deal ${dealId}: ${message}`,
-      ).replace(/[\r\n]+/g, ' ');
+      ).replace(/[\r\n]/g, ' ');
       // eslint-disable-next-line no-console
       console.error(logLine);
     } finally {
