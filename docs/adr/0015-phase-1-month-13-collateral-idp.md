@@ -197,8 +197,18 @@ promoted it to the shared `@cema/collateral` package — carry-over #5, resolved
    offers a UI-driven `submitForReview` on gate-required docs that still lack a queue row
    (Decision 2 — the IDP sets `attorneyReviewRequired` but does not auto-enqueue). The
    IDP action's `revalidatePath('/deals/[id]/documents')` is therefore no longer a no-op.
-   **New fast-follow carry-over:** auto-enqueue gate-required docs from the IDP
-   `persistDocuments` path so review rows appear without a manual submit.
+   **Auto-enqueue fast-follow — RESOLVED (2026-06-01).** `persistDocuments` now
+   idempotently inserts a `pending` `document_review_queue` row for every gate-required
+   doc (`onConflictDoNothing` on the `(documentId, documentVersion)` unique index,
+   `submittedById = actorUserId`) and emits a co-transactional
+   `document.submitted_for_review` audit only on a real insert. **Enqueue-only:** unlike
+   the manual island `submitForReview` (a processor's explicit lifecycle action, which
+   flips `documents.status → attorney_review`), the IDP runs automatically across the
+   whole collateral file, so it deliberately leaves `documents.status` alone — the queue
+   row, not `documents.status`, is the signal the claim/approve machine (`canTransition`
+   on `documentReviewQueue.state`) and the review surface (`reviewActionMode` on
+   `queueId`) key off. The review queue now fills without a manual submit; the island
+   submit remains for any gate-required doc lacking a queue row.
 5. **Promote `InstrumentRecord` to a shared `@cema/collateral` package — RESOLVED
    (2026-05-31, M14 Slice 4, PRs #101 + #102).** The shared collateral vocabulary
    (`DOCUMENT_KINDS`/`DocumentKind`, `GATE_REQUIRED_KINDS`, `RecordingRef`,

@@ -6,7 +6,7 @@ import type {
   IdpDeps,
 } from '@cema/agents-collateral-idp';
 import { emitAuditEvent } from '@cema/compliance';
-import { documents } from '@cema/db';
+import { documentReviewQueue, documents } from '@cema/db';
 import { and, eq, isNotNull } from 'drizzle-orm';
 
 import { withRls } from '../../with-rls';
@@ -47,14 +47,56 @@ export function buildIdpDeps({ organizationId, actorUserId, idp }: BuildIdpDepsA
     persistDocuments(dealId: string, docs: readonly ClassifiedDoc[]): Promise<void> {
       return withRls(organizationId, async (tx) => {
         for (const doc of docs) {
-          await tx
+          const [updated] = await tx
             .update(documents)
             .set({
               kind: doc.kind,
               attorneyReviewRequired: doc.attorneyReviewRequired,
               extractedData: doc.instrument as unknown as Record<string, unknown>,
             })
-            .where(eq(documents.id, doc.documentId));
+            .where(eq(documents.id, doc.documentId))
+            .returning({ version: documents.version });
+
+          // Auto-enqueue gate-required docs (hard rule #2) so the attorney
+          // review queue fills without a manual UI submit. Enqueue-only: the
+          // queue row is the signal the review surface keys off
+          // (deal-documents-review.ts derives actionability from queueId, and
+          // the claim/approve state machine runs on documentReviewQueue.state)
+          // -- we deliberately do NOT flip documents.status here, leaving the
+          // document's lifecycle to the processor/attorney. onConflictDoNothing
+          // on (documentId, documentVersion) makes a durable IDP replay a no-op.
+          if (updated && doc.attorneyReviewRequired) {
+            const [queued] = await tx
+              .insert(documentReviewQueue)
+              .values({
+                organizationId,
+                documentId: doc.documentId,
+                documentVersion: updated.version,
+                submittedById: actorUserId,
+                state: 'pending',
+              })
+              .onConflictDoNothing({
+                target: [documentReviewQueue.documentId, documentReviewQueue.documentVersion],
+              })
+              .returning({ id: documentReviewQueue.id });
+
+            // Empty array == a row already existed for this (doc, version), so
+            // the audit fires only on a real insert -- re-runs stay idempotent.
+            if (queued) {
+              await emitAuditEvent(tx, {
+                organizationId,
+                actorUserId,
+                action: 'document.submitted_for_review',
+                entityType: 'document',
+                entityId: doc.documentId,
+                metadata: {
+                  queueId: queued.id,
+                  version: updated.version,
+                  source: 'collateral-idp',
+                },
+              });
+            }
+          }
         }
         const gateRequiredCount = docs.filter((d) => d.attorneyReviewRequired).length;
         await emitAuditEvent(tx, {
