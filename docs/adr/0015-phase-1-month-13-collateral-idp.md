@@ -218,8 +218,14 @@ promoted it to the shared `@cema/collateral` package — carry-over #5, resolved
    coupling. `@cema/collateral` carries no runtime `@cema/db` dependency (drift guard
    uses it as a devDep only). `UNREADABLE_CONFIDENCE_THRESHOLD` stayed in IDP (OCR-tuning,
    not shared vocabulary).
-6. **Persist chain edges to `kg_edges`** — when Chain-of-Title lands, attribute
-   instrument relationships to the deal's knowledge graph.
+6. **Persist chain edges to `kg_edges` — RESOLVED (2026-06-01, PR #113).** Brainstormed to
+   the **membership** model: the collateral pipeline now indexes each IDP-classified
+   instrument as a PII-safe `deal -> document` edge (new predicate `deal_has_instrument`)
+   via `indexDealInstrumentEdges`, idempotent (`addEdge` `onConflictDoNothing`). 0 migrations
+   (predicate is free-form `text`; the deal is the edge subject, so no `deal_id` column).
+   Chain **structure** edges (doc->doc assignment order) and party-resolved edges are
+   deferred — `ChainEdge` carries party NAMES (PII), not ids, so structure needs entity
+   resolution or a doc->doc derivation. See `docs/plans/2026-06-01-kg-edges-instrument-attribution.md`.
 7. **Provision `BRAINTRUST_API_KEY`** — the live eval skips-green; the offline
    `scorers.test.ts` is the real gate meanwhile (no model key needed — IDP has no model
    call).
