@@ -7,6 +7,8 @@ import { and, eq } from 'drizzle-orm';
 
 import { withRls } from '../with-rls';
 
+import { DocumentNotReviewableError } from './submit-for-review-errors';
+
 // ---------------------------------------------------------------------------
 // Hard rule #2 companion — submitForReview places a document into the
 // attorney review queue. Until a queue row in state 'approved' exists for
@@ -15,14 +17,10 @@ import { withRls } from '../with-rls';
 //
 // Idempotent: calling submitForReview twice for the same (documentId, version)
 // returns the existing queue row rather than inserting a duplicate.
+//
+// DocumentNotReviewableError lives in ./submit-for-review-errors so this
+// 'use server' module exports only async functions across the client boundary.
 // ---------------------------------------------------------------------------
-
-export class DocumentNotReviewableError extends Error {
-  constructor(documentId: string, reason: string) {
-    super(`Document ${documentId} is not reviewable: ${reason}`);
-    this.name = 'DocumentNotReviewableError';
-  }
-}
 
 export interface SubmitForReviewResult {
   queueId: string;
