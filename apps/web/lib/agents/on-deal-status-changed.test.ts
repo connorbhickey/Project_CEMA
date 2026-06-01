@@ -59,4 +59,25 @@ describe('onDealStatusChanged', () => {
 
     errSpy.mockRestore();
   });
+
+  it('emits a single-line, PII-redacted log entry even with hostile dealId/error input', async () => {
+    // dealId is an untrusted RPC arg (the CodeQL log-injection SOURCE); the
+    // error message is a second hostile vector. Both must be neutralized: no
+    // newline may survive into the log (forged-entry defense) and any SSN must
+    // be masked (hard rule #3).
+    vi.mocked(runCollateralPipeline).mockRejectedValue(
+      new Error('boom for SSN 123-45-6789\nFAKE forged log line'),
+    );
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(onDealStatusChanged('deal-1\nINJECTED', 'title_work')).resolves.toBeUndefined();
+
+    expect(errSpy).toHaveBeenCalledTimes(1);
+    const logged = errSpy.mock.calls[0]?.[0] as string;
+    expect(logged).not.toMatch(/[\r\n]/); // log-injection neutralized
+    expect(logged).not.toContain('123-45-6789'); // raw SSN never logged
+    expect(logged).toContain('***-**-6789'); // masked instead
+
+    errSpy.mockRestore();
+  });
 });

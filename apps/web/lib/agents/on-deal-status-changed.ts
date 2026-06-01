@@ -44,8 +44,15 @@ export async function onDealStatusChanged(dealId: string, toStatus: DealStatus):
       // defense in depth (redactPii is idempotent).
       const message = redactPii(err instanceof Error ? err.message : String(err));
       span.setStatus({ code: SpanStatusCode.ERROR, message });
+      // PII-safe AND log-injection-safe: redact the WHOLE emitted line (hard
+      // rule #3, not just the exception message) and collapse any CR/LF so an
+      // untrusted dealId can never forge a second log entry (CodeQL
+      // js/log-injection).
+      const logLine = redactPii(
+        `[deal.status_dispatch] ${trigger} failed for deal ${dealId}: ${message}`,
+      ).replace(/[\r\n]+/g, ' ');
       // eslint-disable-next-line no-console
-      console.error(`[deal.status_dispatch] ${trigger} failed for deal ${dealId}: ${message}`);
+      console.error(logLine);
     } finally {
       span.end();
     }
