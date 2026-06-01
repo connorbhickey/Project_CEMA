@@ -42,6 +42,7 @@ export function route(dealId: string, breaks: readonly ChainBreak[]): RouteDecis
       {
         dealId,
         kind: 'advisory_pass',
+        breakKind: null,
         documentId: null,
         reason: 'Chain of title is internally consistent; advisory pass.',
       },
@@ -50,6 +51,7 @@ export function route(dealId: string, breaks: readonly ChainBreak[]): RouteDecis
   return breaks.map((b) => ({
     dealId,
     kind: ROUTE_BY_BREAK[b.kind],
+    breakKind: b.kind,
     documentId: b.documentId,
     reason: REASON_BY_BREAK[b.kind],
   }));

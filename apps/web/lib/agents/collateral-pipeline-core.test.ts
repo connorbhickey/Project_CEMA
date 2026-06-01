@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { hasReChase } from './collateral-pipeline-core';
 
 function route(kind: RouteDecision['kind']): RouteDecision {
-  return { dealId: 'deal-1', kind, documentId: null, reason: 'x' };
+  const breakKind =
+    kind === 're_chase' ? 'missing_assignment' : kind === 'attorney_review' ? 'lost_note' : null;
+  return { dealId: 'deal-1', kind, breakKind, documentId: null, reason: 'x' };
 }
 
 function chain(routes: RouteDecision[], status: ChainResult['status']): ChainResult {

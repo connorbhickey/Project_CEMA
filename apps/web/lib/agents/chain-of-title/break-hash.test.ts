@@ -6,6 +6,7 @@ import { breakHash } from './break-hash';
 const base: RouteDecision = {
   dealId: '00000000-0000-0000-0000-0000000000ac',
   kind: 're_chase',
+  breakKind: 'missing_assignment',
   documentId: '00000000-0000-0000-0000-0000000000dc',
   reason:
     'A gap in the recorded assignment sequence was detected; re-chase the servicer for the missing assignment.',

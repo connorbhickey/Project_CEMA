@@ -23,6 +23,7 @@ const ATTY_DOC_ID = '00000000-0000-0000-0000-0000000000dc';
 const reChaseDecision: RouteDecision = {
   dealId: DEAL_ID,
   kind: 're_chase',
+  breakKind: 'missing_assignment',
   documentId: null,
   reason:
     'A gap in the recorded assignment sequence was detected; re-chase the servicer for the missing assignment.',
@@ -31,6 +32,7 @@ const reChaseDecision: RouteDecision = {
 const attorneyDecision: RouteDecision = {
   dealId: DEAL_ID,
   kind: 'attorney_review',
+  breakKind: 'lost_note',
   documentId: ATTY_DOC_ID,
   reason:
     'A promissory note has no anchoring mortgage; attorney review required (possible lost-note affidavit).',

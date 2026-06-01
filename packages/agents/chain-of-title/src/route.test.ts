@@ -55,4 +55,17 @@ describe('route', () => {
       expect(decision?.reason.length).toBeGreaterThan(0);
     }
   });
+
+  it('carries the underlying breakKind on each decision', () => {
+    for (const kind of BREAK_KINDS) {
+      const [decision] = route('deal-1', [{ kind, documentId: 'd1', detail: 'x' }]);
+      expect(decision?.breakKind).toBe(kind);
+    }
+  });
+
+  it('sets breakKind to null for an advisory_pass (clean chain)', () => {
+    const [decision] = route('deal-1', []);
+    expect(decision?.kind).toBe('advisory_pass');
+    expect(decision?.breakKind).toBeNull();
+  });
 });
