@@ -1,13 +1,15 @@
-// Chain-of-Title types. This package type-imports the InstrumentRecord shape
-// the Collateral IDP persists -- it never imports @cema/db (the drift guard in
-// types.test.ts is against collateral-idp's exported type, which itself is kept
-// in lockstep with the DB enum). No runtime coupling: these are type-only.
-export type { DocumentKind, InstrumentRecord, RecordingRef } from '@cema/agents-collateral-idp';
+// Chain-of-Title types. This package type-imports the shared collateral
+// vocabulary (the InstrumentRecord shape the Collateral IDP persists) from
+// @cema/collateral -- it never imports @cema/db (the drift guard lives in
+// @cema/collateral, kept in lockstep with the DB enum there). No runtime
+// coupling to the IDP agent: these are type-only imports from the vocabulary
+// package.
+export type { DocumentKind, InstrumentRecord, RecordingRef } from '@cema/collateral';
 
 // Local bindings (the re-export above does not create them) for use in the
 // `satisfies readonly DocumentKind[]` guards and the interfaces below. Kept at
 // the top so the ESLint `import/first` rule stays satisfied.
-import type { DocumentKind, InstrumentRecord } from '@cema/agents-collateral-idp';
+import type { DocumentKind, InstrumentRecord } from '@cema/collateral';
 
 // The three terminal verdicts a chain can carry. `clean` is reachable IFF there
 // are zero breaks (the "never auto-bless" safety property -- see chain.ts).

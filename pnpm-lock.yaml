@@ -219,9 +219,9 @@ importers:
 
   packages/agents/chain-of-title:
     dependencies:
-      '@cema/agents-collateral-idp':
+      '@cema/collateral':
         specifier: workspace:*
-        version: link:../collateral-idp
+        version: link:../../collateral
       '@cema/observability':
         specifier: workspace:*
         version: link:../../observability
