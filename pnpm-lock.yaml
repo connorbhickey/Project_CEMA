@@ -71,6 +71,9 @@ importers:
       '@cema/agents-intake':
         specifier: workspace:*
         version: link:../../packages/agents/intake
+      '@cema/agents-internal-comms':
+        specifier: workspace:*
+        version: link:../../packages/agents/internal-comms
       '@cema/agents-servicer-outreach':
         specifier: workspace:*
         version: link:../../packages/agents/servicer-outreach
@@ -336,6 +339,21 @@ importers:
       braintrust:
         specifier: ^3.13.0
         version: 3.13.0(@aws-sdk/credential-provider-web-identity@3.972.13)(zod@4.3.6)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
+  packages/agents/internal-comms:
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../../config
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

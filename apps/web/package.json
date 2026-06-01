@@ -17,6 +17,7 @@
     "@cema/agents-chain-of-title": "workspace:*",
     "@cema/agents-collateral-idp": "workspace:*",
     "@cema/agents-exception-triage": "workspace:*",
+    "@cema/agents-internal-comms": "workspace:*",
     "@cema/agents-intake": "workspace:*",
     "@cema/agents-servicer-outreach": "workspace:*",
     "@cema/attorney": "workspace:*",
