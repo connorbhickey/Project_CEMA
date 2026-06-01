@@ -6,6 +6,7 @@ const NAV: { href: Route; label: string }[] = [
   { href: '/deals', label: 'Deals' },
   { href: '/contacts', label: 'Contacts' },
   { href: '/attorney/chain-queue', label: 'Chain reviews' },
+  { href: '/exceptions', label: 'Exceptions' },
   { href: '/settings/org', label: 'Settings' },
 ];
 
