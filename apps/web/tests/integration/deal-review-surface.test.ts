@@ -14,9 +14,10 @@ vi.mock('@cema/auth', () => ({
   getCurrentUser: () => Promise.resolve(currentClerkUser),
 }));
 
-// Import the loaders AFTER the mock is registered. Use relative paths — the
-// '@/' alias resolves under tsc/Turbopack but not vitest's module resolver
-// (matches the convention in intake-agent-rls.test.ts).
+// Import the loaders AFTER the mock is registered. Keep relative paths for the
+// loaders themselves (matching intake-agent-rls.test.ts); the '@/' alias now
+// resolves in vitest via resolve.alias in vitest.config.ts and must remain
+// because the loaders transitively import '@/lib/with-rls'.
 const { getDealChainFindings } = await import('../../lib/queries/deal-chain-findings');
 const { getDealDocumentsReview } = await import('../../lib/queries/deal-documents-review');
 

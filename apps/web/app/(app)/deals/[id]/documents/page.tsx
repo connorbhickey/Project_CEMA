@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <h1 className="text-2xl font-semibold">Documents &amp; chain of title</h1>
 
       <section>
-        <h2 className="mb-3 text-sm font-medium">Collateral instruments ({items.length})</h2>
+        <h2 className="mb-3 text-sm font-medium">Documents ({items.length})</h2>
         {items.length === 0 ? (
           <div className="text-muted-foreground rounded-lg border border-dashed p-12 text-center text-sm">
             No documents on this deal yet.
