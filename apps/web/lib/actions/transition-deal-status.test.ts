@@ -53,6 +53,13 @@ vi.mock('../agents/on-deal-status-changed', () => ({
   onDealStatusChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
+// The second post-commit fan-out (internal-comms notification) is exercised by
+// its own suite (internal-comms/notify-internal.test.ts); mock it here to keep
+// this unit focused on the write+audit path.
+vi.mock('../agents/internal-comms/notify-internal', () => ({
+  notifyInternal: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
@@ -61,6 +68,7 @@ import { emitAuditEvent } from '@cema/compliance';
 import { getDb } from '@cema/db';
 import { revalidatePath } from 'next/cache';
 
+import { notifyInternal } from '../agents/internal-comms/notify-internal';
 import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
 
@@ -161,6 +169,7 @@ describe('transitionDealStatus', () => {
     expect(emitAuditEvent).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
     expect(onDealStatusChanged).not.toHaveBeenCalled();
+    expect(notifyInternal).not.toHaveBeenCalled();
   });
 
   it('writes the new status, emits a PII-safe audit event, and revalidates on a real change', async () => {
@@ -186,6 +195,11 @@ describe('transitionDealStatus', () => {
     // Post-commit dispatch fires with the new status (+ org/actor context for
     // the dispatch-failure audit) only on a real change.
     expect(onDealStatusChanged).toHaveBeenCalledWith('deal-1', 'eligibility', {
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
+    // Second post-commit fan-out: internal-comms notification, same ctx.
+    expect(notifyInternal).toHaveBeenCalledWith('deal-1', 'eligibility', {
       organizationId: 'org-1',
       actorUserId: 'user-1',
     });

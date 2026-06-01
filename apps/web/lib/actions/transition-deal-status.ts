@@ -6,6 +6,7 @@ import { dealStatusEnum, deals, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
+import { notifyInternal } from '../agents/internal-comms/notify-internal';
 import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
 
@@ -106,6 +107,13 @@ export async function transitionDealStatus(
     // are threaded in so the dispatcher can record a PII-safe
     // deal.agent_dispatch_failed audit if an agent run fails.
     await onDealStatusChanged(dealId, result.to, {
+      organizationId: org.id,
+      actorUserId: user.id,
+    });
+    // Second post-commit fan-out: internal-comms notification (spec §9.10).
+    // Independent of and after the agent dispatch; itself best-effort (it
+    // swallows its own errors), so it can never undo the committed status write.
+    await notifyInternal(dealId, result.to, {
       organizationId: org.id,
       actorUserId: user.id,
     });
