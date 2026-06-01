@@ -10,7 +10,10 @@ export const ERROR_IDS = {
    *  swallowed so the already-committed deal-status write survives. */
   AGENT_DISPATCH_FAILED: 'AGENT_DISPATCH_FAILED',
   /** A post-commit internal-comms notification (notifyInternal) threw and was
-   *  swallowed so the already-committed deal-status write survives. */
+   *  swallowed so the already-committed deal-status write survives. The durable
+   *  trail is the split audit: an `internal_comm.evaluated` row WITHOUT a
+   *  following `internal_comm.notified` is the queryable record of this failure;
+   *  this token is the matching greppable console line. */
   INTERNAL_COMM_NOTIFY_FAILED: 'INTERNAL_COMM_NOTIFY_FAILED',
 } as const;
 

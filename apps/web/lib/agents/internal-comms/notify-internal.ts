@@ -43,6 +43,23 @@ export async function notifyInternal(
     span.setAttribute('comm.status', notification.status);
     span.setAttribute('comm.channel', notification.channel);
     try {
+      // Split audit (part 1): record the DECISION to notify BEFORE the side
+      // effect, so a swallowed send (or post-send audit) failure still leaves a
+      // durable trail -- a missing `internal_comm.notified` after an
+      // `internal_comm.evaluated` is the queryable signal of a failed notify.
+      // Mirrors the evaluated/created split every Layer-3 agent uses.
+      // PII-safe metadata: enum/token fields only (hard rule #3).
+      await withRls(ctx.organizationId, (tx) =>
+        emitAuditEvent(tx, {
+          organizationId: ctx.organizationId,
+          actorUserId: ctx.actorUserId,
+          action: 'internal_comm.evaluated',
+          entityType: 'deal',
+          entityId: dealId,
+          metadata: { status: notification.status, channel: notification.channel },
+        }),
+      );
+
       const result = await sendInternalComm({
         dealId,
         status: notification.status,
@@ -51,8 +68,7 @@ export async function notifyInternal(
       });
       span.setAttribute('comm.accepted', result.accepted);
 
-      // PII-safe audit: enum/token fields only (never the message body, party
-      // names, or amounts -- though the static template carries none anyway).
+      // Split audit (part 2): record SUCCESS after the side effect.
       await withRls(ctx.organizationId, (tx) =>
         emitAuditEvent(tx, {
           organizationId: ctx.organizationId,

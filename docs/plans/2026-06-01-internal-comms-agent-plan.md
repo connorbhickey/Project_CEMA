@@ -12,7 +12,7 @@
 
 ---
 
-### Task 1: Scaffold the `@cema/agents-internal-comms` package
+## Task 1: Scaffold the `@cema/agents-internal-comms` package
 
 **Files:**
 
@@ -71,7 +71,7 @@ git commit -S -m "feat(internal-comms): scaffold @cema/agents-internal-comms pac
 
 ---
 
-### Task 2: Pure core — `types.ts` + `notify.ts` (TDD)
+## Task 2: Pure core — `types.ts` + `notify.ts` (TDD)
 
 **Files:**
 
@@ -239,7 +239,7 @@ git commit -S -m "feat(internal-comms): pure notificationForStatus core + vocabu
 
 ---
 
-### Task 3: `FixtureChannelAdapter` + `index.ts` (TDD)
+## Task 3: `FixtureChannelAdapter` + `index.ts` (TDD)
 
 **Files:**
 
@@ -322,7 +322,7 @@ git commit -S -m "feat(internal-comms): dormant FixtureChannelAdapter + package 
 
 ---
 
-### Task 4: App dispatcher — `notifyInternal` (TDD)
+## Task 4: App dispatcher — `notifyInternal` (TDD)
 
 **Files:**
 
@@ -581,7 +581,7 @@ git commit -S -m "feat(internal-comms): best-effort notifyInternal dispatcher (s
 
 ---
 
-### Task 5: Drift guard — `NOTIFY_STATUSES ⊆ deal_status` enum
+## Task 5: Drift guard — `NOTIFY_STATUSES ⊆ deal_status` enum
 
 **Files:**
 
@@ -618,7 +618,7 @@ git commit -S -m "test(internal-comms): NOTIFY_STATUSES subset-of-deal_status dr
 
 ---
 
-### Task 6: Wire into `transitionDealStatus` (TDD)
+## Task 6: Wire into `transitionDealStatus` (TDD)
 
 **Files:**
 
@@ -693,7 +693,7 @@ git commit -S -m "feat(internal-comms): fan out notifyInternal from transitionDe
 
 ---
 
-### Task 7: Full verification + docs close-out
+## Task 7: Full verification + docs close-out
 
 **Files:**
 

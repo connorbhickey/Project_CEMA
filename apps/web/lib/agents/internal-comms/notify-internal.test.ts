@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('notifyInternal', () => {
-  it('sends a notification + records the audit for a notify-worthy status', async () => {
+  it('split-audits (evaluated before, notified after) + sends for a notify-worthy status', async () => {
     await notifyInternal('deal-1', 'attorney_review', CTX);
 
     expect(sendInternalComm).toHaveBeenCalledTimes(1);
@@ -54,13 +54,20 @@ describe('notifyInternal', () => {
     });
 
     expect(withRls).toHaveBeenCalledWith('org-1', expect.any(Function));
-    expect(emitAuditEvent).toHaveBeenCalledTimes(1);
-    const [, event] = vi.mocked(emitAuditEvent).mock.calls[0]!;
-    expect(event).toMatchObject({
+    // Split audit: internal_comm.evaluated BEFORE the send, internal_comm.notified AFTER.
+    expect(emitAuditEvent).toHaveBeenCalledTimes(2);
+    const [, evaluated] = vi.mocked(emitAuditEvent).mock.calls[0]!;
+    expect(evaluated).toMatchObject({
       organizationId: 'org-1',
       actorUserId: 'user-1',
-      action: 'internal_comm.notified',
+      action: 'internal_comm.evaluated',
       entityType: 'deal',
+      entityId: 'deal-1',
+      metadata: { status: 'attorney_review', channel: 'pipeline' },
+    });
+    const [, notified] = vi.mocked(emitAuditEvent).mock.calls[1]!;
+    expect(notified).toMatchObject({
+      action: 'internal_comm.notified',
       entityId: 'deal-1',
       metadata: { status: 'attorney_review', channel: 'pipeline', accepted: true },
     });
@@ -73,11 +80,17 @@ describe('notifyInternal', () => {
     expect(emitAuditEvent).not.toHaveBeenCalled();
   });
 
-  it('swallows a failing send so the status write is never blocked', async () => {
+  it('leaves an evaluated audit trail (no notified) and swallows a failing send', async () => {
     vi.mocked(sendInternalComm).mockRejectedValue(new Error('slack boom'));
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await expect(notifyInternal('deal-1', 'exception', CTX)).resolves.toBeUndefined();
+
+    // Durable trail survives the failure: evaluated written, notified never.
+    expect(emitAuditEvent).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(emitAuditEvent).mock.calls[0]![1]).toMatchObject({
+      action: 'internal_comm.evaluated',
+    });
     expect(errSpy).toHaveBeenCalledTimes(1);
 
     errSpy.mockRestore();

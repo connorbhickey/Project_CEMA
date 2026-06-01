@@ -162,9 +162,12 @@ export class FixtureChannelAdapter implements InternalChannelAdapter {
      routine/terminal statuses — no span, no send, no audit).
   2. Open an OTel span `internal_comm.notify` with PII-safe attributes only
      (`comm.deal_id`, `comm.status`, `comm.channel`, `comm.accepted`).
-  3. Build the `InternalCommPacket` and `await adapter.send(packet)`.
-  4. Emit a PII-safe audit `internal_comm.notified` inside `withRls(ctx.organizationId, ...)` —
-     `metadata { status, channel }` (enum/token only).
+  3. **Split audit (part 1):** emit `internal_comm.evaluated` inside `withRls(ctx.organizationId, ...)`
+     — `metadata { status, channel }` (enum/token only) — BEFORE the side effect, so a swallowed
+     failure still leaves a durable trail (mirrors the evaluated/created split every Layer-3 agent
+     uses). An `evaluated` row without a following `notified` is the queryable failure signal.
+  4. Build the `InternalCommPacket` and `await sendInternalComm(packet)`, then **split audit
+     (part 2):** emit `internal_comm.notified` (`metadata { status, channel, accepted }`) on success.
   5. **Best-effort**: wrap in try/catch. On failure, set span `ERROR`, and log with the **inline**
      `redactPii(\`...\`).replace(/[\r\n]/g, ' ')`+`ERROR_IDS`pattern (the exact form CodeQL
 recognizes as a`js/log-injection` sanitizer — must stay inline at the sink). A failed
@@ -225,7 +228,7 @@ Target: +~12 tests. **0 migrations.** Package count 25 → **26**.
 
 ## 9. File structure
 
-```
+```text
 packages/agents/internal-comms/
   package.json            # @cema/agents-internal-comms, devDeps only (no runtime deps)
   tsconfig.json           # extends @cema/config/tsconfig/node.json
