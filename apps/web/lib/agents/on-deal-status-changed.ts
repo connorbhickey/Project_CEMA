@@ -8,6 +8,7 @@ import { withRls } from '../with-rls';
 import { runCollateralPipeline } from './collateral-pipeline';
 import { runDocGen } from './doc-gen/run-doc-gen';
 import { triggerForStatus } from './on-deal-status-changed-core';
+import { runRecordingPrep } from './recording-prep/run-recording-prep';
 import { runOutreachFromDeal } from './servicer-outreach/run-outreach-action';
 
 const tracer = trace.getTracer('@cema/web-deal-status-dispatch');
@@ -64,6 +65,8 @@ export async function onDealStatusChanged(
         await runCollateralPipeline(dealId);
       } else if (trigger === 'doc_gen') {
         await runDocGen(dealId);
+      } else if (trigger === 'recording_prep') {
+        await runRecordingPrep(dealId);
       } else {
         await runOutreachFromDeal(dealId);
       }

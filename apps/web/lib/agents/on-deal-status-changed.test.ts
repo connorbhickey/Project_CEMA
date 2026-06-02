@@ -17,6 +17,10 @@ vi.mock('./doc-gen/run-doc-gen', () => ({
   runDocGen: vi.fn(),
 }));
 
+vi.mock('./recording-prep/run-recording-prep', () => ({
+  runRecordingPrep: vi.fn(),
+}));
+
 // emitAuditEvent is mocked (no DB); redactPii stays REAL so the PII/log-injection
 // assertions below exercise the actual sanitizer.
 vi.mock('@cema/compliance', async (importOriginal) => {
@@ -37,6 +41,7 @@ import { withRls } from '../with-rls';
 import { runCollateralPipeline } from './collateral-pipeline';
 import { runDocGen } from './doc-gen/run-doc-gen';
 import { onDealStatusChanged } from './on-deal-status-changed';
+import { runRecordingPrep } from './recording-prep/run-recording-prep';
 import { runOutreachFromDeal } from './servicer-outreach/run-outreach-action';
 
 const CTX = { organizationId: 'org-1', actorUserId: 'user-1' };
@@ -47,6 +52,7 @@ beforeEach(() => {
   vi.mocked(runCollateralPipeline).mockResolvedValue(undefined as never);
   vi.mocked(runOutreachFromDeal).mockResolvedValue(undefined as never);
   vi.mocked(runDocGen).mockResolvedValue(undefined);
+  vi.mocked(runRecordingPrep).mockResolvedValue(undefined);
   vi.mocked(emitAuditEvent).mockResolvedValue(undefined);
   vi.mocked(withRls).mockImplementation((_orgId, cb) => cb({} as never));
 });
@@ -78,12 +84,22 @@ describe('onDealStatusChanged', () => {
     expect(runOutreachFromDeal).not.toHaveBeenCalled();
   });
 
+  it("runs the recording-prep agent when a deal enters 'recording'", async () => {
+    await onDealStatusChanged('deal-1', 'recording', CTX);
+
+    expect(runRecordingPrep).toHaveBeenCalledWith('deal-1');
+    expect(runCollateralPipeline).not.toHaveBeenCalled();
+    expect(runOutreachFromDeal).not.toHaveBeenCalled();
+    expect(runDocGen).not.toHaveBeenCalled();
+  });
+
   it('does nothing for a status with no wired agent', async () => {
     await onDealStatusChanged('deal-1', 'eligibility', CTX);
 
     expect(runCollateralPipeline).not.toHaveBeenCalled();
     expect(runOutreachFromDeal).not.toHaveBeenCalled();
     expect(runDocGen).not.toHaveBeenCalled();
+    expect(runRecordingPrep).not.toHaveBeenCalled();
   });
 
   it('does not record a dispatch-failure audit on the happy path', async () => {
