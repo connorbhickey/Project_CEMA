@@ -59,6 +59,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@cema/agents-borrower-comms':
+        specifier: workspace:*
+        version: link:../../packages/agents/borrower-comms
       '@cema/agents-chain-of-title':
         specifier: workspace:*
         version: link:../../packages/agents/chain-of-title
