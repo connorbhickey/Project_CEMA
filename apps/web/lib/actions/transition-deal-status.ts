@@ -6,6 +6,7 @@ import { dealStatusEnum, deals, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
+import { notifyBorrower } from '../agents/borrower-comms/notify-borrower';
 import { notifyInternal } from '../agents/internal-comms/notify-internal';
 import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
@@ -114,6 +115,12 @@ export async function transitionDealStatus(
     // Independent of and after the agent dispatch; itself best-effort (it
     // swallows its own errors), so it can never undo the committed status write.
     await notifyInternal(dealId, result.to, {
+      organizationId: org.id,
+      actorUserId: user.id,
+    });
+    // Third post-commit fan-out: borrower-facing email (spec §9.9). Independent
+    // of and after the agent + internal-comms dispatch; itself best-effort.
+    await notifyBorrower(dealId, result.to, {
       organizationId: org.id,
       actorUserId: user.id,
     });

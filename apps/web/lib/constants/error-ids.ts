@@ -15,6 +15,12 @@ export const ERROR_IDS = {
    *  following `internal_comm.notified` is the queryable record of this failure;
    *  this token is the matching greppable console line. */
   INTERNAL_COMM_NOTIFY_FAILED: 'INTERNAL_COMM_NOTIFY_FAILED',
+  /** A post-commit borrower-comms notification (notifyBorrower) threw for a
+   *  borrower party and was swallowed so the already-committed deal-status write
+   *  survives. The durable trail is the split audit: a `borrower_comm.evaluated`
+   *  row WITHOUT a following `borrower_comm.notified` is the queryable failure
+   *  record; this token is the matching greppable console line. */
+  BORROWER_COMM_NOTIFY_FAILED: 'BORROWER_COMM_NOTIFY_FAILED',
 } as const;
 
 export type ErrorId = (typeof ERROR_IDS)[keyof typeof ERROR_IDS];

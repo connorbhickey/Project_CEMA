@@ -60,6 +60,12 @@ vi.mock('../agents/internal-comms/notify-internal', () => ({
   notifyInternal: vi.fn().mockResolvedValue(undefined),
 }));
 
+// The third post-commit fan-out (borrower-facing email) is exercised by its own
+// suite (borrower-comms/notify-borrower.test.ts); mock it here.
+vi.mock('../agents/borrower-comms/notify-borrower', () => ({
+  notifyBorrower: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
@@ -68,6 +74,7 @@ import { emitAuditEvent } from '@cema/compliance';
 import { getDb } from '@cema/db';
 import { revalidatePath } from 'next/cache';
 
+import { notifyBorrower } from '../agents/borrower-comms/notify-borrower';
 import { notifyInternal } from '../agents/internal-comms/notify-internal';
 import { onDealStatusChanged } from '../agents/on-deal-status-changed';
 import { withRls } from '../with-rls';
@@ -170,6 +177,7 @@ describe('transitionDealStatus', () => {
     expect(revalidatePath).not.toHaveBeenCalled();
     expect(onDealStatusChanged).not.toHaveBeenCalled();
     expect(notifyInternal).not.toHaveBeenCalled();
+    expect(notifyBorrower).not.toHaveBeenCalled();
   });
 
   it('writes the new status, emits a PII-safe audit event, and revalidates on a real change', async () => {
@@ -200,6 +208,11 @@ describe('transitionDealStatus', () => {
     });
     // Second post-commit fan-out: internal-comms notification, same ctx.
     expect(notifyInternal).toHaveBeenCalledWith('deal-1', 'eligibility', {
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
+    // Third post-commit fan-out: borrower-facing email, same ctx.
+    expect(notifyBorrower).toHaveBeenCalledWith('deal-1', 'eligibility', {
       organizationId: 'org-1',
       actorUserId: 'user-1',
     });
