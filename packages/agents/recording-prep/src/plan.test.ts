@@ -58,10 +58,12 @@ describe('planRecording', () => {
     for (const s of planRecording(NYC_PURCHASE).coverSheets) {
       expect(s.attorneyReviewRequired).toBe(gate.has(s.kind));
     }
-    const county = planRecording(UPSTATE_REFI).coverSheets[0];
-    expect(county.kind).toBe('county_cover_sheet');
-    expect(county.attorneyReviewRequired).toBe(true);
-    expect(planRecording(NYC_REFI).coverSheets[0].attorneyReviewRequired).toBe(false);
+    const county = planRecording(UPSTATE_REFI).coverSheets.find(
+      (s) => s.kind === 'county_cover_sheet',
+    );
+    expect(county?.attorneyReviewRequired).toBe(true);
+    const acris = planRecording(NYC_REFI).coverSheets.find((s) => s.kind === 'acris_cover_pages');
+    expect(acris?.attorneyReviewRequired).toBe(false);
   });
 
   it('computes fees with the flat county add-on (placeholder schedule)', () => {
