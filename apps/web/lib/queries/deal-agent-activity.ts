@@ -44,7 +44,7 @@ export async function getDealAgentActivity(dealId: string): Promise<DealAgentAct
       id: r.id,
       action: r.action,
       occurredAt: r.occurredAt,
-      metadata: (r.metadata ?? {}),
+      metadata: r.metadata ?? {},
     }));
   });
 }
