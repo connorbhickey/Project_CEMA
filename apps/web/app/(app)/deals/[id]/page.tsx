@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@cema/ui';
-import type { Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -19,10 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Link href={`/deals/${id}/documents`} className="text-blue-600 hover:underline">
           Documents &amp; chain of title
         </Link>
-        <Link
-          href={`/deals/${id}/agent-activity` as Route}
-          className="text-blue-600 hover:underline"
-        >
+        <Link href={`/deals/${id}/agent-activity`} className="text-blue-600 hover:underline">
           Agent activity
         </Link>
       </nav>
