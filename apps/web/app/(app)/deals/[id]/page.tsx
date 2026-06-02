@@ -18,6 +18,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Link href={`/deals/${id}/documents`} className="text-blue-600 hover:underline">
           Documents &amp; chain of title
         </Link>
+        <Link href={`/deals/${id}/agent-activity`} className="text-blue-600 hover:underline">
+          Agent activity
+        </Link>
       </nav>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
