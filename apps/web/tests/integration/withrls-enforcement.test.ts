@@ -27,9 +27,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { withRls } from '../../lib/with-rls';
 
-const ORG_A_ID = '00000000-0000-0000-0000-0000000000a1';
-const ORG_B_ID = '00000000-0000-0000-0000-0000000000b1';
-const USER_ID = '00000000-0000-0000-0000-000000000091';
+// Distinctive `817715c5-…` ("withrls") namespace + `_51`-suffixed clerk fields so
+// no unique field collides with another suite's row on the shared Neon dev branch.
+// Sequential blocks (…00a1/…00b1) are shared across suites, which made the old
+// org-scoped deal cleanup nuke other suites' deals (see the shared-branch hazard).
+const ORG_A_ID = '817715c5-0000-0000-0000-000000000001';
+const ORG_B_ID = '817715c5-0000-0000-0000-000000000002';
+const USER_ID = '817715c5-0000-0000-0000-000000000003';
 
 const skip = !process.env.DATABASE_URL;
 
@@ -43,15 +47,15 @@ describe.skipIf(skip)('withRls — production code path enforces RLS', () => {
       .values([
         {
           id: ORG_A_ID,
-          clerkOrgId: 'org_withrls_test_a',
+          clerkOrgId: 'org_withrls_test_a_51',
           name: 'Org A (withRls enforcement test)',
-          slug: 'withrls-test-org-a',
+          slug: 'withrls-test-org-a-51',
         },
         {
           id: ORG_B_ID,
-          clerkOrgId: 'org_withrls_test_b',
+          clerkOrgId: 'org_withrls_test_b_51',
           name: 'Org B (withRls enforcement test)',
-          slug: 'withrls-test-org-b',
+          slug: 'withrls-test-org-b-51',
         },
       ])
       .onConflictDoNothing();
@@ -60,18 +64,20 @@ describe.skipIf(skip)('withRls — production code path enforces RLS', () => {
       .insert(users)
       .values({
         id: USER_ID,
-        clerkUserId: 'user_withrls_enforcement_test',
-        email: 'withrls-enforcement-test@example.invalid',
+        clerkUserId: 'user_withrls_enforcement_test_51',
+        email: 'withrls-enforcement-test-51@example.invalid',
       })
       .onConflictDoNothing();
   });
 
   afterAll(async () => {
-    // Cleanup as neondb_owner — BYPASSRLS=true lets us delete across orgs.
+    // Cleanup as neondb_owner — BYPASSRLS=true lets us delete across orgs. Delete
+    // only the per-run deals (now safe: the distinctive orgs above are this suite's
+    // alone, so this no longer nukes other suites' deals). Leave the orgs/user as
+    // idempotent seeds — deleting an org throws a 23503 FK violation once it is
+    // referenced by an immutable audit_event (hard rule #10), which failed this file.
     const db = getDb();
     await db.execute(sql`DELETE FROM deals WHERE organization_id IN (${ORG_A_ID}, ${ORG_B_ID})`);
-    await db.execute(sql`DELETE FROM organizations WHERE id IN (${ORG_A_ID}, ${ORG_B_ID})`);
-    await db.execute(sql`DELETE FROM users WHERE id = ${USER_ID}`);
   });
 
   it('Org B cannot see Org A deals when reading through withRls(orgB, ...)', async () => {

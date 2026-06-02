@@ -20,11 +20,17 @@ export default defineConfig({
     alias: { '@': appRoot },
   },
   test: {
-    // Only run unit tests — e2e specs are executed by Playwright, and the
-    // Neon-gated durable-workflow suite needs the @workflow/vitest runtime, so
-    // it runs under vitest.integration.config.ts (pnpm test:workflow), never
-    // here in the required-CI "Unit tests" job.
+    // Only run unit tests here. Three suites run elsewhere:
+    //   - e2e specs (tests/e2e/**) execute under Playwright;
+    //   - the durable-workflow suite (tests/workflow/**) needs the
+    //     @workflow/vitest runtime, via vitest.integration.config.ts (test:workflow);
+    //   - the Neon-gated DB integration suite (tests/integration/**) runs
+    //     SERIALLY against the shared dev branch, via vitest.neon.config.ts
+    //     (test:integration) — running it in this parallel pool races on shared
+    //     tenant/audit state and flakes. All three are Neon-/runtime-gated and are
+    //     skip-green in CI, so excluding them keeps the required "Unit tests" job
+    //     fast + deterministic.
     include: ['**/*.test.ts'],
-    exclude: ['node_modules', 'tests/e2e/**', 'tests/workflow/**'],
+    exclude: ['node_modules', 'tests/e2e/**', 'tests/workflow/**', 'tests/integration/**'],
   },
 });

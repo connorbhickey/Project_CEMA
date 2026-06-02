@@ -14,8 +14,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 const skip = !process.env.DATABASE_URL;
 
 // Mutable current-org so a single suite can assert cross-org RLS isolation.
-let currentClerkOrgId = 'org_review_a';
-const currentClerkUser = { id: 'user_review_a' };
+let currentClerkOrgId = 'org_review_a_51';
+const currentClerkUser = { id: 'user_review_a_51' };
 
 vi.mock('@cema/auth', () => ({
   getCurrentOrganizationId: () => Promise.resolve(currentClerkOrgId),
@@ -30,12 +30,17 @@ const { getDealChainFindings } = await import('../../lib/queries/deal-chain-find
 const { getDealDocumentsReview } = await import('../../lib/queries/deal-documents-review');
 const { getDealChainBreakReviews } = await import('../../lib/queries/deal-chain-break-reviews');
 
-const ORG_A = '00000000-0000-0000-0000-0000000000a1';
-const ORG_B = '00000000-0000-0000-0000-0000000000b1';
-const USER_A = '00000000-0000-0000-0000-000000000a01';
-const DEAL_A = '00000000-0000-0000-0000-0000000000e1';
-const DOC_MORT = '00000000-0000-0000-0000-0000000000d1';
-const DOC_AOM = '00000000-0000-0000-0000-0000000000d2';
+// Distinctive `dea17e51-…` ("deal review") namespace + `_51`-suffixed clerk fields
+// so no unique field collides with another suite's row on the shared Neon dev
+// branch. The old sequential ids (…00a1/…00e1/…00d1) collided with accumulated
+// rows, so onConflictDoNothing silently skipped this suite's org/deal seeds and the
+// loaders returned [] (the shared-branch hazard — same root cause as PR #127's fix).
+const ORG_A = 'dea17e51-0000-0000-0000-000000000001';
+const ORG_B = 'dea17e51-0000-0000-0000-000000000002';
+const USER_A = 'dea17e51-0000-0000-0000-000000000003';
+const DEAL_A = 'dea17e51-0000-0000-0000-000000000004';
+const DOC_MORT = 'dea17e51-0000-0000-0000-000000000005';
+const DOC_AOM = 'dea17e51-0000-0000-0000-000000000006';
 const CBR_HASH = 'a1b2c3d4'; // a chain_break_review_queue row keyed on this break
 
 function inst(
@@ -64,13 +69,13 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
     await db
       .insert(organizations)
       .values([
-        { id: ORG_A, clerkOrgId: 'org_review_a', name: 'Review A', slug: 'review-a' },
-        { id: ORG_B, clerkOrgId: 'org_review_b', name: 'Review B', slug: 'review-b' },
+        { id: ORG_A, clerkOrgId: 'org_review_a_51', name: 'Review A', slug: 'review-a-51' },
+        { id: ORG_B, clerkOrgId: 'org_review_b_51', name: 'Review B', slug: 'review-b-51' },
       ])
       .onConflictDoNothing();
     await db
       .insert(users)
-      .values({ id: USER_A, clerkUserId: 'user_review_a', email: 'review-a@example.invalid' })
+      .values({ id: USER_A, clerkUserId: 'user_review_a_51', email: 'review-a-51@example.invalid' })
       .onConflictDoNothing();
     await db
       .insert(deals)
@@ -136,7 +141,7 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
   });
 
   it('returns deal-scoped documents, gate-required first, with the AOM instrument', async () => {
-    currentClerkOrgId = 'org_review_a';
+    currentClerkOrgId = 'org_review_a_51';
     const items = await getDealDocumentsReview(DEAL_A);
     expect(items).toHaveLength(2);
     expect(items[0]!.attorneyReviewRequired).toBe(true);
@@ -146,7 +151,7 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
   });
 
   it('recomputes a clean chain → advisory_pass', async () => {
-    currentClerkOrgId = 'org_review_a';
+    currentClerkOrgId = 'org_review_a_51';
     const findings = await getDealChainFindings(DEAL_A);
     expect(findings.analyzed).toBe(true);
     expect(findings.status).toBe('clean');
@@ -155,7 +160,7 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
   });
 
   it('returns deal-scoped chain-break review rows', async () => {
-    currentClerkOrgId = 'org_review_a';
+    currentClerkOrgId = 'org_review_a_51';
     const rows = await getDealChainBreakReviews(DEAL_A);
     const mine = rows.find((r) => r.breakHash === CBR_HASH);
     expect(mine).toBeDefined();
@@ -165,7 +170,7 @@ describe.skipIf(skip)('deal review surface (Neon integration)', () => {
   });
 
   it('is invisible to another org (RLS isolation)', async () => {
-    currentClerkOrgId = 'org_review_b';
+    currentClerkOrgId = 'org_review_b_51';
     expect(await getDealDocumentsReview(DEAL_A)).toEqual([]);
     expect(await getDealChainFindings(DEAL_A)).toEqual({
       analyzed: false,
