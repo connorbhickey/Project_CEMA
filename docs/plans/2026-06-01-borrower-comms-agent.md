@@ -164,25 +164,22 @@ export class FixtureChannelAdapter implements BorrowerChannelAdapter {
 - `channel.ts` — `sendBorrowerComm(packet)` module-level function wrapping the `FixtureChannelAdapter`
   (the Resend swap point; a function, not an exported adapter object, so the dispatcher test mocks it
   without tripping `unbound-method`).
+- `parties.ts` — `loadBorrowerParties(organizationId, dealId)`: RLS-reads the deal's `borrower` +
+  `co_borrower` parties with a non-null, non-empty `email`. A mockable seam so the dispatcher test
+  never touches the Drizzle chain.
 - `notify-borrower.ts` — `notifyBorrower(dealId, status, ctx)`:
-  1. `const notification = borrowerNotificationForStatus(status)`; if `null`, **return immediately**.
-  2. RLS-read the deal's borrower parties: `withRls(ctx.organizationId, tx => tx.select().from(parties)
-.where(and(eq(parties.dealId, dealId), inArray(parties.role, ['borrower', 'co_borrower']))))`.
-     Keep only parties with a non-null, non-empty `email`. If none, emit a PII-safe log and return
-     (best-effort — nothing to send).
-  3. **For each borrower party** (co-borrowers included):
-     - Open an OTel span `borrower_comm.notify` with PII-safe attributes only (`comm.deal_id`,
-       `comm.party_id`, `comm.status`, `comm.channel` — **never** the email, name, or body).
-     - **Split audit (part 1):** `borrower_comm.evaluated` inside `withRls` — `metadata { status,
-channel, partyId }` — before the send.
-     - `await sendBorrowerComm({ dealId, partyId, status, channel: 'email', to: email, subject,
-body })`.
-     - **Split audit (part 2):** `borrower_comm.notified` (`metadata { status, channel, partyId,
-accepted }`) on success.
-     - **Best-effort:** wrap each party's send in try/catch; on failure set span `ERROR` and log with
-       the inline `redactPii(...).replace(/[\r\n]/g, ' ')` + `ERROR_IDS.BORROWER_COMM_NOTIFY_FAILED`.
-       A failure on one borrower never blocks the other co-borrowers or the committed status write;
-       never rethrows.
+  - `borrowerNotificationForStatus(status)`; if `null`, return immediately (the 9 non-touchpoint
+    statuses).
+  - `loadBorrowerParties(...)`; if none, return (best-effort — nothing to send).
+  - For each borrower party (co-borrowers included): open an OTel span `borrower_comm.notify`
+    (PII-safe attrs `comm.deal_id` / `comm.party_id` / `comm.status` / `comm.channel` — never the
+    email, name, or body); **split audit** `borrower_comm.evaluated` (`metadata { status, channel,
+partyId }`) before the send; `sendBorrowerComm({ …, to: email })`; then `borrower_comm.notified`
+    (`metadata` adds `{ accepted }`) on success.
+  - **Best-effort:** each party's send is wrapped in try/catch; on failure the span is `ERROR` and
+    the line is logged with the inline `redactPii(...).replace(/[\r\n]/g, ' ')` +
+    `ERROR_IDS.BORROWER_COMM_NOTIFY_FAILED`. A failure on one borrower never blocks the other
+    co-borrowers or the committed status write; never rethrows.
 
 `ctx` reuses the `{ organizationId, actorUserId }` shape threaded through the other dispatchers.
 
