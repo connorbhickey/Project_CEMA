@@ -68,6 +68,9 @@ importers:
       '@cema/agents-collateral-idp':
         specifier: workspace:*
         version: link:../../packages/agents/collateral-idp
+      '@cema/agents-doc-gen':
+        specifier: workspace:*
+        version: link:../../packages/agents/doc-gen
       '@cema/agents-exception-triage':
         specifier: workspace:*
         version: link:../../packages/agents/exception-triage

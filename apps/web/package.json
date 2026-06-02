@@ -17,6 +17,7 @@
     "@cema/agents-borrower-comms": "workspace:*",
     "@cema/agents-chain-of-title": "workspace:*",
     "@cema/agents-collateral-idp": "workspace:*",
+    "@cema/agents-doc-gen": "workspace:*",
     "@cema/agents-exception-triage": "workspace:*",
     "@cema/agents-internal-comms": "workspace:*",
     "@cema/agents-intake": "workspace:*",
