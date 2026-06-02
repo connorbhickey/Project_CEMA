@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint app lib proxy.ts",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.neon.config.ts",
     "test:workflow": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"

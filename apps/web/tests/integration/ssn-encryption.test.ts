@@ -70,11 +70,13 @@ describe.skipIf(skip)('SSN encryption — pgcrypto round-trip + key rotation', (
   afterAll(async () => {
     process.env.PII_ENCRYPTION_KEY = originalKey;
     const db = getDb();
-    // Parties cascade-delete with deals; remove the seed.
+    // Clean ONLY the per-run parties (the sensitive SSN rows). Leave the
+    // deal/user/org as idempotent seeds (beforeAll re-uses them via
+    // onConflictDoNothing) — the working integration suites do the same. Deleting
+    // the org here used to throw a 23503 FK violation on the shared Neon dev branch
+    // (the org is referenced by other suites' deals and by immutable audit_events,
+    // which hard rule #10 forbids deleting), failing this whole file in the suite run.
     await db.execute(sql`DELETE FROM parties WHERE deal_id = ${DEAL_ID}`);
-    await db.execute(sql`DELETE FROM deals WHERE id = ${DEAL_ID}`);
-    await db.execute(sql`DELETE FROM users WHERE id = ${USER_ID}`);
-    await db.execute(sql`DELETE FROM organizations WHERE id = ${ORG_ID}`);
   });
 
   it('round-trips a plaintext SSN through pgcrypto', async () => {
