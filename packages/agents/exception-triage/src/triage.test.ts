@@ -4,7 +4,12 @@ import { triageExceptions } from './triage';
 import { EXCEPTION_KINDS, EXCEPTION_ROUTES, EXCEPTION_SEVERITIES } from './types';
 import type { DealSignals } from './types';
 
-const NONE: DealSignals = { dealStatus: 'title_work', chainBreakCount: 0, dispatchFailed: false };
+const NONE: DealSignals = {
+  dealStatus: 'title_work',
+  chainBreakCount: 0,
+  dispatchFailed: false,
+  recordingRejected: false,
+};
 
 describe('triageExceptions', () => {
   it('returns no exceptions for a clean deal', () => {
@@ -35,16 +40,28 @@ describe('triageExceptions', () => {
     });
   });
 
+  it('flags rejected_recording (high → processor_review) when a recording was rejected', () => {
+    const [ex, ...rest] = triageExceptions({ ...NONE, recordingRejected: true });
+    expect(rest).toHaveLength(0);
+    expect(ex).toMatchObject({
+      kind: 'rejected_recording',
+      severity: 'high',
+      route: 'processor_review',
+    });
+  });
+
   it('emits every applicable exception together', () => {
     const ex = triageExceptions({
       dealStatus: 'exception',
       chainBreakCount: 1,
       dispatchFailed: true,
+      recordingRejected: true,
     });
     expect(ex.map((e) => e.kind).sort()).toEqual([
       'agent_dispatch_failed',
       'chain_break',
       'deal_flagged_exception',
+      'rejected_recording',
     ]);
   });
 
@@ -53,6 +70,7 @@ describe('triageExceptions', () => {
       dealStatus: 'exception',
       chainBreakCount: 7,
       dispatchFailed: true,
+      recordingRejected: true,
     });
     for (const e of ex) {
       expect(e.reason.length).toBeGreaterThan(0);
@@ -65,6 +83,7 @@ describe('triageExceptions', () => {
       'agent_dispatch_failed',
       'chain_break',
       'deal_flagged_exception',
+      'rejected_recording',
     ]);
     expect(EXCEPTION_SEVERITIES).toContain('blocking');
     expect(EXCEPTION_ROUTES).toContain('attorney_review');
