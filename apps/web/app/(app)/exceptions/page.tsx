@@ -42,8 +42,8 @@ export default async function Page() {
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground text-sm font-medium">No open exceptions</p>
           <p className="text-muted-foreground mt-1 text-xs">
-            When an agent surfaces a chain break, a dispatch failure, or a deal is flagged, it
-            appears here.
+            When an agent surfaces a chain break, a dispatch failure, a rejected recording, or a
+            deal is flagged, it appears here.
           </p>
         </div>
       ) : (

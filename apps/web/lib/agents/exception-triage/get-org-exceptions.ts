@@ -14,7 +14,7 @@ export interface DealExceptions {
 /**
  * Cross-deal exception triage (spec §9.11, pull model). RLS-scoped: gathers each
  * deal's live exception signals — open chain_break_review_queue rows, a
- * deal.agent_dispatch_failed audit, deal_status='exception' — into DealSignals,
+ * deal.agent_dispatch_failed audit, a recording.rejected audit, deal_status='exception' — into DealSignals,
  * runs the pure triageExceptions classifier, and returns the deals carrying at
  * least one exception. Recompute-live (no table); derives from what the other
  * Layer-3 agents already emit (no agent changes).
@@ -62,12 +62,23 @@ export async function getOrgExceptions(): Promise<DealExceptions[]> {
       );
     const dispatchFailedDeals = new Set(dispatchRows.map((r) => r.entityId));
 
+    // Deals with a recording-rejection audit (entityId is the dealId) — the
+    // Recording Prep Agent's `recording.rejected` signal.
+    const recordingRejectedRows = await tx
+      .select({ entityId: auditEvents.entityId })
+      .from(auditEvents)
+      .where(
+        and(eq(auditEvents.organizationId, org.id), eq(auditEvents.action, 'recording.rejected')),
+      );
+    const recordingRejectedDeals = new Set(recordingRejectedRows.map((r) => r.entityId));
+
     const out: DealExceptions[] = [];
     for (const d of dealRows) {
       const exceptions = triageExceptions({
         dealStatus: d.status,
         chainBreakCount: chainCountByDeal.get(d.id) ?? 0,
         dispatchFailed: dispatchFailedDeals.has(d.id),
+        recordingRejected: recordingRejectedDeals.has(d.id),
       });
       if (exceptions.length > 0) out.push({ dealId: d.id, dealStatus: d.status, exceptions });
     }

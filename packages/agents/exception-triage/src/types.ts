@@ -1,13 +1,15 @@
-// Exception Triage vocabulary (spec §9.11). v1 covers the exception kinds
-// derivable from live signals the other Layer-3 agents already emit; SLA/time,
-// unreadable-collateral, and Phase-2 kinds (rejected recording, borrower lapse)
-// are deferred. No @cema/db, no clock, no LLM -- the core is a pure classifier
-// over DealSignals the app aggregator gathers.
+// Exception Triage vocabulary (spec §9.11). Covers the exception kinds derivable
+// from live signals the other Layer-3 agents already emit; SLA/time,
+// unreadable-collateral, and borrower-lapse are still deferred. `rejected_recording`
+// (a Phase-2 kind) is derived from the Recording Prep Agent's `recording.rejected`
+// audit. No @cema/db, no clock, no LLM -- the core is a pure classifier over
+// DealSignals the app aggregator gathers.
 
 export const EXCEPTION_KINDS = [
   'chain_break',
   'agent_dispatch_failed',
   'deal_flagged_exception',
+  'rejected_recording',
 ] as const;
 export type ExceptionKind = (typeof EXCEPTION_KINDS)[number];
 
@@ -35,4 +37,5 @@ export interface DealSignals {
   readonly dealStatus: string; // deals.status
   readonly chainBreakCount: number; // open chain_break_review_queue rows for the deal
   readonly dispatchFailed: boolean; // a deal.agent_dispatch_failed audit exists for the deal
+  readonly recordingRejected: boolean; // a recording.rejected audit exists for the deal
 }

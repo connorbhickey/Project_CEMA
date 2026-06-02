@@ -21,8 +21,10 @@ const DEAL_CHAIN = 'e2c10000-0000-0000-0000-0000000000f1'; // open chain break
 const DEAL_FLAG = 'e2c10000-0000-0000-0000-0000000000f2'; // status = exception
 const DEAL_DISPATCH = 'e2c10000-0000-0000-0000-0000000000f3'; // dispatch-failure audit
 const DEAL_CLEAN = 'e2c10000-0000-0000-0000-0000000000f4'; // no signals
+const DEAL_RECORDING = 'e2c10000-0000-0000-0000-0000000000f5'; // recording.rejected audit
 const DEAL_B = 'e2c10000-0000-0000-0000-0000000000fb'; // org B, flagged
 const DISPATCH_AUDIT = 'e2c10000-0000-0000-0000-0000000000d1';
+const REJECT_AUDIT = 'e2c10000-0000-0000-0000-0000000000d2';
 const CHAIN_HASH = 'extr1111';
 
 describe.skipIf(skip)('getOrgExceptions (Neon integration)', () => {
@@ -71,6 +73,13 @@ describe.skipIf(skip)('getOrgExceptions (Neon integration)', () => {
           createdById: USER_A,
         },
         {
+          id: DEAL_RECORDING,
+          organizationId: ORG_A,
+          cemaType: 'refi_cema',
+          status: 'recording',
+          createdById: USER_A,
+        },
+        {
           id: DEAL_B,
           organizationId: ORG_B,
           cemaType: 'refi_cema',
@@ -106,6 +115,18 @@ describe.skipIf(skip)('getOrgExceptions (Neon integration)', () => {
         metadata: { source: 'extr-test' },
       })
       .onConflictDoNothing();
+    await db
+      .insert(auditEvents)
+      .values({
+        id: REJECT_AUDIT,
+        organizationId: ORG_A,
+        actorUserId: USER_A,
+        action: 'recording.rejected',
+        entityType: 'deal',
+        entityId: DEAL_RECORDING,
+        metadata: { venue: 'county', reason: 'bad_legal_description' },
+      })
+      .onConflictDoNothing();
   });
 
   afterAll(async () => {
@@ -123,6 +144,7 @@ describe.skipIf(skip)('getOrgExceptions (Neon integration)', () => {
     expect(kindFor(rows, DEAL_CHAIN)).toEqual(['chain_break']);
     expect(kindFor(rows, DEAL_FLAG)).toEqual(['deal_flagged_exception']);
     expect(kindFor(rows, DEAL_DISPATCH)).toEqual(['agent_dispatch_failed']);
+    expect(kindFor(rows, DEAL_RECORDING)).toEqual(['rejected_recording']);
     expect(rows.some((r) => r.dealId === DEAL_CLEAN)).toBe(false);
     // org B's flagged deal is not visible to org A
     expect(rows.some((r) => r.dealId === DEAL_B)).toBe(false);

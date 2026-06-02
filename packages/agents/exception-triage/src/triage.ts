@@ -12,6 +12,7 @@ const SEVERITY_BY_KIND: Record<ExceptionKind, ExceptionSeverity> = {
   chain_break: 'high',
   agent_dispatch_failed: 'medium',
   deal_flagged_exception: 'high',
+  rejected_recording: 'high',
 };
 
 // Static suggested route per exception kind (a pointer to the existing remedy).
@@ -19,6 +20,7 @@ const ROUTE_BY_KIND: Record<ExceptionKind, ExceptionRoute> = {
   chain_break: 'attorney_review',
   agent_dispatch_failed: 'reprocess',
   deal_flagged_exception: 'processor_review',
+  rejected_recording: 'processor_review',
 };
 
 // Static, PII-free reason per kind (no ids/counts/party names).
@@ -27,6 +29,7 @@ const REASON_BY_KIND: Record<ExceptionKind, string> = {
   agent_dispatch_failed:
     'A post-commit agent dispatch failed; re-run the collateral pipeline for this deal.',
   deal_flagged_exception: 'This deal is flagged as an exception and needs processor review.',
+  rejected_recording: 'A recording submission was rejected and needs processor review.',
 };
 
 // Exhaustiveness guard: if EXCEPTION_KINDS gains a member the maps do not cover,
@@ -58,5 +61,6 @@ export function triageExceptions(signals: DealSignals): Exception[] {
   if (signals.chainBreakCount > 0) out.push(make('chain_break'));
   if (signals.dispatchFailed) out.push(make('agent_dispatch_failed'));
   if (signals.dealStatus === 'exception') out.push(make('deal_flagged_exception'));
+  if (signals.recordingRejected) out.push(make('rejected_recording'));
   return out;
 }
