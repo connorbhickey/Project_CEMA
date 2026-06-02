@@ -43,8 +43,9 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
     await db
       .insert(properties)
       .values({
+        // properties has NO organizationId column — it is deal-owned (tenancy
+        // flows via deals.propertyId), like documents.
         id: PROPERTY_ID,
-        organizationId: ORG_ID,
         streetAddress: '123 Main St',
         city: 'Brooklyn',
         county: 'Kings',
