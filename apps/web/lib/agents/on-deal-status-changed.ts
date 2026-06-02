@@ -6,6 +6,7 @@ import { ERROR_IDS } from '../constants/error-ids';
 import { withRls } from '../with-rls';
 
 import { runCollateralPipeline } from './collateral-pipeline';
+import { runDocGen } from './doc-gen/run-doc-gen';
 import { triggerForStatus } from './on-deal-status-changed-core';
 import { runOutreachFromDeal } from './servicer-outreach/run-outreach-action';
 
@@ -61,6 +62,8 @@ export async function onDealStatusChanged(
     try {
       if (trigger === 'collateral_pipeline') {
         await runCollateralPipeline(dealId);
+      } else if (trigger === 'doc_gen') {
+        await runDocGen(dealId);
       } else {
         await runOutreachFromDeal(dealId);
       }

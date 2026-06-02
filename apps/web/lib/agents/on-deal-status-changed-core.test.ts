@@ -10,7 +10,6 @@ const UNWIRED: DealStatus[] = [
   'intake',
   'eligibility',
   'authorization',
-  'doc_prep',
   'attorney_review',
   'closing',
   'recording',
@@ -26,6 +25,10 @@ describe('triggerForStatus', () => {
 
   it("maps 'title_work' to the collateral pipeline", () => {
     expect(triggerForStatus('title_work')).toBe('collateral_pipeline');
+  });
+
+  it("maps 'doc_prep' to the doc_gen agent", () => {
+    expect(triggerForStatus('doc_prep')).toBe('doc_gen');
   });
 
   it('returns null for every status with no wired agent', () => {
