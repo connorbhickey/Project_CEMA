@@ -19,6 +19,10 @@ const LABEL_BY_ACTION: Record<string, string> = {
   'docgen.evaluated': 'Doc generation evaluated',
   'docgen.generated': 'CEMA documents generated',
   'docgen.inconsistent': "Doc generation blocked (numbers don't tie)",
+  'recording.evaluated': 'Recording prep evaluated',
+  'recording.prepared': 'Recording package prepared',
+  'recording.completed': 'Recording completed',
+  'recording.rejected': 'Recording rejected',
   'internal_comm.evaluated': 'Internal notification evaluated',
   'internal_comm.notified': 'Internal notification sent',
   'borrower_comm.evaluated': 'Borrower notification evaluated',
@@ -43,6 +47,10 @@ const DETAIL_BY_ACTION: Record<string, (m: Record<string, unknown>) => string | 
   'borrower_comm.notified': (m) => (typeof m.channel === 'string' ? `via ${m.channel}` : null),
   'outreach.touch_sent': (m) =>
     typeof m.touchNumber === 'number' ? `touch #${m.touchNumber}` : null,
+  'recording.evaluated': (m) => (typeof m.count === 'number' ? `${m.count} planned` : null),
+  'recording.prepared': (m) => (typeof m.count === 'number' ? `${m.count} cover sheets` : null),
+  'recording.completed': (m) => (typeof m.venue === 'string' ? `via ${m.venue}` : null),
+  'recording.rejected': (m) => (typeof m.reason === 'string' ? `reason: ${m.reason}` : null),
 };
 
 // Humanize an unknown action: 'foo.bar_baz' -> 'Foo bar baz'.
