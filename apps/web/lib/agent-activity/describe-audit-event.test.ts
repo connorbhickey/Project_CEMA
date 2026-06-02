@@ -41,4 +41,19 @@ describe('describeAuditEvent', () => {
     expect(describeAuditEvent('deal.status_changed', {}).detail).toBeNull();
     expect(describeAuditEvent('docgen.generated', { count: 'eight' }).detail).toBeNull();
   });
+
+  it('labels the recording agent actions', () => {
+    expect(describeAuditEvent('recording.evaluated', {}).label).toBe('Recording prep evaluated');
+    expect(describeAuditEvent('recording.prepared', {}).label).toBe('Recording package prepared');
+    expect(describeAuditEvent('recording.completed', {}).label).toBe('Recording completed');
+    expect(describeAuditEvent('recording.rejected', {}).label).toBe('Recording rejected');
+  });
+
+  it('builds PII-safe recording details from whitelisted fields', () => {
+    expect(describeAuditEvent('recording.prepared', { count: 1 }).detail).toBe('1 cover sheets');
+    expect(describeAuditEvent('recording.completed', { venue: 'acris' }).detail).toBe('via acris');
+    expect(
+      describeAuditEvent('recording.rejected', { reason: 'bad_legal_description' }).detail,
+    ).toBe('reason: bad_legal_description');
+  });
 });

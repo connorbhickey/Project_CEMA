@@ -10,8 +10,10 @@ import type { DealStatus } from '../actions/transition-deal-status';
  *   servicer for that file.
  * - `doc_gen` runs the Doc-Gen Agent (Phase 2); fired when document prep begins,
  *   to plan + persist the CEMA document package as gate-required drafts.
+ * - `recording_prep` runs the Recording Prep Agent (Phase 2); fired when the deal
+ *   enters recording, to compose + persist the venue cover sheets and submit.
  */
-export type AgentTrigger = 'collateral_pipeline' | 'outreach' | 'doc_gen';
+export type AgentTrigger = 'collateral_pipeline' | 'outreach' | 'doc_gen' | 'recording_prep';
 
 /**
  * Pure status -> trigger mapping. The deal_status lifecycle is the trigger
@@ -28,6 +30,8 @@ export function triggerForStatus(status: DealStatus): AgentTrigger | null {
       return 'outreach';
     case 'doc_prep':
       return 'doc_gen';
+    case 'recording':
+      return 'recording_prep';
     default:
       return null;
   }

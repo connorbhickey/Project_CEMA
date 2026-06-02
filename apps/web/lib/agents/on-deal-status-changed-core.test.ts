@@ -12,7 +12,6 @@ const UNWIRED: DealStatus[] = [
   'authorization',
   'attorney_review',
   'closing',
-  'recording',
   'completed',
   'exception',
   'cancelled',
@@ -29,6 +28,10 @@ describe('triggerForStatus', () => {
 
   it("maps 'doc_prep' to the doc_gen agent", () => {
     expect(triggerForStatus('doc_prep')).toBe('doc_gen');
+  });
+
+  it("maps 'recording' to the recording_prep agent", () => {
+    expect(triggerForStatus('recording')).toBe('recording_prep');
   });
 
   it('returns null for every status with no wired agent', () => {

@@ -80,6 +80,9 @@ importers:
       '@cema/agents-internal-comms':
         specifier: workspace:*
         version: link:../../packages/agents/internal-comms
+      '@cema/agents-recording-prep':
+        specifier: workspace:*
+        version: link:../../packages/agents/recording-prep
       '@cema/agents-servicer-outreach':
         specifier: workspace:*
         version: link:../../packages/agents/servicer-outreach
@@ -387,6 +390,25 @@ importers:
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
   packages/agents/internal-comms:
+    devDependencies:
+      '@cema/config':
+        specifier: workspace:*
+        version: link:../../config
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+
+  packages/agents/recording-prep:
+    dependencies:
+      '@cema/collateral':
+        specifier: workspace:*
+        version: link:../../collateral
     devDependencies:
       '@cema/config':
         specifier: workspace:*
