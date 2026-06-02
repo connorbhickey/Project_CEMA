@@ -1,0 +1,44 @@
+import { describe, expect, it } from 'vitest';
+
+import { describeAuditEvent } from './describe-audit-event';
+
+describe('describeAuditEvent', () => {
+  it('maps known agent actions to human labels', () => {
+    expect(describeAuditEvent('docgen.generated', { count: 8 }).label).toBe(
+      'CEMA documents generated',
+    );
+    expect(describeAuditEvent('borrower_comm.notified', {}).label).toBe('Borrower emailed');
+    expect(describeAuditEvent('chain.analyzed', {}).label).toBe('Chain-of-title analyzed');
+  });
+
+  it('builds a PII-safe detail from whitelisted fields only', () => {
+    expect(
+      describeAuditEvent('deal.status_changed', { from: 'doc_prep', to: 'attorney_review' }).detail,
+    ).toBe('doc_prep → attorney_review');
+    expect(describeAuditEvent('docgen.generated', { count: 8 }).detail).toBe('8 documents');
+    expect(describeAuditEvent('internal_comm.notified', { channel: 'pipeline' }).detail).toBe(
+      'via pipeline',
+    );
+  });
+
+  it('never renders non-whitelisted metadata (defense in depth)', () => {
+    const d = describeAuditEvent('deal.status_changed', {
+      from: 'doc_prep',
+      to: 'attorney_review',
+      borrowerName: 'Jane Doe',
+    });
+    expect(d.detail).toBe('doc_prep → attorney_review');
+    expect(d.detail).not.toContain('Jane Doe');
+  });
+
+  it('humanizes unknown actions with no detail', () => {
+    const d = describeAuditEvent('some.future_action', { x: 1 });
+    expect(d.label).toBe('Some future action');
+    expect(d.detail).toBeNull();
+  });
+
+  it('returns a null detail when whitelisted fields are absent/wrong-typed', () => {
+    expect(describeAuditEvent('deal.status_changed', {}).detail).toBeNull();
+    expect(describeAuditEvent('docgen.generated', { count: 'eight' }).detail).toBeNull();
+  });
+});
