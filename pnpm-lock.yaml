@@ -80,6 +80,9 @@ importers:
       '@cema/agents-internal-comms':
         specifier: workspace:*
         version: link:../../packages/agents/internal-comms
+      '@cema/agents-recording-prep':
+        specifier: workspace:*
+        version: link:../../packages/agents/recording-prep
       '@cema/agents-servicer-outreach':
         specifier: workspace:*
         version: link:../../packages/agents/servicer-outreach
