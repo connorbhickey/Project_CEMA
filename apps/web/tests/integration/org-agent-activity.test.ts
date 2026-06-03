@@ -132,4 +132,16 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
     const rows = await getOrgAgentActivity();
     expect(rows.filter((r) => r.dealId === DEAL_ID)).toEqual([]);
   });
+
+  it('filters by agent key and by lifecycle', async () => {
+    vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed');
+
+    const docgenIds = (await getOrgAgentActivity('docgen')).map((r) => r.id);
+    expect(docgenIds).toContain(AE_NEWER); // docgen.generated
+    expect(docgenIds).not.toContain(AE_OLDER); // deal.status_changed excluded
+
+    const lifecycleIds = (await getOrgAgentActivity('lifecycle')).map((r) => r.id);
+    expect(lifecycleIds).toContain(AE_OLDER); // deal.status_changed
+    expect(lifecycleIds).not.toContain(AE_NEWER); // docgen.generated excluded
+  });
 });

@@ -1,7 +1,8 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { auditEvents, getDb, organizations } from '@cema/db';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, like } from 'drizzle-orm';
 
+import { agentLikePattern } from '../agent-activity/agent-filter';
 import { withRls } from '../with-rls';
 
 export interface DealAgentActivityEvent {
@@ -19,13 +20,18 @@ const LIMIT = 200;
  * filter is entityId. Returns [] if the org is unresolved. Mirrors the
  * org-resolution in getDealDocumentsReview.
  */
-export async function getDealAgentActivity(dealId: string): Promise<DealAgentActivityEvent[]> {
+export async function getDealAgentActivity(
+  dealId: string,
+  agentKey?: string,
+): Promise<DealAgentActivityEvent[]> {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.clerkOrgId, clerkOrgId),
   });
   if (!org) return [];
+
+  const pattern = agentKey ? agentLikePattern(agentKey) : null;
 
   return withRls(org.id, async (tx) => {
     const rows = await tx
@@ -36,7 +42,15 @@ export async function getDealAgentActivity(dealId: string): Promise<DealAgentAct
         metadata: auditEvents.metadata,
       })
       .from(auditEvents)
-      .where(and(eq(auditEvents.entityType, 'deal'), eq(auditEvents.entityId, dealId)))
+      .where(
+        pattern
+          ? and(
+              eq(auditEvents.entityType, 'deal'),
+              eq(auditEvents.entityId, dealId),
+              like(auditEvents.action, pattern),
+            )
+          : and(eq(auditEvents.entityType, 'deal'), eq(auditEvents.entityId, dealId)),
+      )
       .orderBy(desc(auditEvents.occurredAt))
       .limit(LIMIT);
 
