@@ -1,5 +1,4 @@
 import { formatDistanceToNow } from 'date-fns';
-import type { Route } from 'next';
 import Link from 'next/link';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
@@ -13,8 +12,6 @@ import { summarizePipeline } from '@/lib/dashboard/pipeline-summary';
 import { getAgentActionCounts } from '@/lib/queries/agent-action-counts';
 import { getDealsByStatus } from '@/lib/queries/deals-by-status';
 import { getOrgAgentActivity } from '@/lib/queries/org-agent-activity';
-
-const DASHBOARD_HREF = '/dashboard' as Route<'/dashboard'>;
 
 interface PageProps {
   searchParams: Promise<{ agent?: string }>;
@@ -37,11 +34,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const items = rows.map(toOrgActivityItem);
 
   const filterChips: AgentFilterChip[] = [
-    { key: 'all', label: 'All', href: DASHBOARD_HREF, active: activeAgent === null },
+    { key: 'all', label: 'All', href: '/dashboard', active: activeAgent === null },
     ...AGENT_FILTERS.map((f) => ({
       key: f.key,
       label: f.label,
-      href: { pathname: '/dashboard', query: { agent: f.key } },
+      href: `/dashboard?agent=${f.key}`,
       active: activeAgent === f.key,
     })),
   ];

@@ -1,5 +1,4 @@
 import { formatDistanceToNow } from 'date-fns';
-import type { Route } from 'next';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { AGENT_FILTERS, parseAgentFilter } from '@/lib/agent-activity/agent-filter';
@@ -19,11 +18,11 @@ export default async function DealAgentActivityPage({ params, searchParams }: Pa
 
   const base = `/deals/${id}/agent-activity`;
   const filterChips: AgentFilterChip[] = [
-    { key: 'all', label: 'All', href: base as Route, active: activeAgent === null },
+    { key: 'all', label: 'All', href: base, active: activeAgent === null },
     ...AGENT_FILTERS.map((f) => ({
       key: f.key,
       label: f.label,
-      href: `${base}?agent=${f.key}` as Route,
+      href: `${base}?agent=${f.key}`,
       active: activeAgent === f.key,
     })),
   ];
