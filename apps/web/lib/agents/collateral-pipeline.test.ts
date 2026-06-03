@@ -24,6 +24,11 @@ vi.mock('../kg/index-deal-instrument-edges', () => ({
   indexDealInstrumentEdges: vi.fn(),
 }));
 
+vi.mock('../kg/index-deal-chain-edges', () => ({
+  indexDealChainEdges: vi.fn(),
+}));
+
+import { indexDealChainEdges } from '../kg/index-deal-chain-edges';
 import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
 
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
@@ -84,6 +89,7 @@ beforeEach(() => {
   vi.mocked(runChainOfTitleFromDeal).mockResolvedValue(CHAIN_CLEAN);
   vi.mocked(runOutreachFromDeal).mockResolvedValue(OUTREACH);
   vi.mocked(indexDealInstrumentEdges).mockResolvedValue(2);
+  vi.mocked(indexDealChainEdges).mockResolvedValue(1);
 });
 
 afterEach(() => {
@@ -100,6 +106,7 @@ describe('runCollateralPipeline', () => {
     expect(runChainOfTitleFromDeal).not.toHaveBeenCalled();
     expect(runOutreachFromDeal).not.toHaveBeenCalled();
     expect(indexDealInstrumentEdges).not.toHaveBeenCalled();
+    expect(indexDealChainEdges).not.toHaveBeenCalled();
   });
 
   it('runs Chain-of-Title after IDP but skips Outreach when the chain has no re_chase', async () => {
@@ -109,6 +116,7 @@ describe('runCollateralPipeline', () => {
 
     // The deal's instruments are indexed into the KG once IDP classifies them.
     expect(indexDealInstrumentEdges).toHaveBeenCalledWith('deal-1');
+    expect(indexDealChainEdges).toHaveBeenCalledWith('deal-1');
 
     expect(result).toEqual({
       dealId: 'deal-1',
