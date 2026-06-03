@@ -5,7 +5,14 @@ import {
   NOTE_KINDS,
   RECORDED_KINDS,
 } from './types';
-import type { ChainAnalysis, ChainBreak, ChainEdge, ChainStatus, InstrumentRecord } from './types';
+import type {
+  ChainAnalysis,
+  ChainBreak,
+  ChainEdge,
+  ChainSequenceEdge,
+  ChainStatus,
+  InstrumentRecord,
+} from './types';
 
 const ANCHOR_SET = new Set<string>(ANCHOR_KINDS);
 const NOTE_SET = new Set<string>(NOTE_KINDS);
@@ -232,4 +239,25 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
   }
 
   return { status: toStatus(breaks), edges, breaks };
+}
+
+/**
+ * PII-free doc->doc structural edges: the recorded assignment sequence. Filters
+ * to assignment instruments (aom/allonge), sorts by recordedAt (the SAME order
+ * analyzeChain pass E uses; nulls last), and links each consecutive pair. Returns
+ * document ids only -- party names never leave the agent. Pure + deterministic.
+ * Descriptive: emitted regardless of breaks (recording-order adjacency, not a
+ * claim of valid succession), mirroring the ChainEdge graph.
+ */
+export function chainSequenceEdges(instruments: readonly InstrumentRecord[]): ChainSequenceEdge[] {
+  const assignments = instruments.filter((i) => ASSIGNMENT_SET.has(i.instrumentKind));
+  const ordered = [...assignments].sort(byRecordedAt);
+  const edges: ChainSequenceEdge[] = [];
+  for (let n = 0; n < ordered.length - 1; n += 1) {
+    const cur: InstrumentRecord | undefined = ordered[n];
+    const next: InstrumentRecord | undefined = ordered[n + 1];
+    if (cur === undefined || next === undefined) continue;
+    edges.push({ fromDocumentId: cur.documentId, toDocumentId: next.documentId });
+  }
+  return edges;
 }

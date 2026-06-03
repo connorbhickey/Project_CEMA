@@ -7,6 +7,7 @@ export type Predicate =
   | 'party_is_on_deal' // party → deal     (exists via parties.deal_id but also stored as edge)
   | 'deal_has_document' // deal → document
   | 'deal_has_instrument' // deal → document (an IDP-classified collateral instrument)
+  | 'chain_precedes' // document → document (recorded assignment-sequence adjacency)
   | 'deal_has_communication'; // deal → communication
 
 export interface AddEdgeInput {

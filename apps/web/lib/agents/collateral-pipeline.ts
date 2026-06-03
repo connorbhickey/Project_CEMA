@@ -5,6 +5,7 @@ import type { OutreachResult } from '@cema/agents-servicer-outreach';
 import { redactPii } from '@cema/compliance';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 
+import { indexDealChainEdges } from '../kg/index-deal-chain-edges';
 import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
 
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
@@ -44,6 +45,13 @@ export async function runCollateralPipeline(dealId: string): Promise<CollateralP
         // analysis — it only reads the IDP-written extractedData.
         const instrumentEdgeCount = await indexDealInstrumentEdges(dealId);
         span.setAttribute('pipeline.instrument_edge_count', instrumentEdgeCount);
+
+        // Index the recorded assignment sequence into the KG as PII-safe
+        // chain_precedes (document -> document) edges. Like the instrument edges,
+        // this reads only the IDP-written extractedData (independent of the chain
+        // analysis below).
+        const chainEdgeCount = await indexDealChainEdges(dealId);
+        span.setAttribute('pipeline.chain_edge_count', chainEdgeCount);
 
         chain = await runChainOfTitleFromDeal(dealId);
         span.setAttribute('pipeline.chain_status', chain.status);

@@ -76,6 +76,16 @@ export interface ChainEdge {
   readonly assignee: string | null;
 }
 
+// A PII-free doc->doc structural edge: the assignment instrument `fromDocumentId`
+// is recorded immediately before `toDocumentId` in the recorded assignment
+// sequence (recordedAt order). Document ids ONLY -- never party names. The app
+// persists these to the KG as `document -[chain_precedes]-> document`. Descriptive
+// (recording-order), like ChainEdge -- it does not assert a verified succession.
+export interface ChainSequenceEdge {
+  readonly fromDocumentId: string;
+  readonly toDocumentId: string;
+}
+
 // CEMA instruments that consolidate prior mortgages into one lien -- each emits
 // a `consolidates` edge. A subset of ANCHOR_KINDS.
 export const CONSOLIDATION_KINDS = [
