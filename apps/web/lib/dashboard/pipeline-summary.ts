@@ -1,3 +1,5 @@
+import { dealStatusLabel } from '@/lib/deals/deal-status';
+
 /** A row from getDealsByStatus: one deal_status + how many deals are in it. */
 export interface DealStatusCount {
   readonly status: string;
@@ -31,25 +33,6 @@ const ACTIVE_STATUSES = [
 ] as const;
 const OFF_RAMP_STATUSES = ['completed', 'exception', 'cancelled'] as const;
 
-const STATUS_LABELS: Record<string, string> = {
-  intake: 'Intake',
-  eligibility: 'Eligibility',
-  authorization: 'Authorization',
-  collateral_chase: 'Collateral Chase',
-  title_work: 'Title Work',
-  doc_prep: 'Doc Prep',
-  attorney_review: 'Attorney Review',
-  closing: 'Closing',
-  recording: 'Recording',
-  completed: 'Completed',
-  exception: 'Exception',
-  cancelled: 'Cancelled',
-};
-
-function labelFor(status: string): string {
-  return STATUS_LABELS[status] ?? status;
-}
-
 /**
  * Pure: turn deals-by-status counts into an ordered pipeline funnel. Active
  * lifecycle stages come first (canonical order, zero-filled for empty statuses),
@@ -64,12 +47,12 @@ export function summarizePipeline(counts: readonly DealStatusCount[]): PipelineS
 
   const stages = ACTIVE_STATUSES.map((status) => ({
     status,
-    label: labelFor(status),
+    label: dealStatusLabel(status),
     count: byStatus.get(status) ?? 0,
   }));
   const offRamps = OFF_RAMP_STATUSES.map((status) => ({
     status,
-    label: labelFor(status),
+    label: dealStatusLabel(status),
     count: byStatus.get(status) ?? 0,
   }));
 

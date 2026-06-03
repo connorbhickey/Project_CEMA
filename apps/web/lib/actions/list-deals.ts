@@ -1,12 +1,13 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { deals, getDb, organizations } from '@cema/db';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
+import { type DealStatus } from '@/lib/deals/deal-status';
 import { withRls } from '@/lib/with-rls';
 
 export type Deal = typeof deals.$inferSelect;
 
-export async function listDeals(): Promise<Deal[]> {
+export async function listDeals(status?: DealStatus): Promise<Deal[]> {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
   const org = await db.query.organizations.findFirst({
@@ -15,7 +16,9 @@ export async function listDeals(): Promise<Deal[]> {
   if (!org) return [];
   return withRls(org.id, async (tx) =>
     tx.query.deals.findMany({
-      where: eq(deals.organizationId, org.id),
+      where: status
+        ? and(eq(deals.organizationId, org.id), eq(deals.status, status))
+        : eq(deals.organizationId, org.id),
       orderBy: [desc(deals.createdAt)],
       limit: 50,
     }),
