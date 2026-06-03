@@ -23,6 +23,7 @@ export function AgentFilterChips({ chips }: { chips: AgentFilterChip[] }) {
         <Link
           key={c.key}
           href={c.href as Route}
+          aria-current={c.active ? 'page' : undefined}
           className={`rounded-full border px-3 py-1 text-xs transition-colors ${
             c.active
               ? 'bg-foreground text-background border-foreground'

@@ -14,8 +14,15 @@ export interface AgentFilter {
  * Exception Triage is intentionally absent — it emits no audit actions, so there
  * is nothing to filter to (mirrors its absence from the prefix-fold registry).
  */
+// SQL LIKE treats `_` and `%` as wildcards; escape them so a prefix containing
+// `_` (e.g. 'internal_comm.') matches literally. Postgres LIKE's default escape
+// character is backslash.
+function escapeLike(s: string): string {
+  return s.replace(/[\\%_]/g, '\\$&');
+}
+
 export const AGENT_FILTERS: readonly AgentFilter[] = [
-  ...AGENTS.map((a) => ({ key: a.key, label: a.label, pattern: `${a.prefix}%` })),
+  ...AGENTS.map((a) => ({ key: a.key, label: a.label, pattern: `${escapeLike(a.prefix)}%` })),
   { key: 'lifecycle', label: 'Lifecycle & Status', pattern: 'deal.%' },
 ];
 

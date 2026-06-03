@@ -42,6 +42,11 @@ describe('agentLikePattern', () => {
     expect(agentLikePattern('lifecycle')).toBe('deal.%');
   });
 
+  it('escapes LIKE wildcards in prefixes containing underscores', () => {
+    expect(agentLikePattern('internal_comm')).toBe('internal\\_comm.%');
+    expect(agentLikePattern('borrower_comm')).toBe('borrower\\_comm.%');
+  });
+
   it('returns null for an unknown key', () => {
     expect(agentLikePattern('foo')).toBeNull();
   });
