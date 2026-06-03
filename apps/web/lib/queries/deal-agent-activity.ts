@@ -1,6 +1,6 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { auditEvents, getDb, organizations } from '@cema/db';
-import { and, desc, eq, like } from 'drizzle-orm';
+import { and, desc, eq, gte, like } from 'drizzle-orm';
 
 import { agentLikePattern } from '../agent-activity/agent-filter';
 import { withRls } from '../with-rls';
@@ -23,6 +23,7 @@ const LIMIT = 200;
 export async function getDealAgentActivity(
   dealId: string,
   agentKey?: string,
+  since?: Date,
 ): Promise<DealAgentActivityEvent[]> {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
@@ -34,6 +35,10 @@ export async function getDealAgentActivity(
   const pattern = agentKey ? agentLikePattern(agentKey) : null;
 
   return withRls(org.id, async (tx) => {
+    const conditions = [eq(auditEvents.entityType, 'deal'), eq(auditEvents.entityId, dealId)];
+    if (pattern) conditions.push(like(auditEvents.action, pattern));
+    if (since) conditions.push(gte(auditEvents.occurredAt, since));
+
     const rows = await tx
       .select({
         id: auditEvents.id,
@@ -42,15 +47,7 @@ export async function getDealAgentActivity(
         metadata: auditEvents.metadata,
       })
       .from(auditEvents)
-      .where(
-        pattern
-          ? and(
-              eq(auditEvents.entityType, 'deal'),
-              eq(auditEvents.entityId, dealId),
-              like(auditEvents.action, pattern),
-            )
-          : and(eq(auditEvents.entityType, 'deal'), eq(auditEvents.entityId, dealId)),
-      )
+      .where(and(...conditions))
       .orderBy(desc(auditEvents.occurredAt))
       .limit(LIMIT);
 

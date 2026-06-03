@@ -121,4 +121,19 @@ describe.skipIf(skip)('getDealAgentActivity (Neon integration)', () => {
     const events = await getDealAgentActivity(DEAL_ID);
     expect(events).toEqual([]);
   });
+
+  it('filters by since (occurredAt cutoff), composing with the agent filter', async () => {
+    vi.mocked(getCurrentOrganizationId).mockResolvedValue('agent_activity_org');
+
+    // A cutoff between OLDER (10:00) and NEWER (11:00): only the newer survives.
+    const cutoff = new Date('2026-06-01T10:30:00Z');
+    const sinceIds = (await getDealAgentActivity(DEAL_ID, undefined, cutoff)).map((e) => e.id);
+    expect(sinceIds).toContain(AE_NEWER);
+    expect(sinceIds).not.toContain(AE_OLDER);
+
+    // Composes with the agent filter (docgen + since).
+    const composed = (await getDealAgentActivity(DEAL_ID, 'docgen', cutoff)).map((e) => e.id);
+    expect(composed).toContain(AE_NEWER);
+    expect(composed).not.toContain(AE_OLDER);
+  });
 });
