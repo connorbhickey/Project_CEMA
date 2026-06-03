@@ -1,7 +1,8 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { auditEvents, deals, getDb, organizations, properties } from '@cema/db';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, like } from 'drizzle-orm';
 
+import { agentLikePattern } from '../agent-activity/agent-filter';
 import { type OrgAgentActivityRow } from '../agent-activity/org-activity-item';
 import { withRls } from '../with-rls';
 
@@ -14,13 +15,15 @@ const LIMIT = 50;
  * so the inner join is org-isolated. Returns [] if the org is unresolved.
  * Mirrors the getOrgExceptions org-resolution pattern.
  */
-export async function getOrgAgentActivity(): Promise<OrgAgentActivityRow[]> {
+export async function getOrgAgentActivity(agentKey?: string): Promise<OrgAgentActivityRow[]> {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.clerkOrgId, clerkOrgId),
   });
   if (!org) return [];
+
+  const pattern = agentKey ? agentLikePattern(agentKey) : null;
 
   return withRls(org.id, async (tx) => {
     const rows = await tx
@@ -38,7 +41,11 @@ export async function getOrgAgentActivity(): Promise<OrgAgentActivityRow[]> {
       .from(auditEvents)
       .innerJoin(deals, eq(auditEvents.entityId, deals.id))
       .leftJoin(properties, eq(deals.propertyId, properties.id))
-      .where(eq(auditEvents.entityType, 'deal'))
+      .where(
+        pattern
+          ? and(eq(auditEvents.entityType, 'deal'), like(auditEvents.action, pattern))
+          : eq(auditEvents.entityType, 'deal'),
+      )
       .orderBy(desc(auditEvents.occurredAt))
       .limit(LIMIT);
 
