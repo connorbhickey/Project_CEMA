@@ -1,4 +1,6 @@
-import { type PipelineSummary } from '@/lib/dashboard/pipeline-summary';
+import Link from 'next/link';
+
+import { type PipelineStage, type PipelineSummary } from '@/lib/dashboard/pipeline-summary';
 
 function Stage({ label, count, muted }: { label: string; count: number; muted: boolean }) {
   return (
@@ -8,6 +10,21 @@ function Stage({ label, count, muted }: { label: string; count: number; muted: b
       <div className="text-foreground text-xl font-semibold tabular-nums">{count}</div>
       <div className="text-muted-foreground text-xs">{label}</div>
     </div>
+  );
+}
+
+// A non-zero stage links to the deals list filtered to its status; a zero stage
+// is inert (nothing to drill into).
+function StageBox({ stage }: { stage: PipelineStage }) {
+  const box = <Stage label={stage.label} count={stage.count} muted={stage.count === 0} />;
+  if (stage.count === 0) return box;
+  return (
+    <Link
+      href={{ pathname: '/deals', query: { status: stage.status } }}
+      className="rounded-md transition-opacity hover:opacity-80"
+    >
+      {box}
+    </Link>
   );
 }
 
@@ -23,11 +40,11 @@ export function PipelineFunnel({ summary }: { summary: PipelineSummary }) {
     <div>
       <div className="flex flex-wrap items-stretch gap-2">
         {summary.stages.map((s) => (
-          <Stage key={s.status} label={s.label} count={s.count} muted={s.count === 0} />
+          <StageBox key={s.status} stage={s} />
         ))}
         <div className="bg-border mx-1 w-px self-stretch" aria-hidden />
         {summary.offRamps.map((s) => (
-          <Stage key={s.status} label={s.label} count={s.count} muted={s.count === 0} />
+          <StageBox key={s.status} stage={s} />
         ))}
       </div>
       <p className="text-muted-foreground mt-2 text-xs">
