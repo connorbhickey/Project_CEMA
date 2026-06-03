@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { AgentStatCards } from '@/components/agent-stat-cards';
 import { PipelineFunnel } from '@/components/pipeline-funnel';
+import { activityHref } from '@/lib/agent-activity/activity-href';
 import { AGENT_FILTERS, parseAgentFilter } from '@/lib/agent-activity/agent-filter';
 import { toOrgActivityItem } from '@/lib/agent-activity/org-activity-item';
+import { SINCE_FILTERS, parseSinceFilter, sinceCutoffMs } from '@/lib/agent-activity/since-filter';
 import { getOrgExceptions } from '@/lib/agents/exception-triage/get-org-exceptions';
 import { summarizeAgentActivity } from '@/lib/dashboard/agent-activity-summary';
 import { summarizePipeline } from '@/lib/dashboard/pipeline-summary';
@@ -14,18 +16,23 @@ import { getDealsByStatus } from '@/lib/queries/deals-by-status';
 import { getOrgAgentActivity } from '@/lib/queries/org-agent-activity';
 
 interface PageProps {
-  searchParams: Promise<{ agent?: string }>;
+  searchParams: Promise<{ agent?: string; since?: string }>;
 }
 
+const BASE = '/dashboard';
+
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const { agent: rawAgent } = await searchParams;
+  const { agent: rawAgent, since: rawSince } = await searchParams;
   const activeAgent = parseAgentFilter(rawAgent);
+  const activeSince = parseSinceFilter(rawSince);
+  const cutoffMs = activeSince ? sinceCutoffMs(activeSince) : null;
+  const sinceDate = cutoffMs != null ? new Date(Date.now() - cutoffMs) : undefined;
 
   const [statusCounts, actionCounts, exceptions, rows] = await Promise.all([
     getDealsByStatus(),
     getAgentActionCounts(),
     getOrgExceptions(),
-    getOrgAgentActivity(activeAgent ?? undefined),
+    getOrgAgentActivity(activeAgent ?? undefined, sinceDate),
   ]);
 
   const pipeline = summarizePipeline(statusCounts);
@@ -33,15 +40,27 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const agentCards = summarizeAgentActivity(actionCounts, openExceptionCount);
   const items = rows.map(toOrgActivityItem);
 
-  const filterChips: AgentFilterChip[] = [
-    { key: 'all', label: 'All', href: '/dashboard', active: activeAgent === null },
+  const agentChips: AgentFilterChip[] = [
+    {
+      key: 'all',
+      label: 'All',
+      href: activityHref(BASE, { since: activeSince }),
+      active: activeAgent === null,
+    },
     ...AGENT_FILTERS.map((f) => ({
       key: f.key,
       label: f.label,
-      href: `/dashboard?agent=${f.key}`,
+      href: activityHref(BASE, { agent: f.key, since: activeSince }),
       active: activeAgent === f.key,
     })),
   ];
+
+  const sinceChips: AgentFilterChip[] = SINCE_FILTERS.map((f) => ({
+    key: f.key,
+    label: f.label,
+    href: activityHref(BASE, { agent: activeAgent, since: f.cutoffMs === null ? null : f.key }),
+    active: f.cutoffMs === null ? activeSince === null : activeSince === f.key,
+  }));
 
   return (
     <div className="space-y-8">
@@ -54,15 +73,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
       <section>
         <h2 className="text-muted-foreground mb-3 text-sm font-medium">Agent activity</h2>
-        <AgentStatCards cards={agentCards} />
+        <AgentStatCards cards={agentCards} activeAgent={activeAgent} activeSince={activeSince} />
       </section>
 
-      <section>
+      <section id="recent-activity" className="scroll-mt-6">
         <h2 className="text-muted-foreground mb-4 text-sm font-medium">Recent agent activity</h2>
-        <AgentFilterChips chips={filterChips} />
+        <AgentFilterChips chips={agentChips} />
+        <AgentFilterChips chips={sinceChips} />
         {items.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            {activeAgent
+            {activeAgent || activeSince
               ? 'No activity for this filter.'
               : 'Agent activity will appear here as deals move through the pipeline.'}
           </p>

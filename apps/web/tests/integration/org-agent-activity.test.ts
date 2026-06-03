@@ -144,4 +144,19 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
     expect(lifecycleIds).toContain(AE_OLDER); // deal.status_changed
     expect(lifecycleIds).not.toContain(AE_NEWER); // docgen.generated excluded
   });
+
+  it('filters by since (occurredAt cutoff), composing with the agent filter', async () => {
+    vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed');
+
+    // A cutoff between OLDER (10:00) and NEWER (11:00): only the newer survives.
+    const cutoff = new Date('2026-06-01T10:30:00Z');
+    const sinceIds = (await getOrgAgentActivity(undefined, cutoff)).map((r) => r.id);
+    expect(sinceIds).toContain(AE_NEWER);
+    expect(sinceIds).not.toContain(AE_OLDER);
+
+    // Composes with the agent filter: docgen + since → the docgen event after the cutoff.
+    const composed = (await getOrgAgentActivity('docgen', cutoff)).map((r) => r.id);
+    expect(composed).toContain(AE_NEWER);
+    expect(composed).not.toContain(AE_OLDER);
+  });
 });
