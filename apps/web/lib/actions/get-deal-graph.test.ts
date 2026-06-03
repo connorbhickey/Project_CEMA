@@ -10,15 +10,13 @@ vi.mock('@cema/db', () => ({
 }));
 
 vi.mock('@cema/kg', () => ({
-  traverse: vi
-    .fn()
-    .mockResolvedValue([{ nodeId: 'party-1', nodeType: 'party', depth: 1, pathFrom: 'deal-1' }]),
+  findNeighbors: vi.fn(),
 }));
 
 vi.mock('../with-rls', () => ({ withRls: vi.fn() }));
 
 import { getDb } from '@cema/db';
-import { traverse } from '@cema/kg';
+import { findNeighbors } from '@cema/kg';
 
 import { withRls } from '../with-rls';
 
@@ -30,6 +28,22 @@ beforeEach(() => {
   vi.mocked(getDb).mockReturnValue({
     query: { organizations: { findFirst: vi.fn().mockResolvedValue(ORG) } },
   } as never);
+  vi.mocked(withRls).mockImplementation((_orgId, fn) => fn({} as never));
+  // deal -> two instrument docs; doc-1 -> doc-2 via chain_precedes; doc-2 -> end.
+  vi.mocked(findNeighbors).mockImplementation((_tx, input) => {
+    if (input.nodeId === 'deal-1') {
+      return Promise.resolve([
+        { nodeId: 'doc-1', nodeType: 'document', predicate: 'deal_has_instrument' },
+        { nodeId: 'doc-2', nodeType: 'document', predicate: 'deal_has_instrument' },
+      ] as never);
+    }
+    if (input.nodeId === 'doc-1' && input.predicate === 'chain_precedes') {
+      return Promise.resolve([
+        { nodeId: 'doc-2', nodeType: 'document', predicate: 'chain_precedes' },
+      ] as never);
+    }
+    return Promise.resolve([] as never);
+  });
 });
 
 afterEach(() => {
@@ -37,19 +51,32 @@ afterEach(() => {
 });
 
 describe('getDealGraph', () => {
-  it('calls traverse starting from the deal node', async () => {
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn({} as never));
-    await getDealGraph('deal-1');
-    expect(traverse).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ startId: 'deal-1', startType: 'deal' }),
+  it('returns the deal membership edges and the chain_precedes edges', async () => {
+    const { edges } = await getDealGraph('deal-1');
+
+    const membership = edges.filter((e) => e.predicate === 'deal_has_instrument');
+    expect(membership.map((e) => e.objectId).sort()).toEqual(['doc-1', 'doc-2']);
+    expect(membership.every((e) => e.subjectId === 'deal-1' && e.subjectType === 'deal')).toBe(
+      true,
     );
+
+    const chain = edges.filter((e) => e.predicate === 'chain_precedes');
+    expect(chain).toEqual([
+      {
+        subjectId: 'doc-1',
+        subjectType: 'document',
+        predicate: 'chain_precedes',
+        objectId: 'doc-2',
+        objectType: 'document',
+      },
+    ]);
   });
 
-  it('returns traversal nodes', async () => {
-    vi.mocked(withRls).mockImplementationOnce((_orgId, fn) => fn({} as never));
-    const result = await getDealGraph('deal-1');
-    expect(result.nodes).toHaveLength(1);
-    expect(result.nodes[0]!.nodeType).toBe('party');
+  it('starts the traversal from the deal node', async () => {
+    await getDealGraph('deal-1');
+    expect(findNeighbors).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ nodeId: 'deal-1', nodeType: 'deal' }),
+    );
   });
 });
