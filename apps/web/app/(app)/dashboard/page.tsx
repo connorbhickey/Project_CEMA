@@ -1,8 +1,11 @@
 import { formatDistanceToNow } from 'date-fns';
+import type { Route } from 'next';
 import Link from 'next/link';
 
+import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { AgentStatCards } from '@/components/agent-stat-cards';
 import { PipelineFunnel } from '@/components/pipeline-funnel';
+import { AGENT_FILTERS, parseAgentFilter } from '@/lib/agent-activity/agent-filter';
 import { toOrgActivityItem } from '@/lib/agent-activity/org-activity-item';
 import { getOrgExceptions } from '@/lib/agents/exception-triage/get-org-exceptions';
 import { summarizeAgentActivity } from '@/lib/dashboard/agent-activity-summary';
@@ -11,18 +14,37 @@ import { getAgentActionCounts } from '@/lib/queries/agent-action-counts';
 import { getDealsByStatus } from '@/lib/queries/deals-by-status';
 import { getOrgAgentActivity } from '@/lib/queries/org-agent-activity';
 
-export default async function DashboardPage() {
+const DASHBOARD_HREF = '/dashboard' as Route<'/dashboard'>;
+
+interface PageProps {
+  searchParams: Promise<{ agent?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { agent: rawAgent } = await searchParams;
+  const activeAgent = parseAgentFilter(rawAgent);
+
   const [statusCounts, actionCounts, exceptions, rows] = await Promise.all([
     getDealsByStatus(),
     getAgentActionCounts(),
     getOrgExceptions(),
-    getOrgAgentActivity(),
+    getOrgAgentActivity(activeAgent ?? undefined),
   ]);
 
   const pipeline = summarizePipeline(statusCounts);
   const openExceptionCount = exceptions.reduce((n, d) => n + d.exceptions.length, 0);
   const agentCards = summarizeAgentActivity(actionCounts, openExceptionCount);
   const items = rows.map(toOrgActivityItem);
+
+  const filterChips: AgentFilterChip[] = [
+    { key: 'all', label: 'All', href: DASHBOARD_HREF, active: activeAgent === null },
+    ...AGENT_FILTERS.map((f) => ({
+      key: f.key,
+      label: f.label,
+      href: { pathname: '/dashboard', query: { agent: f.key } },
+      active: activeAgent === f.key,
+    })),
+  ];
 
   return (
     <div className="space-y-8">
@@ -40,9 +62,12 @@ export default async function DashboardPage() {
 
       <section>
         <h2 className="text-muted-foreground mb-4 text-sm font-medium">Recent agent activity</h2>
+        <AgentFilterChips chips={filterChips} />
         {items.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            Agent activity will appear here as deals move through the pipeline.
+            {activeAgent
+              ? 'No activity for this filter.'
+              : 'Agent activity will appear here as deals move through the pipeline.'}
           </p>
         ) : (
           <ol className="border-border relative space-y-6 border-l">
