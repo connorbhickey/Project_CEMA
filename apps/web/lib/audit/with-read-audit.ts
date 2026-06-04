@@ -1,6 +1,9 @@
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
+import { redactPii } from '@cema/compliance';
 import { auditEventReads, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
+
+import { ERROR_IDS } from '../constants/error-ids';
 
 export type AuditReadEntityType =
   | 'communication'
@@ -28,7 +31,9 @@ export interface ReadAuditInput {
  * itself fails (e.g. DB down, unauthenticated context, org not yet synced),
  * the error is logged to stderr and the original result is still returned.
  *
- * Phase 1 will route the catch to Sentry / OpenTelemetry instead of stderr.
+ * The failure is logged PII-safe (redacted + CR/LF-stripped) under the
+ * READ_AUDIT_WRITE_FAILED token; routing that token to Sentry/OpenTelemetry is
+ * the future hook (no Sentry client is wired in apps/web yet).
  */
 export async function withReadAudit<T>(input: ReadAuditInput, fn: () => Promise<T>): Promise<T> {
   const result = await fn();
@@ -59,10 +64,19 @@ export async function withReadAudit<T>(input: ReadAuditInput, fn: () => Promise<
       purpose: input.purpose,
     });
   } catch (e) {
-    // Audit logging must not break the request. Log to stderr; Phase 1
-    // will plumb Sentry/observability.
+    // Audit logging must not break the request. Redact PII (hard rule #3) +
+    // strip every CR/LF (log-injection-safe) INLINE in the dataflow to
+    // console.error: the quantifier-free /[\r\n]/g is the form CodeQL
+    // recognizes as a js/log-injection sanitizer (it stops recognizing it once
+    // the sanitizer is hidden behind a helper). The ERROR_IDS token makes the
+    // line greppable and is the seam a future Sentry router keys on.
+    const message = redactPii(e instanceof Error ? e.message : String(e));
     // eslint-disable-next-line no-console
-    console.error('withReadAudit: failed to write audit row', e);
+    console.error(
+      redactPii(
+        `[${ERROR_IDS.READ_AUDIT_WRITE_FAILED}] failed to write read-audit row: ${message}`,
+      ).replace(/[\r\n]/g, ' '),
+    );
   }
 
   return result;
