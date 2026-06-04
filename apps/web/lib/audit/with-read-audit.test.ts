@@ -92,14 +92,15 @@ describe('withReadAudit', () => {
     expect(consoleSpy).not.toHaveBeenCalled();
   });
 
-  it('insert failure: swallows error and still returns fn result', async () => {
+  it('insert failure: swallows the error, returns fn result, and logs ONE redacted token line', async () => {
     const failingDb = {
       query: {
         organizations: { findFirst: vi.fn().mockResolvedValue(ORG) },
         users: { findFirst: vi.fn().mockResolvedValue(USER) },
       },
       insert: vi.fn().mockReturnValue({
-        values: vi.fn().mockRejectedValue(new Error('DB connection lost')),
+        // The error message carries an SSN + a CR/LF (a log-injection attempt).
+        values: vi.fn().mockRejectedValue(new Error('insert failed for 123-45-6789\nINJECTED')),
       }),
     };
     vi.mocked(getDb).mockReturnValue(failingDb as unknown as ReturnType<typeof getDb>);
@@ -112,12 +113,15 @@ describe('withReadAudit', () => {
       fn,
     );
 
-    expect(result).toBe(expected);
+    expect(result).toBe(expected); // the swallow never breaks the request
     expect(consoleSpy).toHaveBeenCalledOnce();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'withReadAudit: failed to write audit row',
-      expect.any(Error),
-    );
+    // A single redacted string — NOT (message, rawError), which would leak the
+    // unredacted exception (hard rule #3).
+    expect(consoleSpy.mock.calls[0]).toHaveLength(1);
+    const logged = consoleSpy.mock.calls[0]![0] as string;
+    expect(logged).toContain('READ_AUDIT_WRITE_FAILED'); // greppable token
+    expect(logged).not.toContain('123-45-6789'); // SSN redacted (masked to ***-**-6789)
+    expect(logged).not.toMatch(/[\r\n]/); // CR/LF stripped (log-injection-safe)
   });
 
   it('getCurrentOrganizationId throws: swallows error and returns fn result', async () => {
