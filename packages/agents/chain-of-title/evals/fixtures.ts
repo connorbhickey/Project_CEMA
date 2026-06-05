@@ -70,8 +70,10 @@ export interface ChainFixture {
   };
 }
 
-// 24 fixtures spanning every status, break kind, and route kind. `references`
-// is decorative here -- analyzeChain does not read it (carry-over #6).
+// 26 fixtures spanning every status, break kind, and route kind. F25-F26
+// exercise reference-target validation (pass F): analyzeChain now reads
+// `references`, confirming each cited recording reference resolves to a recorded
+// instrument in the deal (a miss is an ambiguous_assignment -> attorney_review).
 export const CHAIN_FIXTURES: readonly ChainFixture[] = [
   {
     name: 'F1 single recorded assignment is clean',
@@ -292,5 +294,19 @@ export const CHAIN_FIXTURES: readonly ChainFixture[] = [
       }),
     ],
     expected: { status: 'clean', breakKinds: [], routeKinds: ['advisory_pass'] },
+  },
+  {
+    name: 'F25 CEMA referencing a present recorded mortgage is clean',
+    instruments: [mortgage('m1'), consolidation('c1', 'cema_3172', 'c-m1')],
+    expected: { status: 'clean', breakKinds: [], routeKinds: ['advisory_pass'] },
+  },
+  {
+    name: 'F26 CEMA referencing an absent recording ref is ambiguous',
+    instruments: [consolidation('c1', 'cema_3172', 'c-absent9')],
+    expected: {
+      status: 'ambiguous',
+      breakKinds: ['ambiguous_assignment'],
+      routeKinds: ['attorney_review'],
+    },
   },
 ] as const;

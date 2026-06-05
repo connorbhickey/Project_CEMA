@@ -181,3 +181,71 @@ describe('analyzeChain', () => {
     expect(assignsTo.some((e) => e.assignor === 'A' && e.assignee === 'B')).toBe(true);
   });
 });
+
+// Reference-target validation (pass F): an instrument's `references` field lists
+// the recording references (reel/page or CRFN) of the instruments it cites -- a
+// CEMA's consolidated-mortgage list, or an AOM citing the mortgage it assigns.
+// A cited reference with no matching recorded instrument in the deal is a real
+// chain defect (a consolidated mortgage missing from the collateral file), so it
+// surfaces as `ambiguous_assignment` -> attorney_review. Conservative: only
+// digit-bearing tokens are treated as references; digit-free prose is ignored.
+describe('analyzeChain reference-target validation', () => {
+  it('flags a reference to a recording ref absent from the deal as ambiguous_assignment', () => {
+    const a = analyzeChain([
+      inst({ documentId: 'c1', instrumentKind: 'cema_3172', references: 'crfn-absent9' }),
+    ]);
+    expect(a.status).toBe('ambiguous');
+    const refBreaks = a.breaks.filter(
+      (b) => b.kind === 'ambiguous_assignment' && b.documentId === 'c1',
+    );
+    expect(refBreaks).toHaveLength(1);
+    expect(refBreaks[0]?.detail).toContain('crfn-absent9');
+  });
+
+  it('does not flag a reference whose target recording ref is present in the deal', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      inst({ documentId: 'c1', instrumentKind: 'cema_3172', references: 'crfn-m1' }),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+
+  it('flags only the absent refs in a delimited reference list', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      inst({
+        documentId: 'c1',
+        instrumentKind: 'cema_3172',
+        references: 'crfn-m1; crfn-absent9, crfn-m1',
+      }),
+    ]);
+    const refBreaks = a.breaks.filter(
+      (b) => b.documentId === 'c1' && b.detail.includes('crfn-absent9'),
+    );
+    expect(refBreaks).toHaveLength(1);
+    // the present ref (cited twice) must never produce a break
+    expect(a.breaks.some((b) => b.detail.includes('crfn-m1'))).toBe(false);
+  });
+
+  it('ignores digit-free reference tokens (treats them as prose, not refs)', () => {
+    const a = analyzeChain([
+      inst({
+        documentId: 'c1',
+        instrumentKind: 'cema_3172',
+        references: 'see schedule A; per title commitment',
+      }),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+
+  it('matches references case-insensitively and ignores surrounding whitespace', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      inst({ documentId: 'c1', instrumentKind: 'cema_3172', references: '   CRFN-M1   ' }),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+});

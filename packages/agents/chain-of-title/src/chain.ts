@@ -26,6 +26,26 @@ function isRecorded(inst: InstrumentRecord): boolean {
   return inst.recordingRef.reelPage !== null || inst.recordingRef.crfn !== null;
 }
 
+// Normalize a recording reference for comparison: trim, collapse internal
+// whitespace, lowercase. Absorbs incidental formatting differences between how a
+// ref is written in `recordingRef` vs cited in another instrument's `references`
+// WITHOUT parsing structure -- high precision, no fuzzy matching.
+function normRef(ref: string): string {
+  return ref.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// The set of normalized recording references actually present in the deal: every
+// non-null reel/page and CRFN across all instruments. Used by pass F to confirm
+// each cited reference resolves to a recorded instrument in the collateral file.
+function presentRefKeys(instruments: readonly InstrumentRecord[]): Set<string> {
+  const keys = new Set<string>();
+  for (const inst of instruments) {
+    if (inst.recordingRef.reelPage !== null) keys.add(normRef(inst.recordingRef.reelPage));
+    if (inst.recordingRef.crfn !== null) keys.add(normRef(inst.recordingRef.crfn));
+  }
+  return keys;
+}
+
 // Sort by recordedAt ascending (ISO-8601 strings sort lexically); nulls last so
 // undated instruments don't masquerade as the earliest hop.
 function byRecordedAt(a: InstrumentRecord, b: InstrumentRecord): number {
@@ -86,12 +106,18 @@ function toStatus(breaks: readonly ChainBreak[]): ChainStatus {
  * `breaks.length === 0`. An empty instrument set, or one with no anchor, can
  * never be `clean` -- it surfaces as `ambiguous`/`broken` for human review.
  *
+ * Reference-target validation (pass F): when an instrument's `references` field
+ * cites other instruments by recording reference, each cited reference is
+ * confirmed present among the deal's recorded instruments; a citation with no
+ * match is an `ambiguous_assignment` (a referenced instrument missing from the
+ * collateral file).
+ *
  * Known limitation (head gap): an InstrumentRecord carries no "original
  * mortgagee" field, so the FIRST assignment's assignor cannot be verified
  * against the anchor's lender. analyzeChain therefore checks INTERNAL
  * consistency of the assignment sequence (assignee[n] === assignor[n+1]); a
- * mismatch at the head relative to the true originator is out of scope here
- * (carry-over: reference-target validation).
+ * mismatch at the head relative to the true originator remains out of scope
+ * (needs an originator field on the anchor -- separate from pass F above).
  */
 export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAnalysis {
   const breaks: ChainBreak[] = [];
@@ -209,6 +235,33 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
           kind: 'missing_assignment',
           documentId: next.documentId,
           detail: `gap between assignment ${cur.documentId} and ${next.documentId}`,
+        });
+      }
+    }
+  }
+
+  // (F) Reference-target validation: an instrument's `references` lists the
+  // recording references of the instruments it cites -- a CEMA's consolidated
+  // mortgages, an AOM citing the mortgage it assigns. A cited reference with no
+  // matching recorded instrument in the deal is a real defect (a referenced
+  // instrument absent from the collateral file), so it surfaces as
+  // ambiguous_assignment -> attorney_review. Conservative by design: `references`
+  // is read as a `;`/`,`/newline-delimited list of recording-ref tokens, and only
+  // digit-bearing tokens are checked (every CRFN / reel-page carries digits), so
+  // digit-free prose is ignored rather than false-flagged. Runs AFTER pass E so
+  // its ambiguous breaks never suppress E's sequential-gap detection. Recording
+  // refs are public identifiers, not PII (detail is never persisted -- route.ts).
+  const presentRefs = presentRefKeys(instruments);
+  for (const inst of instruments) {
+    if (inst.references === null) continue;
+    for (const raw of inst.references.split(/[;,\n]/)) {
+      const token = raw.trim();
+      if (token === '' || !/\d/.test(token)) continue;
+      if (!presentRefs.has(normRef(token))) {
+        breaks.push({
+          kind: 'ambiguous_assignment',
+          documentId: inst.documentId,
+          detail: `instrument ${inst.documentId} references "${token}" which is not present among the deal's recorded instruments`,
         });
       }
     }
