@@ -27,4 +27,18 @@ describe('activity-href', () => {
       '/deals/abc/agent-activity',
     );
   });
+
+  it('composes the cursor param after agent and since', () => {
+    expect(activityParams({ agent: 'idp', since: '7d', cursor: 'ts_id' })).toEqual({
+      agent: 'idp',
+      since: '7d',
+      cursor: 'ts_id',
+    });
+    expect(activityHref('/dashboard', { agent: 'idp', since: '7d', cursor: 'ts_id' })).toBe(
+      '/dashboard?agent=idp&since=7d&cursor=ts_id',
+    );
+    expect(activityHref('/deals/abc/agent-activity', { cursor: 'ts_id' })).toBe(
+      '/deals/abc/agent-activity?cursor=ts_id',
+    );
+  });
 });

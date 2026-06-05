@@ -3,7 +3,9 @@ import Link from 'next/link';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { AgentStatCards } from '@/components/agent-stat-cards';
+import { LoadOlderLink } from '@/components/load-older-link';
 import { PipelineFunnel } from '@/components/pipeline-funnel';
+import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
 import { AGENT_FILTERS, parseAgentFilter } from '@/lib/agent-activity/agent-filter';
 import { toOrgActivityItem } from '@/lib/agent-activity/org-activity-item';
@@ -16,29 +18,31 @@ import { getDealsByStatus } from '@/lib/queries/deals-by-status';
 import { getOrgAgentActivity } from '@/lib/queries/org-agent-activity';
 
 interface PageProps {
-  searchParams: Promise<{ agent?: string; since?: string }>;
+  searchParams: Promise<{ agent?: string; since?: string; cursor?: string }>;
 }
 
 const BASE = '/dashboard';
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const { agent: rawAgent, since: rawSince } = await searchParams;
+  const { agent: rawAgent, since: rawSince, cursor: rawCursor } = await searchParams;
   const activeAgent = parseAgentFilter(rawAgent);
   const activeSince = parseSinceFilter(rawSince);
+  const cursor = parseActivityCursor(rawCursor);
   const cutoffMs = activeSince ? sinceCutoffMs(activeSince) : null;
   const sinceDate = cutoffMs != null ? new Date(Date.now() - cutoffMs) : undefined;
 
-  const [statusCounts, actionCounts, exceptions, rows] = await Promise.all([
+  const [statusCounts, actionCounts, exceptions, activityPage] = await Promise.all([
     getDealsByStatus(),
     getAgentActionCounts(),
     getOrgExceptions(),
-    getOrgAgentActivity(activeAgent ?? undefined, sinceDate),
+    getOrgAgentActivity(activeAgent ?? undefined, sinceDate, cursor ?? undefined),
   ]);
 
   const pipeline = summarizePipeline(statusCounts);
   const openExceptionCount = exceptions.reduce((n, d) => n + d.exceptions.length, 0);
   const agentCards = summarizeAgentActivity(actionCounts, openExceptionCount);
-  const items = rows.map(toOrgActivityItem);
+  const items = activityPage.items.map(toOrgActivityItem);
+  const { nextCursor } = activityPage;
 
   const agentChips: AgentFilterChip[] = [
     {
@@ -104,6 +108,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               </li>
             ))}
           </ol>
+        )}
+        {nextCursor && (
+          <LoadOlderLink
+            href={activityHref(BASE, {
+              agent: activeAgent,
+              since: activeSince,
+              cursor: nextCursor,
+            })}
+          />
         )}
       </section>
     </div>

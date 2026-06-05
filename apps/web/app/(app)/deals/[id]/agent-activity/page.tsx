@@ -1,6 +1,8 @@
 import { formatDistanceToNow } from 'date-fns';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
+import { LoadOlderLink } from '@/components/load-older-link';
+import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
 import { AGENT_FILTERS, parseAgentFilter } from '@/lib/agent-activity/agent-filter';
 import { describeAuditEvent } from '@/lib/agent-activity/describe-audit-event';
@@ -9,18 +11,24 @@ import { getDealAgentActivity } from '@/lib/queries/deal-agent-activity';
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ agent?: string; since?: string }>;
+  searchParams: Promise<{ agent?: string; since?: string; cursor?: string }>;
 }
 
 export default async function DealAgentActivityPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const { agent: rawAgent, since: rawSince } = await searchParams;
+  const { agent: rawAgent, since: rawSince, cursor: rawCursor } = await searchParams;
   const activeAgent = parseAgentFilter(rawAgent);
   const activeSince = parseSinceFilter(rawSince);
+  const cursor = parseActivityCursor(rawCursor);
   const cutoffMs = activeSince ? sinceCutoffMs(activeSince) : null;
   const sinceDate = cutoffMs != null ? new Date(Date.now() - cutoffMs) : undefined;
 
-  const events = await getDealAgentActivity(id, activeAgent ?? undefined, sinceDate);
+  const { items: events, nextCursor } = await getDealAgentActivity(
+    id,
+    activeAgent ?? undefined,
+    sinceDate,
+    cursor ?? undefined,
+  );
 
   const base = `/deals/${id}/agent-activity`;
   const agentChips: AgentFilterChip[] = [
@@ -72,6 +80,15 @@ export default async function DealAgentActivityPage({ params, searchParams }: Pa
             );
           })}
         </ol>
+      )}
+      {nextCursor && (
+        <LoadOlderLink
+          href={activityHref(base, {
+            agent: activeAgent,
+            since: activeSince,
+            cursor: nextCursor,
+          })}
+        />
       )}
     </div>
   );
