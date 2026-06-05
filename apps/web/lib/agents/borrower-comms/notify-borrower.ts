@@ -4,6 +4,7 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import type { DealStatus } from '../../actions/transition-deal-status';
 import { ERROR_IDS } from '../../constants/error-ids';
+import { reportSwallowedError } from '../../observability/report-error';
 import { withRls } from '../../with-rls';
 
 import { sendBorrowerComm } from './channel';
@@ -103,6 +104,10 @@ export async function notifyBorrower(
             `[${ERROR_IDS.BORROWER_COMM_NOTIFY_FAILED}] borrower comm failed for deal ${dealId} party ${recipient.id}: ${message}`,
           ).replace(/[\r\n]/g, ' '),
         );
+        reportSwallowedError(ERROR_IDS.BORROWER_COMM_NOTIFY_FAILED, message, {
+          dealId,
+          partyId: recipient.id,
+        });
       } finally {
         span.end();
       }

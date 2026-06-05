@@ -2,9 +2,11 @@
 // prefix the redacted console line AND name the durable audit/observability
 // record, so an operator can grep logs or query audit_events for the same ID.
 //
-// No Sentry client is wired in apps/web yet (see lib/audit/with-read-audit.ts:
-// "Phase 1 will route the catch to Sentry"). When it lands, route on these IDs
-// from one place; until then the ID + the durable audit event are the signal.
+// Swallow sites route these IDs through the single `reportSwallowedError` seam
+// (lib/observability/report-error.ts), which records a PII-safe event on the
+// active OpenTelemetry span. Sentry capture is a DSN-gated add on that one seam.
+// The ID also prefixes the inline console line and (for the comms paths) names
+// the durable split-audit gap, so the same failure is greppable + queryable.
 export const ERROR_IDS = {
   /** A post-commit Layer-3 agent dispatch (onDealStatusChanged) threw and was
    *  swallowed so the already-committed deal-status write survives. */

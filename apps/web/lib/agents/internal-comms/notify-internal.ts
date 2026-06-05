@@ -4,6 +4,7 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import type { DealStatus } from '../../actions/transition-deal-status';
 import { ERROR_IDS } from '../../constants/error-ids';
+import { reportSwallowedError } from '../../observability/report-error';
 import { withRls } from '../../with-rls';
 
 import { sendInternalComm } from './channel';
@@ -98,6 +99,7 @@ export async function notifyInternal(
           `[${ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED}] internal comm failed for deal ${dealId}: ${message}`,
         ).replace(/[\r\n]/g, ' '),
       );
+      reportSwallowedError(ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED, message, { dealId });
     } finally {
       span.end();
     }

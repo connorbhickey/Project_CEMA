@@ -4,6 +4,7 @@ import { auditEventReads, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
 
 import { ERROR_IDS } from '../constants/error-ids';
+import { reportSwallowedError } from '../observability/report-error';
 
 export type AuditReadEntityType =
   | 'communication'
@@ -32,8 +33,9 @@ export interface ReadAuditInput {
  * the error is logged to stderr and the original result is still returned.
  *
  * The failure is logged PII-safe (redacted + CR/LF-stripped) under the
- * READ_AUDIT_WRITE_FAILED token; routing that token to Sentry/OpenTelemetry is
- * the future hook (no Sentry client is wired in apps/web yet).
+ * READ_AUDIT_WRITE_FAILED token AND routed through `reportSwallowedError`, which
+ * attaches a PII-safe event to the active OpenTelemetry span (Sentry capture is
+ * a documented DSN-gated add layered on that one seam).
  */
 export async function withReadAudit<T>(input: ReadAuditInput, fn: () => Promise<T>): Promise<T> {
   const result = await fn();
@@ -77,6 +79,10 @@ export async function withReadAudit<T>(input: ReadAuditInput, fn: () => Promise<
         `[${ERROR_IDS.READ_AUDIT_WRITE_FAILED}] failed to write read-audit row: ${message}`,
       ).replace(/[\r\n]/g, ' '),
     );
+    reportSwallowedError(ERROR_IDS.READ_AUDIT_WRITE_FAILED, message, {
+      entityType: input.entityType,
+      purpose: input.purpose,
+    });
   }
 
   return result;
