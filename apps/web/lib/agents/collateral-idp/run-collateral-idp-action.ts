@@ -55,7 +55,12 @@ export async function runCollateralIdpFromDeal(dealId: string): Promise<IdpResul
       return result;
     } catch (err) {
       span.recordException(err as Error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: redactPii((err as Error).message) });
+      // Match the M12 outreach action: fall back to String(err) when a non-Error
+      // is thrown so the span status never records an empty/undefined message.
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: redactPii((err as Error).message ?? String(err)),
+      });
       throw err;
     } finally {
       span.end();
