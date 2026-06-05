@@ -28,7 +28,7 @@ The failure is **Preview-only**, happens **before the build runs**, and is **not
 
 → A **Preview-specific provisioning step at deploy creation is failing.** The leading cause is the **Vercel↔Neon integration's per-preview database branch** step (Neon branch quota exhausted — the documented carry-over; each preview deploy creates a branch and they accumulate over time). Production reuses the main branch and never runs this step, so it is unaffected.
 
-**Not yet confirmed:** the exact Vercel error code. It lives in the deployment's internal error (Vercel dashboard) or the Vercel API (the CLI token is in the OS keychain, not on disk), so it needs dashboard access — one click (below).
+**Confirmed (2026-06-05):** the failed deployment's **Provisioning Integrations** step reports `project-cema-db: Create database branch for deployment` → **"Branch limit reached. Upgrade your plan or delete unused branches."** The Neon **Free** plan caps the project at **10 branches**; accumulated per-preview branches filled it, so every new preview's branch-creation failed before the build.
 
 ---
 
@@ -41,7 +41,9 @@ The failure is **Preview-only**, happens **before the build runs**, and is **not
 
 ## Fix (requires dashboard access — Connor)
 
-**If Neon branch quota is exhausted (most likely):**
+**Resolution (2026-06-05):** deleted the accumulated preview branches in the Neon Console (back to **1 / 10**), which clears the limit and unblocks preview deploys. This PR's own preview deploy is the verification (the first green preview).
+
+**If Neon branch quota is exhausted (the confirmed cause):**
 
 - Delete the accumulated preview branches in the **Neon Console** (Branches → remove stale per-preview branches).
 - Set the Vercel↔Neon integration to **auto-delete a preview branch when its PR closes** so they stop accumulating.
