@@ -110,8 +110,8 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
   it('returns the org deal-scoped events (newest first) with joined deal + address context', async () => {
     vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed');
 
-    const rows = await getOrgAgentActivity();
-    const mine = rows.filter((r) => r.dealId === DEAL_ID);
+    const { items } = await getOrgAgentActivity();
+    const mine = items.filter((r) => r.dealId === DEAL_ID);
     const ids = mine.map((r) => r.id);
 
     expect(ids).toContain(AE_NEWER);
@@ -129,18 +129,18 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
   it('isolates cross-org (RLS): another org sees none of this org’s events', async () => {
     vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed_other');
 
-    const rows = await getOrgAgentActivity();
-    expect(rows.filter((r) => r.dealId === DEAL_ID)).toEqual([]);
+    const { items } = await getOrgAgentActivity();
+    expect(items.filter((r) => r.dealId === DEAL_ID)).toEqual([]);
   });
 
   it('filters by agent key and by lifecycle', async () => {
     vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed');
 
-    const docgenIds = (await getOrgAgentActivity('docgen')).map((r) => r.id);
+    const docgenIds = (await getOrgAgentActivity('docgen')).items.map((r) => r.id);
     expect(docgenIds).toContain(AE_NEWER); // docgen.generated
     expect(docgenIds).not.toContain(AE_OLDER); // deal.status_changed excluded
 
-    const lifecycleIds = (await getOrgAgentActivity('lifecycle')).map((r) => r.id);
+    const lifecycleIds = (await getOrgAgentActivity('lifecycle')).items.map((r) => r.id);
     expect(lifecycleIds).toContain(AE_OLDER); // deal.status_changed
     expect(lifecycleIds).not.toContain(AE_NEWER); // docgen.generated excluded
   });
@@ -150,13 +150,24 @@ describe.skipIf(skip)('getOrgAgentActivity (Neon integration)', () => {
 
     // A cutoff between OLDER (10:00) and NEWER (11:00): only the newer survives.
     const cutoff = new Date('2026-06-01T10:30:00Z');
-    const sinceIds = (await getOrgAgentActivity(undefined, cutoff)).map((r) => r.id);
+    const sinceIds = (await getOrgAgentActivity(undefined, cutoff)).items.map((r) => r.id);
     expect(sinceIds).toContain(AE_NEWER);
     expect(sinceIds).not.toContain(AE_OLDER);
 
     // Composes with the agent filter: docgen + since → the docgen event after the cutoff.
-    const composed = (await getOrgAgentActivity('docgen', cutoff)).map((r) => r.id);
+    const composed = (await getOrgAgentActivity('docgen', cutoff)).items.map((r) => r.id);
     expect(composed).toContain(AE_NEWER);
     expect(composed).not.toContain(AE_OLDER);
+  });
+
+  it('paginates with a cursor: returns only events strictly older than the cursor', async () => {
+    vi.mocked(getCurrentOrganizationId).mockResolvedValue('org_agent_feed');
+
+    // Cursor positioned AT the newer event -> the next page is everything older.
+    const cursor = { occurredAt: new Date('2026-06-01T11:00:00.000Z'), id: AE_NEWER };
+    const ids = (await getOrgAgentActivity(undefined, undefined, cursor)).items.map((r) => r.id);
+
+    expect(ids).toContain(AE_OLDER);
+    expect(ids).not.toContain(AE_NEWER); // the cursor row itself is excluded
   });
 });

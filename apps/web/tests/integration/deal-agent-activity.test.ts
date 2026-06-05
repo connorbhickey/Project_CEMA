@@ -104,22 +104,24 @@ describe.skipIf(skip)('getDealAgentActivity (Neon integration)', () => {
   it('returns only the deal-scoped events, newest first', async () => {
     vi.mocked(getCurrentOrganizationId).mockResolvedValue('agent_activity_org');
 
-    const events = await getDealAgentActivity(DEAL_ID);
-    const ids = events.map((e) => e.id);
+    const { items, nextCursor } = await getDealAgentActivity(DEAL_ID);
+    const ids = items.map((e) => e.id);
 
     // The document-scoped event is excluded; deal-scoped events come newest-first.
     expect(ids).toContain(AE_NEWER);
     expect(ids).toContain(AE_OLDER);
     expect(ids).not.toContain(AE_DOCUMENT);
     expect(ids.indexOf(AE_NEWER)).toBeLessThan(ids.indexOf(AE_OLDER));
-    expect(events.every((e) => e.action.startsWith('docgen.'))).toBe(true);
+    expect(items.every((e) => e.action.startsWith('docgen.'))).toBe(true);
+    // Only two deal events (< LIMIT) -> no further page.
+    expect(nextCursor).toBeNull();
   });
 
   it('isolates cross-org (RLS): another org sees none of this deal’s events', async () => {
     vi.mocked(getCurrentOrganizationId).mockResolvedValue('agent_activity_other');
 
-    const events = await getDealAgentActivity(DEAL_ID);
-    expect(events).toEqual([]);
+    const { items } = await getDealAgentActivity(DEAL_ID);
+    expect(items).toEqual([]);
   });
 
   it('filters by since (occurredAt cutoff), composing with the agent filter', async () => {
@@ -127,13 +129,27 @@ describe.skipIf(skip)('getDealAgentActivity (Neon integration)', () => {
 
     // A cutoff between OLDER (10:00) and NEWER (11:00): only the newer survives.
     const cutoff = new Date('2026-06-01T10:30:00Z');
-    const sinceIds = (await getDealAgentActivity(DEAL_ID, undefined, cutoff)).map((e) => e.id);
+    const sinceIds = (await getDealAgentActivity(DEAL_ID, undefined, cutoff)).items.map(
+      (e) => e.id,
+    );
     expect(sinceIds).toContain(AE_NEWER);
     expect(sinceIds).not.toContain(AE_OLDER);
 
     // Composes with the agent filter (docgen + since).
-    const composed = (await getDealAgentActivity(DEAL_ID, 'docgen', cutoff)).map((e) => e.id);
+    const composed = (await getDealAgentActivity(DEAL_ID, 'docgen', cutoff)).items.map((e) => e.id);
     expect(composed).toContain(AE_NEWER);
     expect(composed).not.toContain(AE_OLDER);
+  });
+
+  it('paginates with a cursor: returns only events strictly older than the cursor', async () => {
+    vi.mocked(getCurrentOrganizationId).mockResolvedValue('agent_activity_org');
+
+    // Cursor positioned AT the newer event -> the next page is everything older.
+    const cursor = { occurredAt: new Date('2026-06-01T11:00:00.000Z'), id: AE_NEWER };
+    const { items } = await getDealAgentActivity(DEAL_ID, undefined, undefined, cursor);
+    const ids = items.map((e) => e.id);
+
+    expect(ids).toContain(AE_OLDER);
+    expect(ids).not.toContain(AE_NEWER); // the cursor row itself is excluded
   });
 });
