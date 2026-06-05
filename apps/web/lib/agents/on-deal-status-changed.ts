@@ -3,6 +3,7 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import type { DealStatus } from '../actions/transition-deal-status';
 import { ERROR_IDS } from '../constants/error-ids';
+import { reportSwallowedError } from '../observability/report-error';
 import { withRls } from '../with-rls';
 
 import { runCollateralPipeline } from './collateral-pipeline';
@@ -90,6 +91,10 @@ export async function onDealStatusChanged(
           `[${ERROR_IDS.AGENT_DISPATCH_FAILED}] ${trigger} failed for deal ${dealId}: ${message}`,
         ).replace(/[\r\n]/g, ' '),
       );
+      // Centralized observability route (separate from the inline log sink
+      // above): attach a PII-safe event to the active dispatch span. `message`
+      // is already redacted; dealId/trigger are opaque tokens.
+      reportSwallowedError(ERROR_IDS.AGENT_DISPATCH_FAILED, message, { dealId, trigger });
 
       // Durable, queryable failure record. Metadata is PII-safe by construction:
       // the deal_status enum + the internal trigger token only — never the
@@ -117,6 +122,11 @@ export async function onDealStatusChanged(
             `[${ERROR_IDS.AGENT_DISPATCH_FAILED}] failed to record dispatch-failure audit for deal ${dealId}: ${auditMessage}`,
           ).replace(/[\r\n]/g, ' '),
         );
+        // auditMessage is not pre-redacted here, so redact before routing.
+        reportSwallowedError(ERROR_IDS.AGENT_DISPATCH_FAILED, redactPii(auditMessage), {
+          dealId,
+          phase: 'audit_record',
+        });
       }
     } finally {
       span.end();
