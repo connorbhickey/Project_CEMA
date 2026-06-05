@@ -1,0 +1,17 @@
+name: 'Project_CEMA CodeQL config'
+
+# The Vercel Workflow DevKit (WDK) marks durable workflow and step boundaries
+# with string-literal directive prologues -- "use workflow" and "use step" --
+# analogous to "use strict". CodeQL's security-and-quality suite flags these as
+# js/unknown-directive ("Unknown directive"), producing a false-positive
+# code-scanning alert on every PR that touches an agent's *.workflow.ts /
+# *.steps.ts file (the ADR 0013/0015/0016 durable wraps). The directives are
+# intentional and load-bearing, so we exclude that one cosmetic quality query
+# while keeping the full security-extended + security-and-quality coverage that
+# the workflow's `queries:` input requests. Query filters apply to the entire
+# resolved query set, including queries supplied via the workflow input.
+#
+# See CLAUDE.md carry-over "CodeQL directive allowlist" (ADR 0015 #10).
+query-filters:
+  - exclude:
+      id: js/unknown-directive
