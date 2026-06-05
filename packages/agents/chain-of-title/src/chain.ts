@@ -112,12 +112,13 @@ function toStatus(breaks: readonly ChainBreak[]): ChainStatus {
  * match is an `ambiguous_assignment` (a referenced instrument missing from the
  * collateral file).
  *
- * Known limitation (head gap): an InstrumentRecord carries no "original
- * mortgagee" field, so the FIRST assignment's assignor cannot be verified
- * against the anchor's lender. analyzeChain therefore checks INTERNAL
- * consistency of the assignment sequence (assignee[n] === assignor[n+1]); a
- * mismatch at the head relative to the true originator remains out of scope
- * (needs an originator field on the anchor -- separate from pass F above).
+ * Head-gap verification (pass G): when an anchor's `originator` (the original
+ * mortgagee) is known, the FIRST recorded assignment's assignor is confirmed to
+ * be that lender -- a mismatch is a `missing_assignment` (an assignment at the
+ * head of the chain, from the original lender to the first recorded assignor, is
+ * missing). This complements the INTERNAL sequence check (assignee[n] ===
+ * assignor[n+1]). Skipped when no originator is extracted, so instruments
+ * without the field are unaffected.
  */
 export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAnalysis {
   const breaks: ChainBreak[] = [];
@@ -264,6 +265,30 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
           detail: `instrument ${inst.documentId} references "${token}" which is not present among the deal's recorded instruments`,
         });
       }
+    }
+  }
+
+  // (G) Head-gap verification: the original mortgagee is the anchor's
+  // `originator`. When exactly one is known AND the assignment graph is
+  // unambiguous, the FIRST recorded assignment's assignor must be that lender;
+  // otherwise an assignment at the head of the chain (original lender -> first
+  // recorded assignor) is missing -> missing_assignment (re_chase). Conservative:
+  // no originator, or conflicting originators, skips (no false positives). detail
+  // is documentId-based -- no party names (PII-safe like the other passes).
+  const originators = [
+    ...new Set(
+      instruments.map((i) => i.originator).filter((o): o is string => o != null && o !== ''),
+    ),
+  ];
+  if (ambiguousAfter === ambiguousBefore && assignments.length >= 1 && originators.length === 1) {
+    const originator = originators[0];
+    const head = [...assignments].sort(byRecordedAt)[0];
+    if (originator !== undefined && head !== undefined && head.assignor !== originator) {
+      breaks.push({
+        kind: 'missing_assignment',
+        documentId: head.documentId,
+        detail: `head gap: the first recorded assignment ${head.documentId} is not assigned by the anchor's original mortgagee`,
+      });
     }
   }
 

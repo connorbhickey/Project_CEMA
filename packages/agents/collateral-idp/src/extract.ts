@@ -40,5 +40,6 @@ export function extract(
     recordingRef: toRecordingRef(f),
     county: f.county ?? null,
     references: f.references ?? null,
+    originator: f.originator ?? null,
   };
 }

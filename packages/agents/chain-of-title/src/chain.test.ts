@@ -249,3 +249,40 @@ describe('analyzeChain reference-target validation', () => {
     expect(a.breaks).toHaveLength(0);
   });
 });
+
+// Head-gap verification (pass G): the original mortgagee is the anchor's
+// `originator`. When it is known, the FIRST recorded assignment's assignor must
+// be that lender; otherwise an assignment at the head of the chain (from the
+// original lender to the first recorded assignor) is missing -> missing_assignment
+// (re_chase). Skipped when no originator is known (backward-compatible).
+describe('analyzeChain head-gap verification', () => {
+  it('flags a head gap when the first assignment is not from the original mortgagee', () => {
+    const a = analyzeChain([
+      inst({ documentId: 'm1', instrumentKind: 'mortgage', originator: 'Original Lender' }),
+      aom('a1', 'Wrong Bank', 'B', '2026-01-01'),
+      aom('a2', 'B', 'C', '2026-02-01'),
+    ]);
+    expect(a.status).toBe('broken');
+    const headGap = a.breaks.filter(
+      (b) => b.kind === 'missing_assignment' && b.documentId === 'a1',
+    );
+    expect(headGap).toHaveLength(1);
+    expect(headGap[0]?.detail).toContain('head gap');
+  });
+
+  it('does not flag a head gap when the chain starts from the original mortgagee', () => {
+    const a = analyzeChain([
+      inst({ documentId: 'm1', instrumentKind: 'mortgage', originator: 'Original Lender' }),
+      aom('a1', 'Original Lender', 'B', '2026-01-01'),
+      aom('a2', 'B', 'C', '2026-02-01'),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+
+  it('skips head-gap verification when no originator is known (backward-compatible)', () => {
+    const a = analyzeChain([mortgage('m1'), aom('a1', 'Some Bank', 'B', '2026-01-01')]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+});

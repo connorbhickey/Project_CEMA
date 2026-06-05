@@ -49,6 +49,7 @@ describe('extract', () => {
       recordingRef: { reelPage: null, crfn: null },
       county: null,
       references: null,
+      originator: null,
     });
   });
 
