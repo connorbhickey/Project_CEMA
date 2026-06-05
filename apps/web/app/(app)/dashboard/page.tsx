@@ -1,9 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
-import type { Route } from 'next';
 import Link from 'next/link';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { AgentStatCards } from '@/components/agent-stat-cards';
+import { LoadOlderLink } from '@/components/load-older-link';
 import { PipelineFunnel } from '@/components/pipeline-funnel';
 import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
@@ -110,20 +110,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           </ol>
         )}
         {nextCursor && (
-          <div className="mt-6">
-            <Link
-              href={
-                activityHref(BASE, {
-                  agent: activeAgent,
-                  since: activeSince,
-                  cursor: nextCursor,
-                }) as Route
-              }
-              className="text-primary text-sm font-medium hover:underline"
-            >
-              Load older →
-            </Link>
-          </div>
+          <LoadOlderLink
+            href={activityHref(BASE, {
+              agent: activeAgent,
+              since: activeSince,
+              cursor: nextCursor,
+            })}
+          />
         )}
       </section>
     </div>
