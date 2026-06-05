@@ -286,3 +286,40 @@ describe('analyzeChain head-gap verification', () => {
     expect(a.breaks).toHaveLength(0);
   });
 });
+
+// Allonge attachment (pass H): an allonge is physically attached to a promissory
+// NOTE to add endorsements when the note runs out of space. An allonge present
+// with no note in the deal has nothing to attach to -- the note it endorses is
+// missing from the collateral file -> lost_note (attorney review).
+describe('analyzeChain allonge attachment', () => {
+  it('flags an allonge with no promissory note to attach to as lost_note', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      inst({
+        documentId: 'al1',
+        instrumentKind: 'allonge',
+        assignor: 'A',
+        assignee: 'B',
+        recordedAt: '2026-01-01',
+      }),
+    ]);
+    expect(a.breaks.some((b) => b.kind === 'lost_note' && b.documentId === 'al1')).toBe(true);
+    expect(a.status).toBe('ambiguous');
+  });
+
+  it('does not flag an allonge when a promissory note is present', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      inst({ documentId: 'n1', instrumentKind: 'note' }),
+      inst({
+        documentId: 'al1',
+        instrumentKind: 'allonge',
+        assignor: 'A',
+        assignee: 'B',
+        recordedAt: '2026-01-01',
+      }),
+    ]);
+    expect(a.breaks.some((b) => b.kind === 'lost_note')).toBe(false);
+    expect(a.status).toBe('clean');
+  });
+});
