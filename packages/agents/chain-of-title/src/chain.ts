@@ -292,6 +292,25 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
     }
   }
 
+  // (H) Allonge attachment: an allonge endorses a promissory NOTE (it is
+  // physically attached to the note to add endorsements when the note runs out of
+  // space). An allonge present with no note in the deal has nothing to attach to
+  // -- the note it endorses is missing from the collateral file -> lost_note
+  // (attorney review; possible lost-note affidavit). Allonges still contribute
+  // assignor->assignee edges to the assignment graph above (treating the note
+  // endorsement chain as distinct from the mortgage assignment chain is a future
+  // refinement); this pass only adds the missing-note check.
+  const allonges = instruments.filter((i) => i.instrumentKind === 'allonge');
+  if (allonges.length > 0 && notes.length === 0) {
+    for (const al of allonges) {
+      breaks.push({
+        kind: 'lost_note',
+        documentId: al.documentId,
+        detail: `allonge ${al.documentId} has no promissory note in the deal to attach to`,
+      });
+    }
+  }
+
   // Build the directed instrument graph (spec §5.1). assigns_to edges come from
   // the assignment instruments (assignor -> assignee); consolidates edges from
   // each CEMA instrument. Edges are descriptive output -- they do NOT influence

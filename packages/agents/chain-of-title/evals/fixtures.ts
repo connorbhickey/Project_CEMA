@@ -70,12 +70,13 @@ export interface ChainFixture {
   };
 }
 
-// 28 fixtures spanning every status, break kind, and route kind. F25-F26
+// 29 fixtures spanning every status, break kind, and route kind. F25-F26
 // exercise reference-target validation (pass F): a cited recording reference
 // with no matching instrument is an ambiguous_assignment -> attorney_review.
 // F27-F28 exercise head-gap verification (pass G): when an anchor's `originator`
 // is known, the first recorded assignment's assignor must be that lender, else a
-// missing_assignment -> re_chase.
+// missing_assignment -> re_chase. F29 exercises allonge attachment (pass H): an
+// allonge with no note to attach to is a lost_note -> attorney_review.
 export const CHAIN_FIXTURES: readonly ChainFixture[] = [
   {
     name: 'F1 single recorded assignment is clean',
@@ -284,9 +285,10 @@ export const CHAIN_FIXTURES: readonly ChainFixture[] = [
     },
   },
   {
-    name: 'F24 single allonge with parties under an anchor is clean',
+    name: 'F24 allonge with parties + a note to attach to is clean',
     instruments: [
       mortgage('m1'),
+      noteDoc('n1'),
       inst({
         documentId: 'al1',
         instrumentKind: 'allonge',
@@ -327,5 +329,19 @@ export const CHAIN_FIXTURES: readonly ChainFixture[] = [
       aom('a1', 'Original Lender', 'B', { recordedAt: '2026-01-01' }),
     ],
     expected: { status: 'clean', breakKinds: [], routeKinds: ['advisory_pass'] },
+  },
+  {
+    name: 'F29 allonge with no note to attach to is lost_note',
+    instruments: [
+      mortgage('m1'),
+      inst({
+        documentId: 'al1',
+        instrumentKind: 'allonge',
+        assignor: 'A',
+        assignee: 'B',
+        recordedAt: '2026-01-01',
+      }),
+    ],
+    expected: { status: 'ambiguous', breakKinds: ['lost_note'], routeKinds: ['attorney_review'] },
   },
 ] as const;
