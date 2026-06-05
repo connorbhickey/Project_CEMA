@@ -2,6 +2,7 @@
 
 import type { IdpResult } from '@cema/agents-collateral-idp';
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
+import { redactPii } from '@cema/compliance';
 import { getDb, organizations, users } from '@cema/db';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { eq } from 'drizzle-orm';
@@ -44,11 +45,17 @@ export async function runCollateralIdpFromDealDurable(dealId: string): Promise<I
       const result = await run.returnValue;
 
       span.setAttribute('idp.document_count', result.documents.length);
+      span.setAttribute('idp.unreadable_count', result.unreadable.length);
       span.setStatus({ code: SpanStatusCode.OK });
       return result;
     } catch (err) {
       span.recordException(err as Error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
+      // Redact + fall back to String(err) -- parity with the live action and
+      // hard rule #3 (a span status message is a log; never carry raw PII).
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: redactPii((err as Error).message ?? String(err)),
+      });
       throw err;
     } finally {
       span.end();
