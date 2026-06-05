@@ -72,4 +72,15 @@ export interface InstrumentRecord {
   readonly recordingRef: RecordingRef;
   readonly county: string | null;
   readonly references: string | null;
+  // For an anchor (a mortgage / consolidated instrument), the original mortgagee
+  // — the lender named on the instrument. Chain-of-Title head-gap verification
+  // uses it to confirm the FIRST recorded assignment's assignor is the original
+  // lender (otherwise an assignment at the head of the chain is missing).
+  //
+  // OPTIONAL (unlike the other fields): this was added after the rest, and the
+  // shape is persisted as jsonb. Instruments persisted/fixtured before head-gap
+  // support simply omit it, and `undefined` reads the same as "no originator"
+  // (the head-gap pass skips). The IDP extractor always sets it (null or a
+  // value) going forward.
+  readonly originator?: string | null;
 }

@@ -70,10 +70,12 @@ export interface ChainFixture {
   };
 }
 
-// 26 fixtures spanning every status, break kind, and route kind. F25-F26
-// exercise reference-target validation (pass F): analyzeChain now reads
-// `references`, confirming each cited recording reference resolves to a recorded
-// instrument in the deal (a miss is an ambiguous_assignment -> attorney_review).
+// 28 fixtures spanning every status, break kind, and route kind. F25-F26
+// exercise reference-target validation (pass F): a cited recording reference
+// with no matching instrument is an ambiguous_assignment -> attorney_review.
+// F27-F28 exercise head-gap verification (pass G): when an anchor's `originator`
+// is known, the first recorded assignment's assignor must be that lender, else a
+// missing_assignment -> re_chase.
 export const CHAIN_FIXTURES: readonly ChainFixture[] = [
   {
     name: 'F1 single recorded assignment is clean',
@@ -308,5 +310,22 @@ export const CHAIN_FIXTURES: readonly ChainFixture[] = [
       breakKinds: ['ambiguous_assignment'],
       routeKinds: ['attorney_review'],
     },
+  },
+  {
+    name: 'F27 head gap: first assignment not from the original mortgagee',
+    instruments: [
+      inst({ documentId: 'm1', instrumentKind: 'mortgage', originator: 'Original Lender' }),
+      aom('a1', 'Wrong Bank', 'B', { recordedAt: '2026-01-01' }),
+      aom('a2', 'B', 'C', { recordedAt: '2026-02-01' }),
+    ],
+    expected: { status: 'broken', breakKinds: ['missing_assignment'], routeKinds: ['re_chase'] },
+  },
+  {
+    name: 'F28 head gap clean: chain starts from the original mortgagee',
+    instruments: [
+      inst({ documentId: 'm1', instrumentKind: 'mortgage', originator: 'Original Lender' }),
+      aom('a1', 'Original Lender', 'B', { recordedAt: '2026-01-01' }),
+    ],
+    expected: { status: 'clean', breakKinds: [], routeKinds: ['advisory_pass'] },
   },
 ] as const;
