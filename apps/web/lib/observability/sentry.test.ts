@@ -52,8 +52,24 @@ describe('sentry seam (DSN-gated, dormant by default)', () => {
 
     expect(hoisted.init).toHaveBeenCalledTimes(1);
     expect(hoisted.init).toHaveBeenCalledWith(
-      expect.objectContaining({ dsn: DSN, sendDefaultPii: false }),
+      expect.objectContaining({ dsn: DSN, sendDefaultPii: false, maxBreadcrumbs: 0 }),
     );
+  });
+
+  it('scrubSentryEvent re-redacts the message and drops PII-bearing auto-context', async () => {
+    const { scrubSentryEvent } = await import('./sentry');
+    const scrubbed = scrubSentryEvent({
+      message: 'failed for SSN 123-45-6789',
+      breadcrumbs: [{ message: 'console output' }],
+      request: { headers: { cookie: 'secret' } },
+      user: { id: 'u1', email: 'a@b.com' },
+      extra: { errorId: 'X' },
+    });
+    expect(scrubbed.message).not.toContain('123-45-6789'); // re-redacted
+    expect(scrubbed.breadcrumbs).toBeUndefined();
+    expect(scrubbed.request).toBeUndefined();
+    expect(scrubbed.user).toBeUndefined();
+    expect(scrubbed.extra).toEqual({ errorId: 'X' }); // non-PII fields preserved
   });
 
   it('captures a swallowed error as an error-level message with the errorId tag + PII-safe extra', async () => {
