@@ -5,7 +5,6 @@ import { GENERATED_DOCUMENT_KINDS, partitionDealDocuments } from './partition-do
 
 import type { DealDocumentReviewItem } from '@/lib/queries/deal-documents-review';
 
-
 // Only `instrument !== null` matters to the partition, so a minimal stub suffices.
 const INSTRUMENT = {} as unknown as InstrumentRecord;
 
