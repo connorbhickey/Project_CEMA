@@ -15,6 +15,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         {deal.cemaType === 'refi_cema' ? 'Refi CEMA' : 'Purchase CEMA'} · {deal.status}
       </h1>
       <nav className="mb-6 flex gap-4 text-sm">
+        <Link href={`/deals/${id}/parties`} className="text-blue-600 hover:underline">
+          Parties
+        </Link>
         <Link href={`/deals/${id}/documents`} className="text-blue-600 hover:underline">
           Documents &amp; chain of title
         </Link>
