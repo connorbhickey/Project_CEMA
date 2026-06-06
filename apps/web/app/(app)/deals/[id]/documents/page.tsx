@@ -1,12 +1,16 @@
 import { notFound } from 'next/navigation';
 
 import { DealChainBreakReviewActions } from '@/components/deal-chain-break-review-actions';
-import { DealDocumentReviewActions } from '@/components/deal-document-review-actions';
+import { DealDocumentReviewRow } from '@/components/deal-document-review-row';
 import { getDeal } from '@/lib/actions/get-deal';
 import { mergeChainReview } from '@/lib/agents/chain-of-title/merge-chain-review';
+import { partitionDealDocuments } from '@/lib/deals/partition-documents';
 import { getDealChainBreakReviews } from '@/lib/queries/deal-chain-break-reviews';
 import { getDealChainFindings } from '@/lib/queries/deal-chain-findings';
-import { getDealDocumentsReview } from '@/lib/queries/deal-documents-review';
+import {
+  getDealDocumentsReview,
+  type DealDocumentReviewItem,
+} from '@/lib/queries/deal-documents-review';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +23,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     getDealChainBreakReviews(id),
   ]);
 
+  // Split the deal's documents into what we RECEIVED (the prior servicer's
+  // collateral file, IDP-classified) vs. what we PRODUCED (the generated CEMA
+  // package) vs. other uploads, so the processor sees the two sides distinctly.
+  const groups = partitionDealDocuments(items);
+
   const reChase = findings.routes.filter((r) => r.kind === 're_chase');
   const attorneyReview = findings.routes.filter((r) => r.kind === 'attorney_review');
   // Join live attorney_review findings to their persisted queue rows; surface
@@ -30,73 +39,32 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Documents &amp; chain of title</h1>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium">Documents ({items.length})</h2>
-        {items.length === 0 ? (
+      {items.length === 0 ? (
+        <section>
+          <h2 className="mb-3 text-sm font-medium">Documents (0)</h2>
           <div className="text-muted-foreground rounded-lg border border-dashed p-12 text-center text-sm">
             No documents on this deal yet.
           </div>
-        ) : (
-          <ul className="space-y-3" role="list">
-            {items.map((item) => (
-              <li key={`${item.documentId}:${item.version}`} className="rounded-lg border p-4">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium">{item.kind}</span>
-                  <span className="text-muted-foreground">v{item.version}</span>
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{item.status}</span>
-                  {item.attorneyReviewRequired ? (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-                      attorney gate
-                    </span>
-                  ) : null}
-                  <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-                    {item.reviewState ?? '—'}
-                  </span>
-                </div>
-
-                {item.attorneyReviewRequired && item.instrument ? (
-                  <dl className="text-muted-foreground mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
-                    <div className="flex gap-1">
-                      <dt>Assignor → Assignee:</dt>
-                      <dd className="text-foreground">
-                        {item.instrument.assignor ?? '—'} → {item.instrument.assignee ?? '—'}
-                      </dd>
-                    </div>
-                    <div className="flex gap-1">
-                      <dt>Amount:</dt>
-                      <dd className="text-foreground">
-                        {item.instrument.amount !== null ? `$${item.instrument.amount}` : '—'}
-                      </dd>
-                    </div>
-                    <div className="flex gap-1">
-                      <dt>Recording:</dt>
-                      <dd className="text-foreground">
-                        {item.instrument.recordingRef.crfn ??
-                          item.instrument.recordingRef.reelPage ??
-                          '—'}
-                      </dd>
-                    </div>
-                    <div className="flex gap-1">
-                      <dt>County:</dt>
-                      <dd className="text-foreground">{item.instrument.county ?? '—'}</dd>
-                    </div>
-                  </dl>
-                ) : null}
-
-                <div className="mt-3">
-                  <DealDocumentReviewActions
-                    documentId={item.documentId}
-                    attorneyReviewRequired={item.attorneyReviewRequired}
-                    queueId={item.queueId}
-                    state={item.reviewState}
-                    reviewerIsCurrentUser={item.reviewerIsCurrentUser}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        </section>
+      ) : (
+        <>
+          <DocumentGroup
+            title="Collateral file"
+            description="Instruments classified from the prior servicer's collateral file (Note, Mortgage, Assignments, Allonges)."
+            items={groups.collateral}
+          />
+          <DocumentGroup
+            title="Generated package"
+            description="CEMA documents generated for this deal (Form 3172, affidavits, gap docs, cover sheets) — drafts pending attorney review."
+            items={groups.generated}
+          />
+          <DocumentGroup
+            title="Other documents"
+            description="Uploaded or not-yet-classified documents."
+            items={groups.other}
+          />
+        </>
+      )}
 
       <section>
         <h2 className="mb-3 text-sm font-medium">Chain of title</h2>
@@ -208,5 +176,34 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         )}
       </section>
     </div>
+  );
+}
+
+/**
+ * One document group (Collateral file / Generated package / Other documents).
+ * Renders nothing when empty, so groups with no documents don't show a header.
+ */
+function DocumentGroup({
+  title,
+  description,
+  items,
+}: {
+  title: string;
+  description: string;
+  items: DealDocumentReviewItem[];
+}) {
+  if (items.length === 0) return null;
+  return (
+    <section>
+      <h2 className="text-sm font-medium">
+        {title} ({items.length})
+      </h2>
+      <p className="text-muted-foreground mb-3 text-xs">{description}</p>
+      <ul className="space-y-3" role="list">
+        {items.map((item) => (
+          <DealDocumentReviewRow key={`${item.documentId}:${item.version}`} item={item} />
+        ))}
+      </ul>
+    </section>
   );
 }
