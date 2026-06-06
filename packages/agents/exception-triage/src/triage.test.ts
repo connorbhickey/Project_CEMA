@@ -9,6 +9,7 @@ const NONE: DealSignals = {
   chainBreakCount: 0,
   dispatchFailed: false,
   recordingRejected: false,
+  purchaseMissingSeller: false,
 };
 
 describe('triageExceptions', () => {
@@ -50,17 +51,29 @@ describe('triageExceptions', () => {
     });
   });
 
+  it('flags purchase_missing_seller (medium → processor_review) when a Purchase CEMA lacks a seller', () => {
+    const [ex, ...rest] = triageExceptions({ ...NONE, purchaseMissingSeller: true });
+    expect(rest).toHaveLength(0);
+    expect(ex).toMatchObject({
+      kind: 'purchase_missing_seller',
+      severity: 'medium',
+      route: 'processor_review',
+    });
+  });
+
   it('emits every applicable exception together', () => {
     const ex = triageExceptions({
       dealStatus: 'exception',
       chainBreakCount: 1,
       dispatchFailed: true,
       recordingRejected: true,
+      purchaseMissingSeller: true,
     });
     expect(ex.map((e) => e.kind).sort()).toEqual([
       'agent_dispatch_failed',
       'chain_break',
       'deal_flagged_exception',
+      'purchase_missing_seller',
       'rejected_recording',
     ]);
   });
@@ -71,6 +84,7 @@ describe('triageExceptions', () => {
       chainBreakCount: 7,
       dispatchFailed: true,
       recordingRejected: true,
+      purchaseMissingSeller: true,
     });
     for (const e of ex) {
       expect(e.reason.length).toBeGreaterThan(0);
@@ -83,6 +97,7 @@ describe('triageExceptions', () => {
       'agent_dispatch_failed',
       'chain_break',
       'deal_flagged_exception',
+      'purchase_missing_seller',
       'rejected_recording',
     ]);
     expect(EXCEPTION_SEVERITIES).toContain('blocking');

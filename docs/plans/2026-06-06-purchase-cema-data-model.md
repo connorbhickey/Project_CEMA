@@ -1,6 +1,6 @@
 # Purchase-CEMA data model — how a deal represents seller vs. buyer
 
-> **Status:** Proposal for Connor's review · 2026-06-06
+> **Status:** **Accepted** — D1–D3 confirmed by Connor 2026-06-06; promoted to [ADR 0019](../adr/0019-purchase-cema-data-model.md). D2 (the seller-completeness check) shipped; Q1–Q4 remain open (Connor-owned).
 > **Author:** Claude Opus 4.8 (1M context)
 > **Trigger:** PR #162 made the Doc-Gen Agent plan documents for `purchase_cema`, and flagged a domain assumption about how a Purchase CEMA's _seller_ and _buyer_ are modeled. This doc resolves that assumption against the as-built schema and proposes the conventions + the (small, deferrable) follow-ups.
 

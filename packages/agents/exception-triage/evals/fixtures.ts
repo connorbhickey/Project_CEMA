@@ -11,8 +11,9 @@ function sig(
   chainBreakCount: number,
   dispatchFailed: boolean,
   recordingRejected: boolean,
+  purchaseMissingSeller = false,
 ): DealSignals {
-  return { dealStatus, chainBreakCount, dispatchFailed, recordingRejected };
+  return { dealStatus, chainBreakCount, dispatchFailed, recordingRejected, purchaseMissingSeller };
 }
 
 export const TRIAGE_FIXTURES: readonly TriageFixture[] = [
@@ -37,6 +38,11 @@ export const TRIAGE_FIXTURES: readonly TriageFixture[] = [
     input: sig('recording', 0, false, true),
     expected: { kinds: ['rejected_recording'] },
   },
+  {
+    name: 'purchase missing seller only',
+    input: sig('doc_prep', 0, false, false, true),
+    expected: { kinds: ['purchase_missing_seller'] },
+  },
   // --- Combinations ---
   {
     name: 'chain + dispatch',
@@ -59,14 +65,15 @@ export const TRIAGE_FIXTURES: readonly TriageFixture[] = [
     expected: { kinds: ['agent_dispatch_failed', 'deal_flagged_exception'] },
   },
   {
-    name: 'all four signals',
-    input: sig('exception', 1, true, true),
+    name: 'all five signals',
+    input: sig('exception', 1, true, true, true),
     expected: {
       kinds: [
         'chain_break',
         'agent_dispatch_failed',
         'deal_flagged_exception',
         'rejected_recording',
+        'purchase_missing_seller',
       ],
     },
   },
