@@ -35,6 +35,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Link href={`/deals/${id}/loans`} className="text-blue-600 hover:underline">
           Existing loans
         </Link>
+        <Link href={`/deals/${id}/exceptions`} className="text-blue-600 hover:underline">
+          Exceptions
+        </Link>
         <Link href={`/deals/${id}/agent-activity`} className="text-blue-600 hover:underline">
           Agent activity
         </Link>
