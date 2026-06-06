@@ -40,7 +40,10 @@ function make(
     kind,
     attorneyReviewRequired: GATE_SET.has(kind),
     title: TITLE_BY_KIND[kind],
-    fields: { dealId: input.dealId, ...fields },
+    // `cemaType` is on every field-map so each document is self-describing for the
+    // render adapter (Refi vs Purchase changes obligor/assignor resolution) and the
+    // documents UI. PII-safe (an enum token, never a name) -- hard rule #3.
+    fields: { dealId: input.dealId, cemaType: input.cemaType, ...fields },
   };
 }
 
@@ -91,7 +94,16 @@ export function planDocuments(input: DealDocGenInput): DocumentPlan {
     documents.push(make('gap_mortgage', input, { gap, county: input.county }));
   }
   for (const loan of input.existingLoans) {
-    documents.push(make('aom', input, { existingLoanId: loan.id, upb: loan.upb }));
+    documents.push(
+      make('aom', input, {
+        existingLoanId: loan.id,
+        upb: loan.upb,
+        // Render hint: whose prior loan this Assignment of Mortgage covers — the
+        // seller's for a Purchase CEMA, the borrower's own for a Refi (the AOM
+        // assignor side). PII-safe role token (hard rule #3).
+        priorObligorRole: input.cemaType === 'purchase_cema' ? 'seller' : 'borrower',
+      }),
+    );
   }
   return { documents, consistency, gap };
 }
