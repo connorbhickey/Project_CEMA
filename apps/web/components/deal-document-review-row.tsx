@@ -1,4 +1,5 @@
 import { DealDocumentReviewActions } from '@/components/deal-document-review-actions';
+import { documentKindLabel } from '@/lib/deals/document-kind';
 import type { DealDocumentReviewItem } from '@/lib/queries/deal-documents-review';
 
 /**
@@ -11,7 +12,7 @@ export function DealDocumentReviewRow({ item }: { item: DealDocumentReviewItem }
   return (
     <li className="rounded-lg border p-4">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="font-medium">{item.kind}</span>
+        <span className="font-medium">{documentKindLabel(item.kind)}</span>
         <span className="text-muted-foreground">v{item.version}</span>
         <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{item.status}</span>
         {item.attorneyReviewRequired ? (
