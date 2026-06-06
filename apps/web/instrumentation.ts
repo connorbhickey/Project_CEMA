@@ -14,7 +14,17 @@ import { registerOTel } from '@vercel/otel';
  *
  * Span attributes must stay PII-safe (CLAUDE.md §10.3 / hard rule #3): spans are logs, so
  * never attach loan figures, payoff amounts, or borrower identity — see runIntake.
+ *
+ * Also initializes Sentry error capture (the §4 observability stack) — dynamically
+ * imported under the Node runtime ONLY, so the Node-only `@sentry/node` SDK never
+ * enters the Edge bundle (proxy.ts). `initSentry()` is a no-op without `SENTRY_DSN`,
+ * so this stays dormant outside a Sentry-configured deployment.
  */
-export function register(): void {
+export async function register(): Promise<void> {
   registerOTel({ serviceName: 'cema-web' });
+
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { initSentry } = await import('./lib/observability/sentry');
+    await initSentry();
+  }
 }
