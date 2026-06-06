@@ -28,8 +28,13 @@ vi.mock('../kg/index-deal-chain-edges', () => ({
   indexDealChainEdges: vi.fn(),
 }));
 
+vi.mock('../kg/index-deal-party-edges', () => ({
+  indexDealPartyEdges: vi.fn(),
+}));
+
 import { indexDealChainEdges } from '../kg/index-deal-chain-edges';
 import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
+import { indexDealPartyEdges } from '../kg/index-deal-party-edges';
 
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
 import { runCollateralIdpFromDeal } from './collateral-idp/run-collateral-idp-action';
@@ -90,6 +95,7 @@ beforeEach(() => {
   vi.mocked(runOutreachFromDeal).mockResolvedValue(OUTREACH);
   vi.mocked(indexDealInstrumentEdges).mockResolvedValue(2);
   vi.mocked(indexDealChainEdges).mockResolvedValue(1);
+  vi.mocked(indexDealPartyEdges).mockResolvedValue(3);
 });
 
 afterEach(() => {
@@ -107,6 +113,9 @@ describe('runCollateralPipeline', () => {
     expect(runOutreachFromDeal).not.toHaveBeenCalled();
     expect(indexDealInstrumentEdges).not.toHaveBeenCalled();
     expect(indexDealChainEdges).not.toHaveBeenCalled();
+    // Party edges index independent of collateral docs (a deal has parties
+    // regardless), so they ARE indexed even when IDP classified nothing.
+    expect(indexDealPartyEdges).toHaveBeenCalledWith('deal-1');
   });
 
   it('runs Chain-of-Title after IDP but skips Outreach when the chain has no re_chase', async () => {

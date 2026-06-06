@@ -7,6 +7,7 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import { indexDealChainEdges } from '../kg/index-deal-chain-edges';
 import { indexDealInstrumentEdges } from '../kg/index-deal-instrument-edges';
+import { indexDealPartyEdges } from '../kg/index-deal-party-edges';
 
 import { runChainOfTitleFromDeal } from './chain-of-title/run-chain-of-title-action';
 import { runCollateralIdpFromDeal } from './collateral-idp/run-collateral-idp-action';
@@ -35,6 +36,13 @@ export async function runCollateralPipeline(dealId: string): Promise<CollateralP
     try {
       const idp = await runCollateralIdpFromDeal(dealId);
       span.setAttribute('pipeline.idp_document_count', idp.documents.length);
+
+      // Index the deal's parties into the KG as PII-safe party_is_on_deal edges.
+      // Independent of collateral docs (a deal has parties regardless), so this
+      // runs OUTSIDE the idp-docs gate below. Idempotent; complements the
+      // contact-link-time edge by covering parties set via other flows.
+      const partyEdgeCount = await indexDealPartyEdges(dealId);
+      span.setAttribute('pipeline.party_edge_count', partyEdgeCount);
 
       let chain: ChainResult | null = null;
       let outreach: OutreachResult | null = null;
