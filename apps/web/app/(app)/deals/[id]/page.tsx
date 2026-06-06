@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 
 import { getDeal } from '@/lib/actions/get-deal';
 import { parseDealRecording } from '@/lib/deals/deal-recording';
+import { dealStatusLabel } from '@/lib/deals/deal-status';
+import { partyRoleLabel } from '@/lib/deals/party-role';
+import { getDealParties } from '@/lib/queries/deal-parties';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,10 +14,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!data) notFound();
   const { deal, property, newLoan, existingLoans } = data;
   const recording = parseDealRecording(deal.metadata);
+  const parties = await getDealParties(id);
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold">
-        {deal.cemaType === 'refi_cema' ? 'Refi CEMA' : 'Purchase CEMA'} · {deal.status}
+        {deal.cemaType === 'refi_cema' ? 'Refi CEMA' : 'Purchase CEMA'} ·{' '}
+        {dealStatusLabel(deal.status)}
       </h1>
 
       {recording ? (
@@ -91,6 +96,38 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <li key={loan.id} className="flex justify-between border-b pb-2 last:border-0">
                     <span>UPB: ${loan.upb}</span>
                     <span>Chain position: {loan.chainPosition}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Parties ({parties.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {parties.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                No parties yet.{' '}
+                <Link href={`/deals/${id}/parties`} className="text-blue-600 hover:underline">
+                  Add them →
+                </Link>
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {parties.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b pb-2 last:border-0"
+                  >
+                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">
+                      {partyRoleLabel(p.role)}
+                    </span>
+                    <span>{p.fullName ?? '—'}</span>
+                    {p.email ? (
+                      <span className="text-muted-foreground text-xs">{p.email}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
