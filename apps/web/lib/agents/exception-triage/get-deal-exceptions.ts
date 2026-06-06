@@ -7,7 +7,6 @@ import { isPurchaseMissingSeller } from './purchase-seller-signal';
 
 import { withRls } from '@/lib/with-rls';
 
-
 /**
  * Per-deal exception triage (spec §9.11) — the same pull/derive model as the
  * cross-deal `getOrgExceptions`, scoped to ONE deal so the deal's own exceptions
