@@ -15,9 +15,10 @@ const tracer = trace.getTracer('@cema/web-doc-gen');
 
 /**
  * Post-commit Doc-Gen dispatcher (spec §9.7). When a deal enters `doc_prep`, plan
- * the core Refi-CEMA document package, run the numbers-tie consistency check, and
- * (only if consistent) persist each document as a gate-required, enqueued, draft
- * row with its field-map -- behind the dormant DocMagic render seam.
+ * the core CEMA document package (Refi or Purchase -- same set), run the
+ * numbers-tie consistency check, and (only if consistent) persist each document as
+ * a gate-required, enqueued, draft row with its field-map -- behind the dormant
+ * DocMagic render seam.
  *
  * Self-resolves identity (mirrors runOutreachFromDeal). Idempotent: skips a deal
  * whose package already exists (anchor cema_3172). Invoked from the best-effort
