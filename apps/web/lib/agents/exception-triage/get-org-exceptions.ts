@@ -1,8 +1,9 @@
 import { triageExceptions, type Exception } from '@cema/agents-exception-triage';
 import { getCurrentOrganizationId } from '@cema/auth';
-import { auditEvents, chainBreakReviewQueue, deals, getDb, organizations } from '@cema/db';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { auditEvents, chainBreakReviewQueue, deals, getDb, organizations, parties } from '@cema/db';
+import { and, eq, inArray, or, sql } from 'drizzle-orm';
 
+import { isPurchaseMissingSeller } from '@/lib/agents/exception-triage/purchase-seller-signal';
 import { withRls } from '@/lib/with-rls';
 
 export interface DealExceptions {
@@ -14,10 +15,11 @@ export interface DealExceptions {
 /**
  * Cross-deal exception triage (spec §9.11, pull model). RLS-scoped: gathers each
  * deal's live exception signals — open chain_break_review_queue rows, a
- * deal.agent_dispatch_failed audit, a recording.rejected audit, deal_status='exception' — into DealSignals,
- * runs the pure triageExceptions classifier, and returns the deals carrying at
- * least one exception. Recompute-live (no table); derives from what the other
- * Layer-3 agents already emit (no agent changes).
+ * deal.agent_dispatch_failed audit, a recording.rejected audit, deal_status='exception',
+ * and a Purchase CEMA past an active stage with no `seller` party (D2 / ADR 0019)
+ * — into DealSignals, runs the pure triageExceptions classifier, and returns the
+ * deals carrying at least one exception. Recompute-live (no table); derives from
+ * what the other Layer-3 agents already emit + the deal's own parties/cemaType.
  */
 export async function getOrgExceptions(): Promise<DealExceptions[]> {
   const clerkOrgId = await getCurrentOrganizationId();
@@ -29,7 +31,7 @@ export async function getOrgExceptions(): Promise<DealExceptions[]> {
 
   return withRls(org.id, async (tx) => {
     const dealRows = await tx
-      .select({ id: deals.id, status: deals.status })
+      .select({ id: deals.id, status: deals.status, cemaType: deals.cemaType })
       .from(deals)
       .where(eq(deals.organizationId, org.id));
     if (dealRows.length === 0) return [];
@@ -72,6 +74,24 @@ export async function getOrgExceptions(): Promise<DealExceptions[]> {
       );
     const recordingRejectedDeals = new Set(recordingRejectedRows.map((r) => r.entityId));
 
+    // Deals that have a `seller` party (scoped to this org's deals via the
+    // already org-filtered dealRows ids). Drives the Purchase-CEMA seller
+    // well-formedness check (design doc D2 / ADR 0019).
+    const sellerRows = await tx
+      .select({ dealId: parties.dealId })
+      .from(parties)
+      .where(
+        and(
+          inArray(
+            parties.dealId,
+            dealRows.map((d) => d.id),
+          ),
+          eq(parties.role, 'seller'),
+        ),
+      )
+      .groupBy(parties.dealId);
+    const dealsWithSeller = new Set(sellerRows.map((r) => r.dealId));
+
     const out: DealExceptions[] = [];
     for (const d of dealRows) {
       const exceptions = triageExceptions({
@@ -79,6 +99,11 @@ export async function getOrgExceptions(): Promise<DealExceptions[]> {
         chainBreakCount: chainCountByDeal.get(d.id) ?? 0,
         dispatchFailed: dispatchFailedDeals.has(d.id),
         recordingRejected: recordingRejectedDeals.has(d.id),
+        purchaseMissingSeller: isPurchaseMissingSeller(
+          d.cemaType,
+          d.status,
+          dealsWithSeller.has(d.id),
+        ),
       });
       if (exceptions.length > 0) out.push({ dealId: d.id, dealStatus: d.status, exceptions });
     }

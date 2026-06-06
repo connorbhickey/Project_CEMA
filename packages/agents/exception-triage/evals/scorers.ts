@@ -30,12 +30,14 @@ const SEVERITY: Record<ExceptionKind, ExceptionSeverity> = {
   agent_dispatch_failed: 'medium',
   deal_flagged_exception: 'high',
   rejected_recording: 'high',
+  purchase_missing_seller: 'medium',
 };
 const ROUTE: Record<ExceptionKind, ExceptionRoute> = {
   chain_break: 'attorney_review',
   agent_dispatch_failed: 'reprocess',
   deal_flagged_exception: 'processor_review',
   rejected_recording: 'processor_review',
+  purchase_missing_seller: 'processor_review',
 };
 const REASON: Record<ExceptionKind, string> = {
   chain_break: 'Chain-of-title breaks are awaiting attorney review.',
@@ -43,6 +45,8 @@ const REASON: Record<ExceptionKind, string> = {
     'A post-commit agent dispatch failed; re-run the collateral pipeline for this deal.',
   deal_flagged_exception: 'This deal is flagged as an exception and needs processor review.',
   rejected_recording: 'A recording submission was rejected and needs processor review.',
+  purchase_missing_seller:
+    'This Purchase CEMA has no seller party; add the seller before document generation.',
 };
 
 const sortedJoin = (xs: readonly string[]): string => [...xs].sort().join(',');

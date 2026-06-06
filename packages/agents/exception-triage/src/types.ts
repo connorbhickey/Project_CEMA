@@ -10,6 +10,7 @@ export const EXCEPTION_KINDS = [
   'agent_dispatch_failed',
   'deal_flagged_exception',
   'rejected_recording',
+  'purchase_missing_seller',
 ] as const;
 export type ExceptionKind = (typeof EXCEPTION_KINDS)[number];
 
@@ -38,4 +39,8 @@ export interface DealSignals {
   readonly chainBreakCount: number; // open chain_break_review_queue rows for the deal
   readonly dispatchFailed: boolean; // a deal.agent_dispatch_failed audit exists for the deal
   readonly recordingRejected: boolean; // a recording.rejected audit exists for the deal
+  // A Purchase CEMA that has reached an active processing stage but has no
+  // `seller` party (the aggregator computes the stage gate). Design doc D2:
+  // docs/plans/2026-06-06-purchase-cema-data-model.md / ADR 0019.
+  readonly purchaseMissingSeller: boolean;
 }
