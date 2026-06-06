@@ -2,6 +2,8 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import type { ErrorId } from '../constants/error-ids';
 
+import { captureSwallowedError } from './sentry';
+
 const tracer = trace.getTracer('@cema/web-observability');
 
 /**
@@ -30,12 +32,11 @@ const tracer = trace.getTracer('@cema/web-observability');
  * stack trace or raw error object can leak — only the redacted message + the
  * allowlisted context + the static error id.
  *
- * Sentry (the §4 error-capture sink) remains a Connor-gated follow-up: wiring the
- * SDK is blocked on a pnpm peer-dependency dedup — `@sentry/node` reshuffles the
- * peer graph and duplicates `drizzle-orm`, breaking type identity across packages
- * (needs a `pnpm.overrides`/dedupe decision). Add the `SENTRY_DSN`-gated
- * `Sentry.captureMessage(redactedMessage, { level: 'error', tags: { errorId } })`
- * here once that is resolved — the single call site keeps it a one-function change.
+ * It also routes to Sentry (the §4 error-capture sink) via captureSwallowedError
+ * (./sentry) — a second, independent best-effort sink, dormant until `SENTRY_DSN`
+ * is provisioned. (Wiring `@sentry/node` required a `pnpm.overrides` pin of
+ * `@opentelemetry/api` to a single version, otherwise it reshuffled the peer graph
+ * and duplicated `drizzle-orm`; see the root package.json override.)
  */
 export function reportSwallowedError(
   errorId: ErrorId,
@@ -55,4 +56,8 @@ export function reportSwallowedError(
   } finally {
     span.end();
   }
+
+  // Independent best-effort sink: route to Sentry too (dormant until SENTRY_DSN
+  // is set). Never throws; runs regardless of the span outcome above.
+  captureSwallowedError(errorId, redactedMessage, context);
 }
