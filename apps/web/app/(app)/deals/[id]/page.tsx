@@ -3,17 +3,28 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { getDeal } from '@/lib/actions/get-deal';
+import { parseDealRecording } from '@/lib/deals/deal-recording';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await getDeal(id);
   if (!data) notFound();
   const { deal, property, newLoan, existingLoans } = data;
+  const recording = parseDealRecording(deal.metadata);
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold">
         {deal.cemaType === 'refi_cema' ? 'Refi CEMA' : 'Purchase CEMA'} · {deal.status}
       </h1>
+
+      {recording ? (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+          <span className="font-medium">Recorded</span>
+          {recording.venue ? <> · {recording.venue}</> : null} ·{' '}
+          {recording.crfn ? `CRFN ${recording.crfn}` : `Reel/Page ${recording.reelPage}`}
+          {recording.recordedAt ? ` · ${recording.recordedAt}` : null}
+        </div>
+      ) : null}
       <nav className="mb-6 flex gap-4 text-sm">
         <Link href={`/deals/${id}/parties`} className="text-blue-600 hover:underline">
           Parties

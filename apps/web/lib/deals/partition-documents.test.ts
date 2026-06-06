@@ -16,6 +16,7 @@ function item(over: Partial<DealDocumentReviewItem>): DealDocumentReviewItem {
     version: 1,
     attorneyReviewRequired: false,
     instrument: null,
+    generatedFields: null,
     queueId: null,
     reviewState: null,
     reviewerIsCurrentUser: false,
