@@ -1,3 +1,5 @@
+import { redactPii } from '@cema/compliance';
+
 import type { ErrorId } from '../constants/error-ids';
 
 // The Sentry SDK is loaded via a DYNAMIC import in initSentry (below), never a
@@ -10,6 +12,31 @@ type SentryModule = typeof import('@sentry/node');
 let sentry: SentryModule | null = null;
 let initialized = false;
 
+interface ScrubbableEvent {
+  message?: string;
+  breadcrumbs?: unknown;
+  request?: unknown;
+  user?: unknown;
+}
+
+/**
+ * Defense-in-depth scrub of a Sentry event before it leaves the process (wired as
+ * the `beforeSend` hook). We already only `captureMessage` an already-`redactPii`'d
+ * string, but this guarantees — even if a future call path captures something
+ * richer — that (a) the message is `redactPii`'d again, and (b) the PII-bearing
+ * auto-context (breadcrumbs / request / user) is dropped entirely (hard rule #3).
+ * Pure + node-testable; preserves the event's own type.
+ */
+export function scrubSentryEvent<T extends ScrubbableEvent>(event: T): T {
+  if (typeof event.message === 'string') {
+    event.message = redactPii(event.message);
+  }
+  delete event.breadcrumbs;
+  delete event.request;
+  delete event.user;
+  return event;
+}
+
 /**
  * DSN-gated Sentry initialization — the error-capture half of the §4 observability
  * stack (Sentry + Vercel Observability + OpenTelemetry). Called once from
@@ -17,9 +44,11 @@ let initialized = false;
  * `@vercel/otel`'s OTLP exporter and every other env-gated integration in this repo;
  * tracing stays with `@vercel/otel` (ADR 0011), Sentry here is errors only.
  *
- * PII (hard rule #3): `sendDefaultPii: false` so Sentry never auto-attaches IP,
- * headers, cookies, or request bodies. The only data sent is the already-redacted
- * message + the PII-safe tags/extra passed to captureSwallowedError.
+ * PII (hard rule #3), defense in depth: `sendDefaultPii: false` (no IP / headers /
+ * cookies / request bodies), `maxBreadcrumbs: 0` (no incidental breadcrumb capture),
+ * and a `beforeSend` scrub (scrubSentryEvent) that re-`redactPii`s the message and
+ * drops any breadcrumbs / request / user on the event. The only data sent is the
+ * already-redacted message + the PII-safe tags/extra passed to captureSwallowedError.
  *
  * Returns whether Sentry is now active. Idempotent + best-effort: a failed init
  * (bad DSN, offline) leaves the seam dormant rather than throwing at boot.
@@ -39,6 +68,11 @@ export async function initSentry(): Promise<boolean> {
       tracesSampleRate: 0,
       // hard rule #3 — never let Sentry auto-collect request/user PII.
       sendDefaultPii: false,
+      // Capture no breadcrumbs (console/http/etc.) — they could carry incidental
+      // PII; we only need the explicit error message + errorId tag.
+      maxBreadcrumbs: 0,
+      // Final defense-in-depth scrub of every outgoing event (hard rule #3).
+      beforeSend: (event) => scrubSentryEvent(event),
     });
     initialized = true;
     return true;
