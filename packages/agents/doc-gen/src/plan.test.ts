@@ -61,6 +61,16 @@ describe('planDocuments', () => {
     }
   });
 
+  it('enriches field-maps with cemaType (all docs) + priorObligorRole (AOM) for render', () => {
+    const refi = planDocuments(BASE).documents;
+    for (const d of refi) expect(d.fields.cemaType).toBe('refi_cema');
+    expect(refi.find((d) => d.kind === 'aom')?.fields.priorObligorRole).toBe('borrower');
+
+    const purchase = planDocuments({ ...BASE, cemaType: 'purchase_cema' }).documents;
+    for (const d of purchase) expect(d.fields.cemaType).toBe('purchase_cema');
+    expect(purchase.find((d) => d.kind === 'aom')?.fields.priorObligorRole).toBe('seller');
+  });
+
   it('flags numbers_do_not_tie + plans nothing when UPB exceeds the new loan', () => {
     const plan = planDocuments({
       ...BASE,
