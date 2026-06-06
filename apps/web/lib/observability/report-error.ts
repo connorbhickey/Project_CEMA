@@ -1,6 +1,8 @@
-import { trace } from '@opentelemetry/api';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 import type { ErrorId } from '../constants/error-ids';
+
+const tracer = trace.getTracer('@cema/web-observability');
 
 /**
  * Central routing seam for best-effort / swallowed errors.
@@ -13,31 +15,44 @@ import type { ErrorId } from '../constants/error-ids';
  * those swallows are routed for observability — called alongside, never
  * replacing, the console.error.
  *
- * Today it attaches a PII-safe `swallowed_error` event to the active
- * OpenTelemetry span, so a swallowed failure becomes queryable in Vercel
- * Observability traces — dormant until an OTLP endpoint is configured, exactly
- * like every other span (ADR 0011). When no span is active it no-ops.
- *
- * Sentry activation (Connor — needs SENTRY_DSN): install `@sentry/nextjs`, add a
- * DSN-gated `Sentry.init` in instrumentation.ts, then add
- *   Sentry.captureMessage(redactedMessage, { level: 'error', tags: { errorId } })
- * here. The single call site makes that a one-function change.
+ * It emits a dedicated, short-lived `swallowed_error` span marked
+ * `SpanStatusCode.ERROR`, so a swallowed failure becomes a first-class,
+ * filterable, alertable error in Vercel Observability — rather than a buried
+ * event on the parent request span, which otherwise reports success (these
+ * failures are best-effort by design, so the request DID succeed). The span is
+ * auto-parented to whatever span is active (or stands alone when none is). The
+ * SDK is registered once in instrumentation.ts via `@vercel/otel`, whose OTLP
+ * exporter is live in production and a no-op locally (ADR 0011).
  *
  * PII (hard rule #3): callers MUST pass an already-`redactPii`'d message, and
  * `context` values must be PII-safe (ids / enum tokens — never names, amounts,
- * SSNs). We use `addEvent` (not `recordException`) so no raw stack trace or raw
- * error message can leak — only the redacted message + allowlisted context.
+ * SSNs). We use `setAttribute` / `setStatus` (never `recordException`) so no raw
+ * stack trace or raw error object can leak — only the redacted message + the
+ * allowlisted context + the static error id.
+ *
+ * Sentry (the §4 error-capture sink) remains a Connor-gated follow-up: wiring the
+ * SDK is blocked on a pnpm peer-dependency dedup — `@sentry/node` reshuffles the
+ * peer graph and duplicates `drizzle-orm`, breaking type identity across packages
+ * (needs a `pnpm.overrides`/dedupe decision). Add the `SENTRY_DSN`-gated
+ * `Sentry.captureMessage(redactedMessage, { level: 'error', tags: { errorId } })`
+ * here once that is resolved — the single call site keeps it a one-function change.
  */
 export function reportSwallowedError(
   errorId: ErrorId,
   redactedMessage: string,
   context: Record<string, string> = {},
 ): void {
-  const span = trace.getActiveSpan();
-  if (!span) return;
-  span.addEvent('swallowed_error', {
-    'error.id': errorId,
-    'error.message': redactedMessage,
-    ...context,
-  });
+  const span = tracer.startSpan('swallowed_error');
+  try {
+    span.setAttribute('error.id', errorId);
+    span.setAttribute('error.message', redactedMessage);
+    for (const [key, value] of Object.entries(context)) {
+      span.setAttribute(key, value);
+    }
+    span.setStatus({ code: SpanStatusCode.ERROR, message: errorId });
+  } catch {
+    // Best-effort telemetry must never break the swallow site that called it.
+  } finally {
+    span.end();
+  }
 }
