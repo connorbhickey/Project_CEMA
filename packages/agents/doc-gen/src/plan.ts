@@ -4,8 +4,9 @@ import type { DealDocGenInput, DocumentPlan, PlannedDocument } from './types';
 
 const GATE_SET = new Set<DocumentKind>(GATE_REQUIRED_KINDS);
 
-// The kinds this v1 emits (Refi-CEMA core). Titles are static + PII-free (they may
-// carry public form numbers like MT-15 / Form 3172, which are not PII).
+// The kinds this v1 emits (CEMA core — Refi + Purchase share the same set).
+// Titles are static + PII-free (they may carry public form numbers like MT-15 /
+// Form 3172, which are not PII).
 const TITLE_BY_KIND = {
   cema_3172: 'CEMA (NY Form 3172)',
   consolidated_note: 'Consolidated Note',
@@ -44,18 +45,28 @@ function make(
 }
 
 /**
- * Pure, deterministic Refi-CEMA document planner (spec §9.7). Computes the gap,
- * runs the numbers-tie consistency check, and (only if consistent) returns the
- * core document set: always cema_3172/consolidated_note/aff_255/aff_275/mt_15;
- * gap_note + gap_mortgage when gap > 0; one aom per existing loan. No clock, no
- * LLM, no IO. PII-safe by construction (static titles + issue tokens).
+ * Pure, deterministic CEMA document planner (spec §9.7) — Refi + Purchase CEMA.
+ * Computes the gap, runs the numbers-tie consistency check, and (only if
+ * consistent) returns the core document set: always
+ * cema_3172/consolidated_note/aff_255/aff_275/mt_15; gap_note + gap_mortgage when
+ * gap > 0; one aom per existing loan. Both CEMA types share this set (the
+ * Purchase-specific transfer-tax forms TP-584 / NYC-RPT are Recording Prep's
+ * domain, §9.8); the Purchase difference is whose loan is assumed (the seller's),
+ * which surfaces at render time, not in the plan. No clock, no LLM, no IO.
+ * PII-safe by construction (static titles + issue tokens).
  */
 export function planDocuments(input: DealDocGenInput): DocumentPlan {
   const totalUpb = round2(input.existingLoans.reduce((sum, loan) => sum + loan.upb, 0));
   const gap = round2(input.newPrincipal - totalUpb);
 
   const issues: string[] = [];
-  if (input.cemaType !== 'refi_cema') issues.push('not_refi_cema');
+  // Both CEMA types are supported (Phase 2.5). A Purchase CEMA assumes the
+  // seller's existing mortgage rather than the borrower's own, but Doc-Gen's
+  // document set is identical (spec §9.7); only an unrecognized cema_type is
+  // rejected.
+  if (input.cemaType !== 'refi_cema' && input.cemaType !== 'purchase_cema') {
+    issues.push('unsupported_cema_type');
+  }
   if (input.existingLoans.length === 0) issues.push('no_existing_loans');
   if (input.newPrincipal <= 0) issues.push('new_principal_not_positive');
   if (gap < 0) issues.push('numbers_do_not_tie');

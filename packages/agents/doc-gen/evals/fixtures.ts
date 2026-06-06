@@ -204,9 +204,9 @@ export const DOC_GEN_FIXTURES: readonly DocGenFixture[] = [
     },
     { ok: true, issues: [], kinds: consistentKinds(1, true), gap: 50000 },
   ),
-  // --- Inconsistent inputs (no documents emitted) ---
+  // --- Consistent Purchase-CEMA plan (Phase 2.5): identical document set to Refi ---
   fx(
-    'purchase CEMA is out of scope',
+    'purchase CEMA, single loan, new money',
     {
       dealId: 'dg-15',
       cemaType: 'purchase_cema',
@@ -214,7 +214,19 @@ export const DOC_GEN_FIXTURES: readonly DocGenFixture[] = [
       existingLoans: loans(300000),
       county: 'Queens',
     },
-    { ok: false, issues: ['not_refi_cema'], kinds: [], gap: 200000 },
+    { ok: true, issues: [], kinds: consistentKinds(1, true), gap: 200000 },
+  ),
+  // --- Inconsistent inputs (no documents emitted) ---
+  fx(
+    'unsupported cema type (neither refi nor purchase)',
+    {
+      dealId: 'dg-23',
+      cemaType: 'home_equity',
+      newPrincipal: 500000,
+      existingLoans: loans(300000),
+      county: 'Queens',
+    },
+    { ok: false, issues: ['unsupported_cema_type'], kinds: [], gap: 200000 },
   ),
   fx(
     'no existing loans',
@@ -282,7 +294,7 @@ export const DOC_GEN_FIXTURES: readonly DocGenFixture[] = [
     { ok: false, issues: ['numbers_do_not_tie'], kinds: [], gap: -100000 },
   ),
   fx(
-    'purchase + no loans + zero principal (multi-issue)',
+    'purchase, no loans + zero principal (multi-issue)',
     {
       dealId: 'dg-21',
       cemaType: 'purchase_cema',
@@ -292,13 +304,13 @@ export const DOC_GEN_FIXTURES: readonly DocGenFixture[] = [
     },
     {
       ok: false,
-      issues: ['not_refi_cema', 'no_existing_loans', 'new_principal_not_positive'],
+      issues: ['no_existing_loans', 'new_principal_not_positive'],
       kinds: [],
       gap: 0,
     },
   ),
   fx(
-    'purchase that also does not tie',
+    'purchase that does not tie',
     {
       dealId: 'dg-22',
       cemaType: 'purchase_cema',
@@ -306,6 +318,6 @@ export const DOC_GEN_FIXTURES: readonly DocGenFixture[] = [
       existingLoans: loans(200000),
       county: 'Bronx',
     },
-    { ok: false, issues: ['not_refi_cema', 'numbers_do_not_tie'], kinds: [], gap: -100000 },
+    { ok: false, issues: ['numbers_do_not_tie'], kinds: [], gap: -100000 },
   ),
 ];

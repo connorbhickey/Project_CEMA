@@ -72,9 +72,22 @@ describe('planDocuments', () => {
     expect(plan.documents).toEqual([]);
   });
 
-  it('flags non-refi / no-loans / non-positive-principal and plans nothing', () => {
-    expect(planDocuments({ ...BASE, cemaType: 'purchase_cema' }).consistency.issues).toContain(
-      'not_refi_cema',
+  it('plans the same core document set for a Purchase CEMA (Phase 2.5)', () => {
+    // A Purchase CEMA assumes the SELLER's existing mortgage rather than the
+    // borrower's own, but Doc-Gen's document set is identical (spec §9.7 lists
+    // the same outputs for both CEMA types; the purchase-specific transfer-tax
+    // forms TP-584 / NYC-RPT are Recording Prep's domain, §9.8). Whose loan is
+    // assumed surfaces at render time, not in the document-type plan.
+    const purchase = { ...BASE, cemaType: 'purchase_cema' };
+    const plan = planDocuments(purchase);
+    expect(plan.consistency.ok).toBe(true);
+    expect(plan.gap).toBe(200000);
+    expect(kinds(purchase)).toEqual(kinds(BASE));
+  });
+
+  it('flags an unsupported cema type / no-loans / non-positive-principal and plans nothing', () => {
+    expect(planDocuments({ ...BASE, cemaType: 'home_equity' }).consistency.issues).toContain(
+      'unsupported_cema_type',
     );
     expect(planDocuments({ ...BASE, existingLoans: [] }).consistency.issues).toContain(
       'no_existing_loans',
@@ -82,7 +95,7 @@ describe('planDocuments', () => {
     expect(planDocuments({ ...BASE, newPrincipal: 0 }).consistency.issues).toContain(
       'new_principal_not_positive',
     );
-    expect(planDocuments({ ...BASE, cemaType: 'purchase_cema' }).documents).toEqual([]);
+    expect(planDocuments({ ...BASE, cemaType: 'home_equity' }).documents).toEqual([]);
   });
 
   it('titles are static (never leak the borrower name or amounts); issues are PII-free tokens', () => {
