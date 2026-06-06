@@ -51,6 +51,17 @@ export function DealDocumentReviewRow({ item }: { item: DealDocumentReviewItem }
         </dl>
       ) : null}
 
+      {item.generatedFields ? (
+        <dl className="text-muted-foreground mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+          {item.generatedFields.map((f) => (
+            <div key={f.label} className="flex gap-1">
+              <dt>{f.label}:</dt>
+              <dd className="text-foreground">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
       <div className="mt-3">
         <DealDocumentReviewActions
           documentId={item.documentId}

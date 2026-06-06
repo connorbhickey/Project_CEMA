@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { isInstrumentRecord } from './deal-chain-findings';
 
+import { generatedDocFields, type DocField } from '@/lib/deals/generated-doc-fields';
 import { withRls } from '@/lib/with-rls';
 
 export interface DealDocumentReviewItem {
@@ -15,6 +16,9 @@ export interface DealDocumentReviewItem {
   readonly version: number;
   readonly attorneyReviewRequired: boolean;
   readonly instrument: InstrumentRecord | null;
+  // For a GENERATED document (Doc-Gen / Recording-Prep): its field-map amounts.
+  // Mutually exclusive with `instrument` (a doc is classified collateral XOR generated).
+  readonly generatedFields: DocField[] | null;
   readonly queueId: string | null;
   readonly reviewState: ReviewState | null;
   readonly reviewerIsCurrentUser: boolean;
@@ -77,6 +81,9 @@ export async function getDealDocumentsReview(dealId: string): Promise<DealDocume
       version: r.version,
       attorneyReviewRequired: r.attorneyReviewRequired,
       instrument: isInstrumentRecord(r.extractedData) ? r.extractedData : null,
+      generatedFields: isInstrumentRecord(r.extractedData)
+        ? null
+        : generatedDocFields(r.extractedData),
       queueId: r.queueId ?? null,
       reviewState: r.reviewState ?? null,
       reviewerIsCurrentUser:
