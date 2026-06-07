@@ -13,7 +13,8 @@ vi.mock('@cema/auth', () => ({
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-const { addExistingLoan, removeExistingLoan } = await import('../../lib/actions/manage-deal-loans');
+const { addExistingLoan, removeExistingLoan, updateExistingLoan } =
+  await import('../../lib/actions/manage-deal-loans');
 
 // Distinctive `10a47e51-…` ("deal-loans-editor") namespace + `dle_` clerk fields.
 const ORG_A = '10a47e51-0000-0000-0000-000000000001';
@@ -86,6 +87,29 @@ describe.skipIf(skip)('deal-loans editor (Neon integration)', () => {
     // The audit carries chainPosition but never the UPB/payoff figure (hard rule #3).
     const meta = JSON.stringify(audits.map((a) => a.metadata));
     expect(meta).not.toContain('456789');
+  });
+
+  it('updates a loan in place and writes a PII-safe loan.updated audit', async () => {
+    currentClerkOrgId = 'dle_org_a';
+    const [loan] = await loansFor(DEAL_A);
+    expect(loan).toBeDefined();
+
+    await updateExistingLoan(DEAL_A, loan!.id, {
+      upb: '333333',
+      chainPosition: '0',
+      investor: 'Freddie Mac',
+    });
+
+    const [after] = await loansFor(DEAL_A);
+    expect(after!.upb).toBe('333333.00');
+    expect(after!.investor).toBe('Freddie Mac');
+
+    const updateAudits = await getDb()
+      .select({ metadata: auditEvents.metadata })
+      .from(auditEvents)
+      .where(and(eq(auditEvents.action, 'loan.updated'), eq(auditEvents.entityId, DEAL_A)));
+    expect(updateAudits.length).toBeGreaterThan(0);
+    expect(JSON.stringify(updateAudits.map((a) => a.metadata))).not.toContain('333333');
   });
 
   it('rejects a duplicate chain position within the deal', async () => {

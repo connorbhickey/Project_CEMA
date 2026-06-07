@@ -3,7 +3,7 @@
 import { getCurrentOrganizationId, getCurrentUser } from '@cema/auth';
 import { emitAuditEvent } from '@cema/compliance';
 import { deals, existingLoans, getDb, organizations, users } from '@cema/db';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 import { parseExistingLoanInput, type ExistingLoanFormInput } from '../deals/existing-loan-input';
@@ -74,6 +74,72 @@ export async function addExistingLoan(dealId: string, raw: ExistingLoanFormInput
       entityType: 'deal',
       entityId: dealId,
       metadata: { loanId: inserted!.id, chainPosition: loan.chainPosition },
+    });
+  });
+
+  revalidatePath(`/deals/${dealId}/loans`);
+  revalidatePath(`/deals/${dealId}`);
+}
+
+/**
+ * Edit an existing loan in place (UPB / chain position / recording / etc.) so a
+ * processor can fix it without remove + re-add. Same validation as addExistingLoan;
+ * the chain position is checked for uniqueness within the deal EXCLUDING the loan
+ * being edited; the update is doubly scoped (`id AND dealId`, deal confirmed in-org).
+ * PII-safe audit `loan.updated` (loanId + chainPosition only, never the UPB figure).
+ */
+export async function updateExistingLoan(
+  dealId: string,
+  loanId: string,
+  raw: ExistingLoanFormInput,
+): Promise<void> {
+  const loan = parseExistingLoanInput(raw);
+  const { orgId, userId } = await resolveIdentity();
+
+  await withRls(orgId, async (tx) => {
+    const [deal] = await tx
+      .select({ id: deals.id })
+      .from(deals)
+      .where(eq(deals.id, dealId))
+      .limit(1);
+    if (!deal) throw new Error('Deal not found');
+
+    const [clash] = await tx
+      .select({ id: existingLoans.id })
+      .from(existingLoans)
+      .where(
+        and(
+          eq(existingLoans.dealId, dealId),
+          eq(existingLoans.chainPosition, loan.chainPosition),
+          ne(existingLoans.id, loanId),
+        ),
+      )
+      .limit(1);
+    if (clash) {
+      throw new Error(`Chain position ${loan.chainPosition} is already used on this deal`);
+    }
+
+    const [updated] = await tx
+      .update(existingLoans)
+      .set({
+        upb: loan.upb,
+        chainPosition: loan.chainPosition,
+        originalPrincipal: loan.originalPrincipal,
+        investor: loan.investor,
+        recordedReelPage: loan.recordedReelPage,
+        recordedCrfn: loan.recordedCrfn,
+      })
+      .where(and(eq(existingLoans.id, loanId), eq(existingLoans.dealId, dealId)))
+      .returning({ id: existingLoans.id });
+    if (!updated) throw new Error('Loan not found');
+
+    await emitAuditEvent(tx, {
+      organizationId: orgId,
+      actorUserId: userId,
+      action: 'loan.updated',
+      entityType: 'deal',
+      entityId: dealId,
+      metadata: { loanId: updated.id, chainPosition: loan.chainPosition },
     });
   });
 
