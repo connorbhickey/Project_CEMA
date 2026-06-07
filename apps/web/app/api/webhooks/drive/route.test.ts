@@ -23,9 +23,19 @@ vi.mock('@cema/db', () => ({
 vi.mock('drizzle-orm', () => ({ eq: vi.fn().mockReturnValue({}) }));
 vi.mock('@cema/queues', () => ({ publish: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/queue', () => ({ vercelQueueSend: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@cema/cache', () => ({
+  acquireIdempotencyKey: vi.fn().mockResolvedValue(true),
+  releaseIdempotencyKey: vi.fn().mockResolvedValue(undefined),
+}));
 
+import { acquireIdempotencyKey } from '@cema/cache';
 import { getDb } from '@cema/db';
-import { parseDriveNotificationHeaders, verifyDriveChannelToken } from '@cema/integrations-drive';
+import {
+  fetchDriveFile,
+  parseDriveNotificationHeaders,
+  verifyDriveChannelToken,
+} from '@cema/integrations-drive';
+import { publish } from '@cema/queues';
 
 function makeReq(headers: Record<string, string>) {
   return new Request('https://example.com/api/webhooks/drive', {
@@ -125,5 +135,39 @@ describe('POST /api/webhooks/drive', () => {
     const { POST } = await import('./route');
     const res = await POST(makeReq({}));
     expect(res.status).toBe(200);
+  });
+
+  it('skips the Drive fetch + mirror when the push message was already processed', async () => {
+    vi.mocked(parseDriveNotificationHeaders).mockReturnValue({
+      channelId: 'ch-1',
+      channelToken: 'tok',
+      resourceState: 'update',
+      resourceId: 'file-1',
+      messageNumber: '42',
+    });
+    vi.mocked(getDb).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'conn-1',
+                organizationId: 'org-1',
+                oauthRefreshToken: 'rt',
+                driveChannelToken: 'tok',
+              },
+            ]),
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof getDb>);
+    vi.mocked(verifyDriveChannelToken).mockReturnValue(true);
+    vi.mocked(acquireIdempotencyKey).mockResolvedValueOnce(false); // replayed push
+
+    const { POST } = await import('./route');
+    const res = await POST(makeReq({}));
+    expect(res.status).toBe(200);
+    expect(vi.mocked(fetchDriveFile)).not.toHaveBeenCalled();
+    expect(vi.mocked(publish)).not.toHaveBeenCalled();
   });
 });

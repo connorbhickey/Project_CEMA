@@ -1,4 +1,5 @@
 import { blobPut } from '@cema/blob';
+import { acquireIdempotencyKey, releaseIdempotencyKey } from '@cema/cache';
 import { driveFiles, getDb, orgDriveConnections } from '@cema/db';
 import {
   downloadDriveFileBytes,
@@ -42,52 +43,52 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('OK', { status: 200 });
   }
 
-  const fileId = headers.resourceId;
-  const drive = getDriveClient({ refreshToken: conn.oauthRefreshToken });
-  const meta = await fetchDriveFile(drive, fileId);
+  // Replay protection: SETNX on the push's channelId:messageNumber. Google Drive
+  // assigns a monotonic X-Goog-Message-Number per channel (unique per push), so a
+  // re-delivered notification (same message number) is skipped before the Drive
+  // API fetch + blob mirror. Released on failure so a genuine retry re-acquires.
+  const idempotencyKey = `webhook:idempo:drive:${headers.channelId}:${headers.messageNumber}`;
+  if (!(await acquireIdempotencyKey(idempotencyKey))) {
+    return new Response('OK', { status: 200 });
+  }
 
-  if (meta.trashed || headers.resourceState === 'trash') {
+  const fileId = headers.resourceId;
+
+  try {
+    const drive = getDriveClient({ refreshToken: conn.oauthRefreshToken });
+    const meta = await fetchDriveFile(drive, fileId);
+
+    if (meta.trashed || headers.resourceState === 'trash') {
+      await db
+        .insert(driveFiles)
+        .values({
+          organizationId: conn.organizationId,
+          driveConnectionId: conn.id,
+          driveFileId: fileId,
+          fileName: meta.fileName,
+          mimeType: meta.mimeType,
+          sizeBytes: meta.sizeBytes,
+          syncStatus: 'trashed',
+          trashedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [driveFiles.driveConnectionId, driveFiles.driveFileId],
+          set: { syncStatus: 'trashed', trashedAt: new Date(), updatedAt: new Date() },
+        });
+      return new Response('OK', { status: 200 });
+    }
+
+    const bytes = await downloadDriveFileBytes(drive, fileId);
+    const blobPathname = `drive/${conn.organizationId}/${fileId}/${meta.fileName}`;
+    const blob = await blobPut(blobPathname, bytes, meta.mimeType);
+
     await db
       .insert(driveFiles)
       .values({
         organizationId: conn.organizationId,
         driveConnectionId: conn.id,
         driveFileId: fileId,
-        fileName: meta.fileName,
-        mimeType: meta.mimeType,
-        sizeBytes: meta.sizeBytes,
-        syncStatus: 'trashed',
-        trashedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [driveFiles.driveConnectionId, driveFiles.driveFileId],
-        set: { syncStatus: 'trashed', trashedAt: new Date(), updatedAt: new Date() },
-      });
-    return new Response('OK', { status: 200 });
-  }
-
-  const bytes = await downloadDriveFileBytes(drive, fileId);
-  const blobPathname = `drive/${conn.organizationId}/${fileId}/${meta.fileName}`;
-  const blob = await blobPut(blobPathname, bytes, meta.mimeType);
-
-  await db
-    .insert(driveFiles)
-    .values({
-      organizationId: conn.organizationId,
-      driveConnectionId: conn.id,
-      driveFileId: fileId,
-      driveFolderId: meta.driveFolderId,
-      fileName: meta.fileName,
-      mimeType: meta.mimeType,
-      sizeBytes: meta.sizeBytes,
-      blobPathname: blob.pathname,
-      blobUrl: blob.url,
-      syncStatus: 'synced',
-      lastSyncedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [driveFiles.driveConnectionId, driveFiles.driveFileId],
-      set: {
+        driveFolderId: meta.driveFolderId,
         fileName: meta.fileName,
         mimeType: meta.mimeType,
         sizeBytes: meta.sizeBytes,
@@ -95,20 +96,35 @@ export async function POST(req: Request): Promise<Response> {
         blobUrl: blob.url,
         syncStatus: 'synced',
         lastSyncedAt: new Date(),
-        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [driveFiles.driveConnectionId, driveFiles.driveFileId],
+        set: {
+          fileName: meta.fileName,
+          mimeType: meta.mimeType,
+          sizeBytes: meta.sizeBytes,
+          blobPathname: blob.pathname,
+          blobUrl: blob.url,
+          syncStatus: 'synced',
+          lastSyncedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+    await publish(
+      'files.drive.ingest',
+      {
+        orgId: conn.organizationId,
+        driveFileId: fileId,
+        driveConnectionId: conn.id,
+        receivedAt: new Date().toISOString(),
       },
-    });
+      vercelQueueSend,
+    );
 
-  await publish(
-    'files.drive.ingest',
-    {
-      orgId: conn.organizationId,
-      driveFileId: fileId,
-      driveConnectionId: conn.id,
-      receivedAt: new Date().toISOString(),
-    },
-    vercelQueueSend,
-  );
-
-  return new Response('OK', { status: 200 });
+    return new Response('OK', { status: 200 });
+  } catch (err) {
+    await releaseIdempotencyKey(idempotencyKey);
+    throw err;
+  }
 }

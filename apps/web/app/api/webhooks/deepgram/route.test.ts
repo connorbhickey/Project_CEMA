@@ -31,7 +31,13 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn().mockReturnValue({}),
 }));
 
+vi.mock('@cema/cache', () => ({
+  acquireIdempotencyKey: vi.fn().mockResolvedValue(true),
+  releaseIdempotencyKey: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { blobPut } from '@cema/blob';
+import { acquireIdempotencyKey } from '@cema/cache';
 import { emitAuditEvent } from '@cema/compliance';
 import { getDb } from '@cema/db';
 import { parseTranscriptResponse, verifyDeepgramSignature } from '@cema/integrations-deepgram';
@@ -122,6 +128,14 @@ describe('POST /api/webhooks/deepgram', () => {
 
     const res = await POST(makeRequest());
     expect(res.status).toBe(404);
+  });
+
+  it('skips the blob write + audit when the request_id was already processed', async () => {
+    vi.mocked(acquireIdempotencyKey).mockResolvedValueOnce(false); // duplicate delivery
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+    expect(blobPut).not.toHaveBeenCalled();
+    expect(emitAuditEvent).not.toHaveBeenCalled();
   });
 
   it('calls parseTranscriptResponse with the parsed body', async () => {

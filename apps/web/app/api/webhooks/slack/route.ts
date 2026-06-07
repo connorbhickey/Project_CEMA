@@ -1,3 +1,4 @@
+import { acquireIdempotencyKey, releaseIdempotencyKey } from '@cema/cache';
 import { communications, deals, getDb, orgSlackConnections, slackMessages } from '@cema/db';
 import {
   fetchSlackUserDisplayName,
@@ -66,76 +67,91 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const orgId = conn.organizationId;
-  const client = getSlackClient(conn.slackBotToken);
-  const displayName = evt.user ? await fetchSlackUserDisplayName(client, evt.user) : null;
-
   const vendorEventId = `${payload.team_id}:${evt.channel}:${evt.ts}`;
-  const messageType =
-    evt.type === 'app_mention' ? 'app_mention' : evt.thread_ts ? 'thread_reply' : 'message';
 
-  const [comm] = await db
-    .insert(communications)
-    .values({
-      organizationId: orgId,
-      kind: 'slack',
-      direction: 'inbound',
-      medium: 'slack',
-      vendorEventId,
-      sourceThreadId: evt.thread_ts ?? evt.ts,
-      startedAt: new Date(Math.floor(Number(evt.ts) * 1000)),
-      status: 'ready',
-    })
-    .onConflictDoUpdate({
-      target: communications.vendorEventId,
-      set: { status: 'ready', updatedAt: new Date() },
-    })
-    .returning();
-
-  if (!comm) {
+  // Idempotency: SETNX on the Slack event's stable id (team:channel:ts). Slack
+  // retries carry the same ts, and message edits arrive as a 'subtype' (filtered
+  // above), so a duplicate here is always a redelivery — skip it before the
+  // user-lookup API call + writes. Released on failure so the retry re-acquires.
+  const idempotencyKey = `webhook:idempo:slack:${vendorEventId}`;
+  if (!(await acquireIdempotencyKey(idempotencyKey))) {
     return new Response('OK', { status: 200 });
   }
 
-  await db
-    .insert(slackMessages)
-    .values({
-      communicationId: comm.id,
-      slackTeamId: payload.team_id,
-      slackChannelId: evt.channel,
-      slackChannelName: null,
-      slackMessageTs: evt.ts,
-      slackThreadTs: evt.thread_ts ?? null,
-      authorSlackUserId: evt.user ?? null,
-      authorDisplayName: displayName,
-      text: evt.text ?? null,
-      rawPayload: evt,
-      hasAttachments: 'files' in evt && Array.isArray(evt.files) && evt.files.length > 0,
-      messageType,
-    })
-    .onConflictDoUpdate({
-      target: [
-        slackMessages.slackTeamId,
-        slackMessages.slackChannelId,
-        slackMessages.slackMessageTs,
-      ],
-      set: { text: evt.text ?? null, updatedAt: new Date() },
-    });
+  try {
+    const client = getSlackClient(conn.slackBotToken);
+    const displayName = evt.user ? await fetchSlackUserDisplayName(client, evt.user) : null;
 
-  await publish(
-    'comms.slack.ingest',
-    {
-      orgId,
-      communicationId: comm.id,
-      slackTeamId: payload.team_id,
-      slackChannelId: evt.channel,
-      slackMessageTs: evt.ts,
-      receivedAt: new Date().toISOString(),
-    },
-    vercelQueueSend,
-  );
+    const messageType =
+      evt.type === 'app_mention' ? 'app_mention' : evt.thread_ts ? 'thread_reply' : 'message';
 
-  await publish('comms.embed', { orgId, communicationId: comm.id }, vercelQueueSend);
+    const [comm] = await db
+      .insert(communications)
+      .values({
+        organizationId: orgId,
+        kind: 'slack',
+        direction: 'inbound',
+        medium: 'slack',
+        vendorEventId,
+        sourceThreadId: evt.thread_ts ?? evt.ts,
+        startedAt: new Date(Math.floor(Number(evt.ts) * 1000)),
+        status: 'ready',
+      })
+      .onConflictDoUpdate({
+        target: communications.vendorEventId,
+        set: { status: 'ready', updatedAt: new Date() },
+      })
+      .returning();
 
-  return new Response('OK', { status: 200 });
+    if (!comm) {
+      return new Response('OK', { status: 200 });
+    }
+
+    await db
+      .insert(slackMessages)
+      .values({
+        communicationId: comm.id,
+        slackTeamId: payload.team_id,
+        slackChannelId: evt.channel,
+        slackChannelName: null,
+        slackMessageTs: evt.ts,
+        slackThreadTs: evt.thread_ts ?? null,
+        authorSlackUserId: evt.user ?? null,
+        authorDisplayName: displayName,
+        text: evt.text ?? null,
+        rawPayload: evt,
+        hasAttachments: 'files' in evt && Array.isArray(evt.files) && evt.files.length > 0,
+        messageType,
+      })
+      .onConflictDoUpdate({
+        target: [
+          slackMessages.slackTeamId,
+          slackMessages.slackChannelId,
+          slackMessages.slackMessageTs,
+        ],
+        set: { text: evt.text ?? null, updatedAt: new Date() },
+      });
+
+    await publish(
+      'comms.slack.ingest',
+      {
+        orgId,
+        communicationId: comm.id,
+        slackTeamId: payload.team_id,
+        slackChannelId: evt.channel,
+        slackMessageTs: evt.ts,
+        receivedAt: new Date().toISOString(),
+      },
+      vercelQueueSend,
+    );
+
+    await publish('comms.embed', { orgId, communicationId: comm.id }, vercelQueueSend);
+
+    return new Response('OK', { status: 200 });
+  } catch (err) {
+    await releaseIdempotencyKey(idempotencyKey);
+    throw err;
+  }
 }
 
 async function handleSlashCommand(rawBody: string): Promise<Response> {
