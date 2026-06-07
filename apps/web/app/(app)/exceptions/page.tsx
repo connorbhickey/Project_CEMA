@@ -3,6 +3,7 @@ import type { Route } from 'next';
 import Link from 'next/link';
 
 import { getOrgExceptions } from '@/lib/agents/exception-triage/get-org-exceptions';
+import { dealStatusLabel } from '@/lib/deals/deal-status';
 import { exceptionKindLabel, exceptionRouteLabel } from '@/lib/exceptions/exception-labels';
 
 // blocking first, low last.
@@ -69,7 +70,7 @@ export default async function Page() {
                       → {exceptionRouteLabel(row.exception.route)}
                     </span>
                     <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-                      deal {row.dealStatus}
+                      deal {dealStatusLabel(row.dealStatus)}
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-2 text-sm">{row.exception.reason}</p>
