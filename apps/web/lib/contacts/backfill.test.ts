@@ -33,7 +33,11 @@ import { withRls } from '../with-rls';
 import { backfillContacts } from './backfill';
 
 beforeEach(() => {
-  vi.mocked(ensureContact).mockResolvedValue({ contactId: 'c-1', created: true });
+  vi.mocked(ensureContact).mockResolvedValue({
+    contactId: 'c-1',
+    created: true,
+    matchedBy: 'created',
+  });
 });
 
 afterEach(() => vi.clearAllMocks());

@@ -232,6 +232,13 @@
       "when": 1780806729920,
       "tag": "0032_damp_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1780807725252,
+      "tag": "0033_eminent_lionheart",
+      "breakpoints": true
     }
   ]
 }
