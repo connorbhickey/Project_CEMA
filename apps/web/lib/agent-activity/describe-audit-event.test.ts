@@ -56,4 +56,26 @@ describe('describeAuditEvent', () => {
       describeAuditEvent('recording.rejected', { reason: 'bad_legal_description' }).detail,
     ).toBe('reason: bad_legal_description');
   });
+
+  it('labels the party/loan editor actions + PII-safe role/chain-position detail', () => {
+    // party.* carry { partyId, role }; loan.* carry { loanId, chainPosition }.
+    const party = describeAuditEvent('party.added', {
+      partyId: 'p-1',
+      role: 'seller_attorney',
+      fullName: 'Jane Doe',
+    });
+    expect(party.label).toBe('Party added');
+    expect(party.detail).toBe('Seller attorney'); // role humanized
+    expect(party.detail).not.toContain('Jane Doe'); // name never rendered
+    expect(party.detail).not.toContain('p-1'); // id never rendered
+
+    const loan = describeAuditEvent('loan.updated', {
+      loanId: 'l-1',
+      chainPosition: 2,
+      upb: '420000',
+    });
+    expect(loan.label).toBe('Existing loan updated');
+    expect(loan.detail).toBe('chain position 2');
+    expect(loan.detail).not.toContain('420000'); // the UPB dollar figure never rendered
+  });
 });

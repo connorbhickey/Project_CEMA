@@ -32,6 +32,15 @@ const LABEL_BY_ACTION: Record<string, string> = {
   'document.submitted_for_review': 'Document queued for attorney review',
   'document.approved': 'Document approved',
   'document.rejected': 'Document rejected',
+  // Processor edits via the deal-data editors (Tier-1 batch). entityType='deal',
+  // so they show on the deal agent-activity timeline; explicit labels + the
+  // PII-safe detail below beat the humanized fallback.
+  'party.added': 'Party added',
+  'party.updated': 'Party updated',
+  'party.removed': 'Party removed',
+  'loan.added': 'Existing loan added',
+  'loan.updated': 'Existing loan updated',
+  'loan.removed': 'Existing loan removed',
 };
 
 // Per-action PII-safe detail builders. Each reads ONLY whitelisted metadata
@@ -51,6 +60,17 @@ const DETAIL_BY_ACTION: Record<string, (m: Record<string, unknown>) => string | 
   'recording.prepared': (m) => (typeof m.count === 'number' ? `${m.count} cover sheets` : null),
   'recording.completed': (m) => (typeof m.venue === 'string' ? `via ${m.venue}` : null),
   'recording.rejected': (m) => (typeof m.reason === 'string' ? `reason: ${m.reason}` : null),
+  // Party/loan edits: surface the role (humanized) / chain position only — both
+  // PII-safe enum/count fields (never the party name or the UPB dollar figure).
+  'party.added': (m) => (typeof m.role === 'string' && m.role ? humanize(m.role) : null),
+  'party.updated': (m) => (typeof m.role === 'string' && m.role ? humanize(m.role) : null),
+  'party.removed': (m) => (typeof m.role === 'string' && m.role ? humanize(m.role) : null),
+  'loan.added': (m) =>
+    typeof m.chainPosition === 'number' ? `chain position ${m.chainPosition}` : null,
+  'loan.updated': (m) =>
+    typeof m.chainPosition === 'number' ? `chain position ${m.chainPosition}` : null,
+  'loan.removed': (m) =>
+    typeof m.chainPosition === 'number' ? `chain position ${m.chainPosition}` : null,
 };
 
 // Humanize an unknown action: 'foo.bar_baz' -> 'Foo bar baz'.
