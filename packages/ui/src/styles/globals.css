@@ -1,26 +1,220 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(0 0% 9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(0 0% 9%);
-  --color-primary: hsl(0 0% 9%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(0 0% 96%);
-  --color-secondary-foreground: hsl(0 0% 9%);
-  --color-muted: hsl(0 0% 96%);
-  --color-muted-foreground: hsl(0 0% 45%);
-  --color-accent: hsl(0 0% 96%);
-  --color-accent-foreground: hsl(0 0% 9%);
-  --color-border: hsl(0 0% 90%);
-  --color-input: hsl(0 0% 90%);
-  --color-ring: hsl(0 0% 71%);
+@custom-variant dark (&:is(.dark *));
+
+/* ── Semantic tokens — light ─────────────────────────────────── */
+:root {
   --radius: 0.5rem;
+
+  --background: #f8fafc;
+  --foreground: #10213f;
+  --card: #ffffff;
+  --card-foreground: #10213f;
+  --popover: #ffffff;
+  --popover-foreground: #10213f;
+
+  --primary: #10213f; /* ink navy — primary buttons on light */
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f8;
+  --secondary-foreground: #10213f;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f0fdfa; /* teal-50 surface — active/hover */
+  --accent-foreground: #0f766e;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
+  --border: #e7ecf2;
+  --input: #e2e8f0;
+  --ring: #0d9488; /* teal focus ring */
+
+  /* brand */
+  --brand-navy: #10213f;
+  --brand-navy-header: #0e1b33;
+  --brand-teal: #0d9488;
+  --brand-teal-bright: #14b8a6;
+  --savings: #0f9d58;
+  --savings-foreground: #047857;
+
+  /* status (text / surface) */
+  --status-info: #1d4ed8;
+  --status-info-bg: #eff6ff;
+  --status-success: #047857;
+  --status-success-bg: #ecfdf5;
+  --status-warning: #b45309;
+  --status-warning-bg: #fffbeb;
+  --status-danger: #b91c1c;
+  --status-danger-bg: #fef2f2;
+
+  /* severity */
+  --sev-low: #475569;
+  --sev-low-bg: #f1f5f9;
+  --sev-medium: #b45309;
+  --sev-medium-bg: #fffbeb;
+  --sev-high: #c2410c;
+  --sev-high-bg: #fff7ed;
+  --sev-critical: #b91c1c;
+  --sev-critical-bg: #fef2f2;
+
+  /* charts */
+  --chart-1: #0d9488;
+  --chart-2: #2563eb;
+  --chart-3: #0f9d58;
+  --chart-4: #b45309;
+  --chart-5: #7c3aed;
+
+  /* sidebar */
+  --sidebar: #ecf0f7;
+  --sidebar-foreground: #475569;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #f0fdfa;
+  --sidebar-accent: #f0fdfa;
+  --sidebar-accent-foreground: #0f766e;
+  --sidebar-border: #dde4ef;
+  --sidebar-ring: #0d9488;
+}
+
+/* ── Semantic tokens — dark ──────────────────────────────────── */
+.dark {
+  --background: #0b1220;
+  --foreground: #e8eef6;
+  --card: #111a2e;
+  --card-foreground: #e8eef6;
+  --popover: #111a2e;
+  --popover-foreground: #e8eef6;
+
+  --primary: #2dd4bf; /* teal — primary action on dark (navy would vanish) */
+  --primary-foreground: #06241f;
+  --secondary: #18233b;
+  --secondary-foreground: #e8eef6;
+  --muted: #18233b;
+  --muted-foreground: #94a3b8;
+  --accent: #15324a;
+  --accent-foreground: #5eead4;
+  --destructive: #f87171;
+  --destructive-foreground: #0b1220;
+
+  --border: #22304d;
+  --input: #28385a;
+  --ring: #2dd4bf;
+
+  --brand-navy: #0b1220;
+  --brand-navy-header: #0b1220;
+  --brand-teal: #2dd4bf;
+  --brand-teal-bright: #5eead4;
+  --savings: #34d399;
+  --savings-foreground: #6ee7b7;
+
+  --status-info: #93b4fd;
+  --status-info-bg: #16233f;
+  --status-success: #6ee7b7;
+  --status-success-bg: #0f2a22;
+  --status-warning: #fcd34d;
+  --status-warning-bg: #2a2410;
+  --status-danger: #fda4af;
+  --status-danger-bg: #2a1416;
+
+  --sev-low: #94a3b8;
+  --sev-low-bg: #1a2335;
+  --sev-medium: #fcd34d;
+  --sev-medium-bg: #2a2410;
+  --sev-high: #fdba74;
+  --sev-high-bg: #2a1c10;
+  --sev-critical: #fda4af;
+  --sev-critical-bg: #2a1416;
+
+  --chart-1: #2dd4bf;
+  --chart-2: #60a5fa;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #a78bfa;
+
+  --sidebar: #0e1830;
+  --sidebar-foreground: #b9c7dc;
+  --sidebar-primary: #5eead4;
+  --sidebar-primary-foreground: #06241f;
+  --sidebar-accent: #15324a;
+  --sidebar-accent-foreground: #5eead4;
+  --sidebar-border: #22304d;
+  --sidebar-ring: #2dd4bf;
+}
+
+/* ── Bridge semantic tokens → Tailwind utilities ─────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-header: var(--brand-navy-header);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-teal-bright: var(--brand-teal-bright);
+  --color-savings: var(--savings);
+  --color-savings-foreground: var(--savings-foreground);
+
+  --color-status-info: var(--status-info);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-success: var(--status-success);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-sev-low: var(--sev-low);
+  --color-sev-low-bg: var(--sev-low-bg);
+  --color-sev-medium: var(--sev-medium);
+  --color-sev-medium-bg: var(--sev-medium-bg);
+  --color-sev-high: var(--sev-high);
+  --color-sev-high-bg: var(--sev-high-bg);
+  --color-sev-critical: var(--sev-critical);
+  --color-sev-critical-bg: var(--sev-critical-bg);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 }
