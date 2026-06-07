@@ -1,3 +1,4 @@
+import { ThemeToggle } from '@cema/ui';
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
@@ -25,7 +26,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex flex-1 flex-col">
         <header className="bg-card flex items-center justify-between border-b px-6 py-3">
           <OrganizationSwitcher />
-          <UserButton />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserButton />
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
