@@ -225,6 +225,13 @@
       "when": 1780332479836,
       "tag": "0031_cool_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1780806729920,
+      "tag": "0032_damp_hiroim",
+      "breakpoints": true
     }
   ]
 }
