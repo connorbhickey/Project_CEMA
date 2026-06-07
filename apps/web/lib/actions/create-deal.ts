@@ -77,7 +77,10 @@ export async function createDeal(rawInput: unknown): Promise<{ id: string }> {
       action: 'deal.created',
       entityType: 'deal',
       entityId: deal!.id,
-      metadata: { cemaType: input.cemaType, principal: input.principal, upb: input.upb },
+      // PII-safe (hard rule #3): enum token only. principal/upb are dollar figures
+      // (UPB is a payoff-adjacent amount the rule lists) and must NOT enter the
+      // audit log — every other agent's audit metadata is token/id-only.
+      metadata: { cemaType: input.cemaType },
     });
 
     return { id: deal!.id };

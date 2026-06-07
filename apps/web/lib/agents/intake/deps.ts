@@ -108,11 +108,14 @@ export function buildIntakeDeps(args: BuildIntakeDepsArgs): IntakeDeps {
           action: 'deal.created',
           entityType: 'deal',
           entityId: deal!.id,
+          // PII-safe (hard rule #3): tokens/ids only. netSavings is a borrower
+          // dollar figure (the same class as create-deal's principal/upb) and must
+          // NOT enter the audit log -- the intake SPANS already exclude it, and this
+          // aligns the audit with that discipline. externalId is an opaque LOS ref.
           metadata: {
             source: 'intake-agent',
             externalId: application.externalId,
             cemaType: application.cemaType,
-            netSavings: savings.netSavings,
             isPlaceholderRate: savings.isPlaceholderRate,
           },
         });
