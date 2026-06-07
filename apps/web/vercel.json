@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/recording-retention",
       "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/drive-retention",
+      "schedule": "0 4 1 * *"
     }
   ]
 }
