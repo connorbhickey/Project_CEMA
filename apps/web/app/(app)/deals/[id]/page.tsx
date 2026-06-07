@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getDeal } from '@/lib/actions/get-deal';
 import { parseDealRecording } from '@/lib/deals/deal-recording';
 import { dealStatusLabel } from '@/lib/deals/deal-status';
+import { cemaTypeLabel, loanProgramLabel, propertyTypeLabel } from '@/lib/deals/enum-labels';
 import { partyRoleLabel } from '@/lib/deals/party-role';
 import { getDealParties } from '@/lib/queries/deal-parties';
 
@@ -18,8 +19,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold">
-        {deal.cemaType === 'refi_cema' ? 'Refi CEMA' : 'Purchase CEMA'} ·{' '}
-        {dealStatusLabel(deal.status)}
+        {cemaTypeLabel(deal.cemaType)} · {dealStatusLabel(deal.status)}
       </h1>
 
       {recording ? (
@@ -61,7 +61,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 />
                 <Row k="City / County" v={`${property.city}, ${property.county}`} />
                 <Row k="ZIP" v={property.zipCode} />
-                <Row k="Type" v={property.propertyType} />
+                <Row k="Type" v={propertyTypeLabel(property.propertyType)} />
               </dl>
             ) : (
               <p className="text-muted-foreground text-sm">No property yet.</p>
@@ -76,7 +76,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             {newLoan ? (
               <dl className="space-y-1 text-sm">
                 <Row k="Principal" v={`$${newLoan.principal}`} />
-                <Row k="Program" v={newLoan.program} />
+                <Row k="Program" v={loanProgramLabel(newLoan.program)} />
               </dl>
             ) : (
               <p className="text-muted-foreground text-sm">No new loan yet.</p>
