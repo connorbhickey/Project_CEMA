@@ -1,3 +1,4 @@
+import { blobDel } from '@cema/blob';
 import { auditEvents, communications, getDb, recordings } from '@cema/db';
 import { and, eq, inArray, isNull, lt, sql } from 'drizzle-orm';
 
@@ -29,6 +30,8 @@ export async function GET(req: Request): Promise<Response> {
       .select({
         id: recordings.id,
         organizationId: communications.organizationId,
+        recordingBlobUrl: recordings.recordingBlobUrl,
+        transcriptBlobUrl: recordings.transcriptBlobUrl,
       })
       .from(recordings)
       .innerJoin(communications, eq(recordings.communicationId, communications.id))
@@ -46,6 +49,17 @@ export async function GET(req: Request): Promise<Response> {
     }
 
     const ids = expired.map((r) => r.id);
+
+    // Physically delete the blobs from Vercel Blob BEFORE zeroing the DB URLs.
+    // Otherwise the soft-delete only un-links the blob in our DB while it stays
+    // accessible at its (unguessable) URL forever -- an orphan + privacy gap.
+    // Best-effort: a failed del is counted but never blocks the soft-delete, and
+    // Vercel Blob del() is idempotent so a re-run is safe (resolves M9 carry-over #3).
+    const blobUrls = expired
+      .flatMap((r) => [r.recordingBlobUrl, r.transcriptBlobUrl])
+      .filter((u): u is string => typeof u === 'string' && u.length > 0);
+    const delResults = await Promise.allSettled(blobUrls.map((u) => blobDel(u)));
+    const failedDeletes = delResults.filter((r) => r.status === 'rejected').length;
 
     await db
       .update(recordings)
@@ -73,7 +87,7 @@ export async function GET(req: Request): Promise<Response> {
     }));
     await db.insert(auditEvents).values(auditRows);
 
-    return Response.json({ purged: ids.length });
+    return Response.json({ purged: ids.length, failedDeletes });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     return Response.json({ purged: 0, error: message }, { status: 500 });
