@@ -1,3 +1,4 @@
+import { isBankHoliday } from './holidays';
 import type { OutreachAction, OutreachCadence, ServicerResponse, SubmissionMethod } from './types';
 
 /** Business-day offsets for the 5 touches: initial (T+0) + follow-ups at
@@ -5,11 +6,11 @@ import type { OutreachAction, OutreachCadence, ServicerResponse, SubmissionMetho
 export const OUTREACH_OFFSETS_BUSINESS_DAYS: readonly number[] = [0, 5, 10, 15, 20] as const;
 
 /**
- * Adds `n` business days (Mon-Fri) to `from`, skipping weekends. `n = 0`
- * returns a copy of `from` unchanged (T+0 is the trigger instant, sent
- * immediately regardless of weekday). NY bank holidays are NOT yet excluded
- * (carry-over -- pairs with the Connor-owned NY reference-data confirmation).
- * Operates in UTC so the result is deterministic across server timezones.
+ * Adds `n` business days (Mon-Fri) to `from`, skipping weekends AND observed
+ * Federal Reserve bank holidays (the schedule national servicers process mail on;
+ * see holidays.ts). `n = 0` returns a copy of `from` unchanged (T+0 is the trigger
+ * instant, sent immediately regardless of weekday). Operates in UTC so the result
+ * is deterministic across server timezones (and durable-replay safe).
  */
 export function addBusinessDays(from: Date, n: number): Date {
   const r = new Date(from.getTime());
@@ -17,7 +18,9 @@ export function addBusinessDays(from: Date, n: number): Date {
   while (added < n) {
     r.setUTCDate(r.getUTCDate() + 1);
     const day = r.getUTCDay();
-    if (day !== 0 && day !== 6) added += 1;
+    if (day === 0 || day === 6) continue;
+    if (isBankHoliday(r)) continue;
+    added += 1;
   }
   return r;
 }

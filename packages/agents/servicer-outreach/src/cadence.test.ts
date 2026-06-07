@@ -27,6 +27,12 @@ describe('addBusinessDays', () => {
     // Fri +1 bd = Mon 2026-06-08
     expect(addBusinessDays(fri, 1).toISOString()).toBe('2026-06-08T09:00:00.000Z');
   });
+
+  it('skips bank holidays, not just weekends', () => {
+    const friBeforeMlk = new Date('2026-01-16T09:00:00.000Z'); // Fri before MLK
+    // +1 bd skips Sat 17, Sun 18, and MLK Mon 19 -> Tue 2026-01-20
+    expect(addBusinessDays(friBeforeMlk, 1).toISOString()).toBe('2026-01-20T09:00:00.000Z');
+  });
 });
 
 describe('planOutreachCadence', () => {
@@ -40,8 +46,8 @@ describe('planOutreachCadence', () => {
       '2026-06-01T14:00:00.000Z', // T+0
       '2026-06-08T14:00:00.000Z', // T+5bd
       '2026-06-15T14:00:00.000Z', // T+10bd
-      '2026-06-22T14:00:00.000Z', // T+15bd
-      '2026-06-29T14:00:00.000Z', // T+20bd
+      '2026-06-23T14:00:00.000Z', // T+15bd — +1 day: Juneteenth (Fri 6/19) is a bank holiday
+      '2026-06-30T14:00:00.000Z', // T+20bd — +1 day for the same Juneteenth skip
     ]);
     expect(cadence.dueAt.length).toBe(OUTREACH_OFFSETS_BUSINESS_DAYS.length);
   });
