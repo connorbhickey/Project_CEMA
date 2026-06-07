@@ -13,7 +13,8 @@ vi.mock('@cema/auth', () => ({
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-const { addDealParty, removeDealParty } = await import('../../lib/actions/manage-deal-parties');
+const { addDealParty, removeDealParty, updateDealParty } =
+  await import('../../lib/actions/manage-deal-parties');
 const { getDealParties } = await import('../../lib/queries/deal-parties');
 
 // Distinctive `9a47e510-…` ("deal-parties") namespace + `dpe_` clerk fields so no
@@ -91,6 +92,33 @@ describe.skipIf(skip)('deal-parties editor (Neon integration)', () => {
     expect(meta).toContain('seller');
     expect(meta).not.toContain('Sally');
     expect(meta).not.toContain('sally.dpe');
+  });
+
+  it('updates a party in place and writes a PII-safe party.updated audit', async () => {
+    currentClerkOrgId = 'dpe_org_a';
+    const before = await getDealParties(DEAL_A);
+    const target = before.find((p) => p.role === 'seller');
+    expect(target).toBeDefined();
+
+    await updateDealParty({
+      dealId: DEAL_A,
+      partyId: target!.id,
+      role: 'seller',
+      fullName: 'Sandra Seller DPE',
+      email: 'sandra.dpe@example.invalid',
+    });
+
+    const after = await getDealParties(DEAL_A);
+    const updated = after.find((p) => p.id === target!.id);
+    expect(updated?.fullName).toBe('Sandra Seller DPE');
+    expect(updated?.email).toBe('sandra.dpe@example.invalid');
+
+    const updateAudits = await getDb()
+      .select({ metadata: auditEvents.metadata })
+      .from(auditEvents)
+      .where(and(eq(auditEvents.action, 'party.updated'), eq(auditEvents.entityId, DEAL_A)));
+    expect(updateAudits.length).toBeGreaterThan(0);
+    expect(JSON.stringify(updateAudits.map((a) => a.metadata))).not.toContain('Sandra');
   });
 
   it('rejects an invalid role at the boundary', async () => {

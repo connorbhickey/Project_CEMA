@@ -1,5 +1,6 @@
 import { DealDocumentReviewActions } from '@/components/deal-document-review-actions';
 import { documentKindLabel } from '@/lib/deals/document-kind';
+import { documentStatusLabel, reviewStateLabel } from '@/lib/deals/document-status';
 import type { DealDocumentReviewItem } from '@/lib/queries/deal-documents-review';
 
 /**
@@ -14,14 +15,16 @@ export function DealDocumentReviewRow({ item }: { item: DealDocumentReviewItem }
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="font-medium">{documentKindLabel(item.kind)}</span>
         <span className="text-muted-foreground">v{item.version}</span>
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{item.status}</span>
+        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
+          {documentStatusLabel(item.status)}
+        </span>
         {item.attorneyReviewRequired ? (
           <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
             attorney gate
           </span>
         ) : null}
         <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-          {item.reviewState ?? '—'}
+          {item.reviewState ? reviewStateLabel(item.reviewState) : '—'}
         </span>
       </div>
 
