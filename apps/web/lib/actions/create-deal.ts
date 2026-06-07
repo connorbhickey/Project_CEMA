@@ -6,6 +6,7 @@ import { deals, existingLoans, getDb, newLoans, organizations, properties, users
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
+import { notifyInternalDealCreated } from '../agents/internal-comms/notify-internal';
 import { withRls } from '../with-rls';
 
 import { createDealInputSchema } from './create-deal-schema';
@@ -31,7 +32,7 @@ export async function createDeal(rawInput: unknown): Promise<{ id: string }> {
   });
   if (!user) throw new Error('User not synced yet');
 
-  return withRls(org.id, async (tx) => {
+  const created = await withRls(org.id, async (tx) => {
     const [property] = await tx
       .insert(properties)
       .values({
@@ -79,7 +80,17 @@ export async function createDeal(rawInput: unknown): Promise<{ id: string }> {
       metadata: { cemaType: input.cemaType, principal: input.principal, upb: input.upb },
     });
 
-    revalidatePath('/deals');
     return { id: deal!.id };
   });
+
+  // Post-commit, BEST-EFFORT: announce the new deal on the org's internal pipeline
+  // channel so the loan officer / team see it enter the funnel (ADR 0010 #8). Never
+  // throws — a failed announcement must not surface on the committed deal creation.
+  await notifyInternalDealCreated(created.id, {
+    organizationId: org.id,
+    actorUserId: user.id,
+  });
+
+  revalidatePath('/deals');
+  return created;
 }

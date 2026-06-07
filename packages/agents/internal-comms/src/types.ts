@@ -26,11 +26,25 @@ export interface InternalNotification {
   readonly message: string;
 }
 
+// Static PII-free announcement posted when a NEW deal is created (spec §9.10 /
+// ADR 0010 #8 — the loan-officer / team "new deal entered the pipeline" notice).
+// Distinct from a status transition: creation is not a deal_status.
+export const DEAL_CREATED_MESSAGE = 'A new deal has been created and entered the pipeline.';
+
+// Pure-core output for the deal-created trigger. No `status` (creation is not a
+// deal_status); the channel + static message are all the dormant Fixture needs.
+export interface DealCreatedNotification {
+  readonly channel: InternalChannel;
+  readonly message: string;
+}
+
 // What the channel adapter sends. Carries the opaque dealId (NOT PII) so a real
-// Slack adapter can render a deep link; the Fixture just records it.
+// Slack adapter can render a deep link; the Fixture just records it. `status` is
+// optional: present for status-transition notifications, absent for the
+// deal-created announcement (which carries no deal_status).
 export interface InternalCommPacket {
   readonly dealId: string;
-  readonly status: NotifyStatus;
+  readonly status?: NotifyStatus;
   readonly channel: InternalChannel;
   readonly message: string;
 }

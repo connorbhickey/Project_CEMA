@@ -1,4 +1,4 @@
-import { notificationForStatus } from '@cema/agents-internal-comms';
+import { dealCreatedNotification, notificationForStatus } from '@cema/agents-internal-comms';
 import { emitAuditEvent, redactPii } from '@cema/compliance';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 
@@ -97,6 +97,83 @@ export async function notifyInternal(
       console.error(
         redactPii(
           `[${ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED}] internal comm failed for deal ${dealId}: ${message}`,
+        ).replace(/[\r\n]/g, ' '),
+      );
+      reportSwallowedError(ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED, message, { dealId });
+    } finally {
+      span.end();
+    }
+  });
+}
+
+/**
+ * Post-commit internal-comms dispatcher for DEAL CREATION (ADR 0010 #8): announces
+ * a new deal on the org's pipeline channel so the loan officer / team see it enter
+ * the funnel. Mirrors notifyInternal's split-audit + best-effort swallow, but is
+ * triggered by creation (not a status) so it ALWAYS posts (dealCreatedNotification
+ * never returns null) and audits with a `trigger: 'deal_created'` token.
+ *
+ * BEST-EFFORT: a failed announcement must never roll back or surface on the
+ * already-committed deal creation. Today this runs in-request (Fixture adapter);
+ * at real-Slack activation the send should become fire-and-forget.
+ */
+export async function notifyInternalDealCreated(
+  dealId: string,
+  ctx: NotifyInternalContext,
+): Promise<void> {
+  const notification = dealCreatedNotification();
+
+  return tracer.startActiveSpan('internal_comm.notify_deal_created', async (span) => {
+    // PII-safe attributes only: opaque dealId + enum/token fields (hard rule #3).
+    span.setAttribute('comm.deal_id', dealId);
+    span.setAttribute('comm.trigger', 'deal_created');
+    span.setAttribute('comm.channel', notification.channel);
+    try {
+      // Split audit (part 1): the DECISION to notify, before the side effect.
+      await withRls(ctx.organizationId, (tx) =>
+        emitAuditEvent(tx, {
+          organizationId: ctx.organizationId,
+          actorUserId: ctx.actorUserId,
+          action: 'internal_comm.evaluated',
+          entityType: 'deal',
+          entityId: dealId,
+          metadata: { trigger: 'deal_created', channel: notification.channel },
+        }),
+      );
+
+      const result = await sendInternalComm({
+        dealId,
+        channel: notification.channel,
+        message: notification.message,
+      });
+      span.setAttribute('comm.accepted', result.accepted);
+
+      // Split audit (part 2): SUCCESS after the side effect.
+      await withRls(ctx.organizationId, (tx) =>
+        emitAuditEvent(tx, {
+          organizationId: ctx.organizationId,
+          actorUserId: ctx.actorUserId,
+          action: 'internal_comm.notified',
+          entityType: 'deal',
+          entityId: dealId,
+          metadata: {
+            trigger: 'deal_created',
+            channel: notification.channel,
+            accepted: result.accepted,
+          },
+        }),
+      );
+      span.setStatus({ code: SpanStatusCode.OK });
+    } catch (err) {
+      const message = redactPii(err instanceof Error ? err.message : String(err));
+      span.setStatus({ code: SpanStatusCode.ERROR, message });
+      // PII-safe + log-injection-safe: the redact+replace MUST stay INLINE at the
+      // console.error sink — the quantifier-free /[\r\n]/g is the form CodeQL
+      // recognizes as a js/log-injection sanitizer (mirrors notifyInternal).
+      // eslint-disable-next-line no-console
+      console.error(
+        redactPii(
+          `[${ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED}] internal comm (deal_created) failed for deal ${dealId}: ${message}`,
         ).replace(/[\r\n]/g, ' '),
       );
       reportSwallowedError(ERROR_IDS.INTERNAL_COMM_NOTIFY_FAILED, message, { dealId });
