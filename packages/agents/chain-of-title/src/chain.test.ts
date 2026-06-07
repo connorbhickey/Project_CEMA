@@ -31,6 +31,14 @@ const aom = (
   recordedAt: string,
 ): InstrumentRecord =>
   inst({ documentId: id, instrumentKind: 'aom', assignor, assignee, recordedAt });
+const note = (id: string): InstrumentRecord => inst({ documentId: id, instrumentKind: 'note' });
+const allonge = (
+  id: string,
+  assignor: string,
+  assignee: string,
+  recordedAt: string,
+): InstrumentRecord =>
+  inst({ documentId: id, instrumentKind: 'allonge', assignor, assignee, recordedAt });
 
 describe('analyzeChain', () => {
   it('returns clean for a mortgage with a single recorded assignment', () => {
@@ -320,6 +328,59 @@ describe('analyzeChain allonge attachment', () => {
       }),
     ]);
     expect(a.breaks.some((b) => b.kind === 'lost_note')).toBe(false);
+    expect(a.status).toBe('clean');
+  });
+});
+
+// Note-endorsement chain (pass I): allonges endorse the NOTE (a chain distinct
+// from the mortgage's AOM chain). Their sequence is validated on its own, and an
+// allonge never contaminates the mortgage assignment passes (D/E/G).
+describe('analyzeChain note-endorsement chain (pass I)', () => {
+  it('returns clean for a note with a contiguous allonge endorsement sequence', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      note('n1'),
+      allonge('al1', 'Holder A', 'Holder B', '2026-01-01'),
+      allonge('al2', 'Holder B', 'Holder C', '2026-02-01'),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+
+  it('flags a gap in the note endorsement sequence as missing_assignment (re_chase)', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      note('n1'),
+      allonge('al1', 'Holder A', 'Holder B', '2026-01-01'),
+      allonge('al2', 'Holder X', 'Holder C', '2026-02-01'), // B != X -> endorsement gap
+    ]);
+    expect(a.breaks.some((b) => b.kind === 'missing_assignment' && b.documentId === 'al2')).toBe(
+      true,
+    );
+    expect(a.status).toBe('broken');
+  });
+
+  it('keeps the chains distinct: an unrelated allonge never breaks the MORTGAGE chain', () => {
+    // The allonge shares no parties with the single AOM. If allonges still fed the
+    // assignment graph (the old behavior), recording-order sorting would put the
+    // AOM then the allonge and pass E would flag a spurious gap. They no longer do.
+    const a = analyzeChain([
+      mortgage('m1'),
+      note('n1'),
+      aom('a1', 'Lender A', 'Lender B', '2026-01-01'),
+      allonge('al1', 'Holder X', 'Holder Y', '2026-01-15'),
+    ]);
+    expect(a.status).toBe('clean');
+    expect(a.breaks).toHaveLength(0);
+  });
+
+  it('a single allonge with a note asserts no endorsement gap', () => {
+    const a = analyzeChain([
+      mortgage('m1'),
+      note('n1'),
+      allonge('al1', 'Holder A', 'Holder B', '2026-01-01'),
+    ]);
+    expect(a.breaks.some((b) => b.kind === 'missing_assignment')).toBe(false);
     expect(a.status).toBe('clean');
   });
 });
