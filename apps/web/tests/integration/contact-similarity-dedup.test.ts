@@ -11,7 +11,7 @@
 import { ensureContact } from '@cema/contacts';
 import { contactIdentities, contacts, getDb, organizations, users } from '@cema/db';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { withRls } from '../../lib/with-rls';
 
@@ -50,6 +50,15 @@ describe.skipIf(skip)('pgvector fuzzy contact dedup', () => {
       .insert(users)
       .values({ id: USER_ID, clerkUserId: 'user_c7ec', email: 'c7ec@example.invalid' })
       .onConflictDoNothing();
+  });
+
+  // Clean the org's contacts BEFORE each test (not just afterAll), so a prior run
+  // that aborted before teardown can't leave stale rows that flip the first
+  // `created === true` assertion. Each test starts from a hermetic, empty org.
+  beforeEach(async () => {
+    const db = getDb();
+    await db.delete(contactIdentities).where(eq(contactIdentities.organizationId, ORG_ID));
+    await db.delete(contacts).where(eq(contacts.organizationId, ORG_ID));
   });
 
   afterAll(async () => {

@@ -3,7 +3,19 @@ import { contactIdentities, contacts } from '@cema/db';
 import { and, eq } from 'drizzle-orm';
 
 import { normalizeEmail, normalizePhone } from './normalize';
-import { DEFAULT_SIMILARITY_MAX_DISTANCE, findSimilarContacts } from './similarity';
+import {
+  DEFAULT_SIMILARITY_MAX_DISTANCE,
+  findSimilarContacts,
+  isValidEmbedding,
+} from './similarity';
+
+// Identity kinds for which a fuzzy (name/employer embedding) fallback is SAFE:
+// people legitimately have multiple emails/phones, so consolidating by name
+// similarity helps. Authoritative external IDs (crm_id, slack_user) are excluded
+// — an exact miss there is a genuinely new mapping, and a name-similarity merge
+// would wrongly attach the external id to the wrong contact (a hard-to-unwind
+// data-integrity error).
+const FUZZY_DEDUP_KINDS = new Set<DedupKind>(['email', 'phone']);
 
 export type DedupKind = 'email' | 'phone' | 'slack_user' | 'crm_id';
 export type DedupSource = 'party' | 'comm_from' | 'comm_to' | 'slack_message' | 'manual';
@@ -69,14 +81,20 @@ export async function ensureContact(
     return { contactId: existing[0].contactId, created: false, matchedBy: 'exact' };
   }
 
-  // Fuzzy pass: if a name/employer embedding is supplied, link this new identity
-  // to a near-duplicate contact instead of creating a redundant one. Conservative
-  // threshold (DEFAULT_SIMILARITY_MAX_DISTANCE) avoids false merges; a miss falls
-  // through to creating a fresh contact below.
-  if (input.embedding && input.embedding.length > 0) {
+  // Sanitize the embedding ONCE: pgvector enforces dimension + finiteness on write
+  // AND in <=>, so a malformed embedding (wrong length / NaN / Infinity) would
+  // hard-fail both the fuzzy lookup and the contacts insert. Reuse the sanitized
+  // value for both; an invalid embedding degrades to no-fuzzy + a NULL column.
+  const validEmbedding = isValidEmbedding(input.embedding) ? input.embedding : null;
+
+  // Fuzzy pass: only for alias-prone kinds (email/phone) with a well-formed
+  // embedding — link this new identity to a near-duplicate contact instead of
+  // creating a redundant one. Conservative threshold avoids false merges; a miss
+  // (or an authoritative kind / missing embedding) falls through to a fresh contact.
+  if (FUZZY_DEDUP_KINDS.has(input.kind) && validEmbedding) {
     const [match] = await findSimilarContacts(tx, {
       orgId: input.orgId,
-      embedding: input.embedding,
+      embedding: validEmbedding,
       maxDistance: input.similarityMaxDistance ?? DEFAULT_SIMILARITY_MAX_DISTANCE,
       limit: 1,
     });
@@ -106,8 +124,10 @@ export async function ensureContact(
       primaryEmail: input.kind === 'email' ? normalized : null,
       primaryPhone: input.kind === 'phone' ? normalized : null,
       employer: input.employer ?? null,
-      embedding: input.embedding ?? null,
-      embeddingGeneratedAt: input.embedding ? (input.embeddingGeneratedAt ?? null) : null,
+      // Sanitized: a malformed embedding persists NULL rather than failing the
+      // pgvector(3072) write (dimension + finite-element enforcement).
+      embedding: validEmbedding,
+      embeddingGeneratedAt: validEmbedding ? (input.embeddingGeneratedAt ?? null) : null,
     })
     .returning();
 
