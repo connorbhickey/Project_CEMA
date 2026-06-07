@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { getDeal } from '@/lib/actions/get-deal';
 import { getDealExceptions } from '@/lib/agents/exception-triage/get-deal-exceptions';
+import { exceptionKindLabel, exceptionRouteLabel } from '@/lib/exceptions/exception-labels';
 
 const SEVERITY_CLASS: Record<ExceptionSeverity, string> = {
   blocking: 'bg-red-100 text-red-800',
@@ -36,9 +37,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                 >
                   {e.severity}
                 </span>
-                <span className="font-medium">{e.kind}</span>
+                <span className="font-medium">{exceptionKindLabel(e.kind)}</span>
                 <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-                  → {e.route}
+                  → {exceptionRouteLabel(e.route)}
                 </span>
               </div>
               <p className="text-muted-foreground mt-1">{e.reason}</p>
