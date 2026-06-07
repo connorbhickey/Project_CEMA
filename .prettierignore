@@ -9,3 +9,6 @@ pnpm-lock.yaml
 *.min.js
 *.min.css
 **/migrations/meta/**
+
+# WDK (workflow) generated route artifacts — gitignored build output
+**/.well-known/workflow/**
