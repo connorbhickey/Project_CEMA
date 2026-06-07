@@ -28,6 +28,12 @@ export const ERROR_IDS = {
    *  This token is the greppable signal; the read audit is best-effort, so —
    *  unlike the split-audit comms paths — there is no durable failure record. */
   READ_AUDIT_WRITE_FAILED: 'READ_AUDIT_WRITE_FAILED',
+  /** The additive, env-gated intake savings narrative (a configured AI-Gateway
+   *  model call) threw and was swallowed so the deterministic intake Deal — which
+   *  is already created and complete — still returns to the processor. The
+   *  narrative is an OPTIONAL enhancement, never a hard dependency; this token is
+   *  the greppable + Sentry-routed signal that a configured model call failed. */
+  INTAKE_NARRATIVE_FAILED: 'INTAKE_NARRATIVE_FAILED',
 } as const;
 
 export type ErrorId = (typeof ERROR_IDS)[keyof typeof ERROR_IDS];
