@@ -22,7 +22,7 @@ A node test that asserts the token system + font/dark wiring exist. It is the re
 
 **Files:**
 
-- Create: `apps/web/lib/theme/design-tokens.test.ts`
+- Create: `apps/web/lib/theme/design-system.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -77,13 +77,13 @@ describe('design tokens — Phase 0 foundation', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter web test -- design-tokens`
+Run: `pnpm --filter web test -- design-system`
 Expected: FAIL — current `globals.css` has none of these tokens; `layout.tsx` still imports `Inter`.
 
 - [ ] **Step 3: Commit the red test**
 
 ```bash
-git add apps/web/lib/theme/design-tokens.test.ts
+git add apps/web/lib/theme/design-system.test.ts
 git commit -S -m "test(ui): add Phase 0 design-token contract guard"
 ```
 
@@ -505,7 +505,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 - [ ] **Step 2: Run the guard test — now green**
 
-Run: `pnpm --filter web test -- design-tokens`
+Run: `pnpm --filter web test -- design-system`
 Expected: PASS (all five assertions; `globals.css` from Task 2 + this layout satisfy them).
 
 - [ ] **Step 3: Commit**
@@ -605,7 +605,7 @@ Expected: all pass. (Raw-Tailwind-colored ad-hoc components — e.g. `bg-blue-60
 - [ ] **Step 5: Unit + (default) test suite still green**
 
 Run: `pnpm --filter web test`
-Expected: PASS, including the new `design-tokens` guard.
+Expected: PASS, including the new `design-system` guard.
 
 - [ ] **Step 6: Commit any verification fixes** (only if Steps 1–5 required edits)
 
@@ -640,7 +640,7 @@ Use a precise converter (e.g. https://oklch.com or the `culori` CLI) — do **no
 
 - [ ] **Step 2: Guard test + build still pass**
 
-Run: `pnpm --filter web test -- design-tokens && pnpm --filter web build`
+Run: `pnpm --filter web test -- design-system && pnpm --filter web build`
 Expected: PASS (the guard asserts token **names**, not formats, so it stays green).
 
 - [ ] **Step 3: Visual parity check**
@@ -662,7 +662,7 @@ git commit -S -m "refactor(ui): express design tokens in OKLCH"
 - App loads Hanken Grotesk + Geist Mono; no `Inter`.
 - `next-themes` dark mode works (toggle in header, no FOUC); `ThemeProvider`/`ThemeToggle` exported from `@cema/ui`.
 - `@source` registers `packages/ui/src` so shared-package classes generate.
-- `pnpm typecheck`, `pnpm --filter web build`, and `pnpm --filter web test` (incl. the `design-tokens` guard) all pass.
+- `pnpm typecheck`, `pnpm --filter web build`, and `pnpm --filter web test` (incl. the `design-system` guard) all pass.
 - Existing shadcn-based screens render in the new palette with **zero structural change**; raw-Tailwind ad-hoc components are catalogued for Phase 3.
 - 0 schema/migration changes; no functional behavior change.
 

@@ -26,6 +26,7 @@ export function ThemeToggle() {
   const current = (ORDER as readonly string[]).includes(theme ?? '')
     ? (theme as ThemeChoice)
     : 'system';
+  // noUncheckedIndexedAccess: the modulo guarantees an in-bounds index; the ?? is unreachable but required by tsc
   const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length] ?? 'system';
   const Icon = current === 'dark' ? Moon : current === 'light' ? Sun : Monitor;
 
