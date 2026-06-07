@@ -14,6 +14,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+import { vector3072 } from './communications';
 import { organizations } from './tenants';
 
 export const contacts = pgTable(
@@ -29,6 +30,13 @@ export const contacts = pgTable(
     employer: varchar('employer', { length: 256 }),
     role: varchar('role', { length: 64 }),
     metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
+    // pgvector embedding of the contact's name/employer/email for FUZZY dedup
+    // (spec §9.1). 3072-dim (text-embedding-3-large); brute-force cosine scan
+    // scoped to one org (no HNSW index — pgvector can't index > 2000 dims, and an
+    // org's contact count is small). Nullable: backfilled lazily, gated on the
+    // OpenAI key — exact email/phone dedup works without it.
+    embedding: vector3072('embedding'),
+    embeddingGeneratedAt: timestamp('embedding_generated_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
