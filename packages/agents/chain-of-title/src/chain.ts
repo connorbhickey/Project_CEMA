@@ -125,7 +125,15 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
 
   const anchors = instruments.filter((i) => ANCHOR_SET.has(i.instrumentKind));
   const notes = instruments.filter((i) => NOTE_SET.has(i.instrumentKind));
+  // `assignments` (aom + allonge) feeds only the DESCRIPTIVE edge graph + sequence
+  // edges (all recorded transfers in time order). Break-detection treats the two
+  // chains DISTINCTLY: `aoms` drive the MORTGAGE-assignment passes (D/E/G), while
+  // `allonges` drive the NOTE-endorsement passes (H/I). An allonge endorses the
+  // note, not the mortgage, so it must not create a fork/merge/gap in the mortgage
+  // chain (and vice-versa).
   const assignments = instruments.filter((i) => ASSIGNMENT_SET.has(i.instrumentKind));
+  const aoms = instruments.filter((i) => i.instrumentKind === 'aom');
+  const allonges = instruments.filter((i) => i.instrumentKind === 'allonge');
 
   // (A) Per-instrument: any RECORDED_KINDS instrument missing a recording ref.
   for (const inst of instruments) {
@@ -158,11 +166,12 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
     });
   }
 
-  // (D) Assignment-graph ambiguity (missing party, fork, merge, cycle).
+  // (D) MORTGAGE assignment-graph ambiguity (missing party, fork, merge, cycle) --
+  // over AOMs only (the note-endorsement chain is analyzed separately in H/I).
   const ambiguousBefore = breaks.filter((b) => b.kind === 'ambiguous_assignment').length;
 
   // (D.1) Missing party on an assignment.
-  for (const a of assignments) {
+  for (const a of aoms) {
     if (a.assignor === null || a.assignee === null) {
       breaks.push({
         kind: 'ambiguous_assignment',
@@ -174,7 +183,7 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
 
   // (D.2) Fork: one assignor with two+ distinct outgoing assignments.
   const byAssignor = new Map<string, InstrumentRecord[]>();
-  for (const a of assignments) {
+  for (const a of aoms) {
     if (a.assignor === null) continue;
     const group = byAssignor.get(a.assignor) ?? [];
     group.push(a);
@@ -194,7 +203,7 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
 
   // (D.3) Merge: one assignee receiving two+ distinct incoming assignments.
   const byAssignee = new Map<string, InstrumentRecord[]>();
-  for (const a of assignments) {
+  for (const a of aoms) {
     if (a.assignee === null) continue;
     const group = byAssignee.get(a.assignee) ?? [];
     group.push(a);
@@ -212,8 +221,8 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
     }
   }
 
-  // (D.4) Cycle in the assignor -> assignee graph.
-  if (detectCycle(assignments)) {
+  // (D.4) Cycle in the mortgage assignor -> assignee graph.
+  if (detectCycle(aoms)) {
     breaks.push({
       kind: 'ambiguous_assignment',
       documentId: null,
@@ -221,12 +230,13 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
     });
   }
 
-  // (E) Sequential gap: only when the assignment graph is otherwise unambiguous
-  // (no new ambiguous_assignment breaks above), check consecutive recorded hops
-  // for assignee[n] === assignor[n+1]. A mismatch is a missing_assignment.
+  // (E) Sequential gap in the MORTGAGE chain: only when the AOM graph is otherwise
+  // unambiguous (no new ambiguous_assignment breaks above), check consecutive
+  // recorded AOM hops for assignee[n] === assignor[n+1]. A mismatch is a
+  // missing_assignment. (The note-endorsement gap is pass I.)
   const ambiguousAfter = breaks.filter((b) => b.kind === 'ambiguous_assignment').length;
-  if (ambiguousAfter === ambiguousBefore && assignments.length > 1) {
-    const ordered = [...assignments].sort(byRecordedAt);
+  if (ambiguousAfter === ambiguousBefore && aoms.length > 1) {
+    const ordered = [...aoms].sort(byRecordedAt);
     for (let n = 0; n < ordered.length - 1; n += 1) {
       const cur: InstrumentRecord | undefined = ordered[n];
       const next: InstrumentRecord | undefined = ordered[n + 1];
@@ -280,9 +290,9 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
       instruments.map((i) => i.originator).filter((o): o is string => o != null && o !== ''),
     ),
   ];
-  if (ambiguousAfter === ambiguousBefore && assignments.length >= 1 && originators.length === 1) {
+  if (ambiguousAfter === ambiguousBefore && aoms.length >= 1 && originators.length === 1) {
     const originator = originators[0];
-    const head = [...assignments].sort(byRecordedAt)[0];
+    const head = [...aoms].sort(byRecordedAt)[0];
     if (originator !== undefined && head !== undefined && head.assignor !== originator) {
       breaks.push({
         kind: 'missing_assignment',
@@ -296,11 +306,9 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
   // physically attached to the note to add endorsements when the note runs out of
   // space). An allonge present with no note in the deal has nothing to attach to
   // -- the note it endorses is missing from the collateral file -> lost_note
-  // (attorney review; possible lost-note affidavit). Allonges still contribute
-  // assignor->assignee edges to the assignment graph above (treating the note
-  // endorsement chain as distinct from the mortgage assignment chain is a future
-  // refinement); this pass only adds the missing-note check.
-  const allonges = instruments.filter((i) => i.instrumentKind === 'allonge');
+  // (attorney review; possible lost-note affidavit). The note-endorsement chain is
+  // now analyzed DISTINCTLY from the mortgage assignment chain: allonges no longer
+  // feed the AOM passes (D/E/G); pass I below validates their own sequence.
   if (allonges.length > 0 && notes.length === 0) {
     for (const al of allonges) {
       breaks.push({
@@ -308,6 +316,33 @@ export function analyzeChain(instruments: readonly InstrumentRecord[]): ChainAna
         documentId: al.documentId,
         detail: `allonge ${al.documentId} has no promissory note in the deal to attach to`,
       });
+    }
+  }
+
+  // (I) Note-endorsement chain gap: allonges endorse the note (endorser ->
+  // endorsee), a chain DISTINCT from the mortgage's AOM chain. When a note anchors
+  // the endorsements and the allonges form a sequence, a break in the endorsement
+  // continuity (endorsee[n] !== endorser[n+1], by recordedAt) means an intervening
+  // endorsement is missing from the collateral file -> missing_assignment
+  // (re_chase: recoverable by chasing the servicer for the complete note, like a
+  // missing mortgage assignment). Conservative: needs >= 2 allonges with non-null
+  // endorsement parties on the hop; a single allonge or a null-party hop asserts
+  // no gap. Only runs when a note is present (a noteless allonge is pass H's
+  // lost_note, not a sequence gap).
+  if (notes.length > 0 && allonges.length > 1) {
+    const orderedAllonges = [...allonges].sort(byRecordedAt);
+    for (let n = 0; n < orderedAllonges.length - 1; n += 1) {
+      const cur: InstrumentRecord | undefined = orderedAllonges[n];
+      const next: InstrumentRecord | undefined = orderedAllonges[n + 1];
+      if (cur === undefined || next === undefined) continue;
+      if (cur.assignee === null || next.assignor === null) continue; // no definite gap
+      if (cur.assignee !== next.assignor) {
+        breaks.push({
+          kind: 'missing_assignment',
+          documentId: next.documentId,
+          detail: `gap in note endorsement chain between allonge ${cur.documentId} and ${next.documentId}`,
+        });
+      }
     }
   }
 
