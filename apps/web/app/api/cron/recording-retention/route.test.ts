@@ -25,11 +25,19 @@ vi.mock('drizzle-orm', () => ({
   sql: Object.assign(vi.fn().mockReturnValue('now()'), { raw: vi.fn().mockReturnValue('now()') }),
 }));
 
+vi.mock('@cema/blob', () => ({ blobDel: vi.fn().mockResolvedValue(undefined) }));
+
+import { blobDel } from '@cema/blob';
 import { getDb } from '@cema/db';
 
 import { GET } from './route';
 
-type ExpiredRow = { id: string; organizationId: string };
+type ExpiredRow = {
+  id: string;
+  organizationId: string;
+  recordingBlobUrl?: string | null;
+  transcriptBlobUrl?: string | null;
+};
 
 function makeDb(expiredRows: ExpiredRow[]) {
   return {
@@ -82,6 +90,30 @@ describe('GET /api/cron/recording-retention', () => {
     const body = (await res.json()) as { purged: number };
     expect(res.status).toBe(200);
     expect(body.purged).toBe(2);
+  });
+
+  it('physically deletes the recording + transcript blobs before zeroing the URLs', async () => {
+    const rows: ExpiredRow[] = [
+      {
+        id: 'rec-1',
+        organizationId: 'org-1',
+        recordingBlobUrl: 'https://blob.example/rec-1.mp3',
+        transcriptBlobUrl: 'https://blob.example/rec-1.json',
+      },
+      { id: 'rec-2', organizationId: 'org-1', recordingBlobUrl: 'https://blob.example/rec-2.mp3' },
+    ];
+    vi.mocked(getDb).mockReturnValue(makeDb(rows) as never);
+
+    const res = await GET(makeUnauthorizedRequest());
+    const body = (await res.json()) as { purged: number; failedDeletes: number };
+
+    expect(body.purged).toBe(2);
+    expect(body.failedDeletes).toBe(0);
+    // 3 non-empty blob URLs (2 recordings + 1 transcript); empty/null are skipped.
+    expect(blobDel).toHaveBeenCalledTimes(3);
+    expect(blobDel).toHaveBeenCalledWith('https://blob.example/rec-1.mp3');
+    expect(blobDel).toHaveBeenCalledWith('https://blob.example/rec-1.json');
+    expect(blobDel).toHaveBeenCalledWith('https://blob.example/rec-2.mp3');
   });
 
   it('returns 200 with purged:0 when no expired recordings', async () => {
