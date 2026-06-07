@@ -24,7 +24,7 @@ import { emitAuditEvent } from '@cema/compliance';
 import { withRls } from '../../with-rls';
 
 import { sendInternalComm } from './channel';
-import { notifyInternal } from './notify-internal';
+import { notifyInternal, notifyInternalDealCreated } from './notify-internal';
 
 const CTX = { organizationId: 'org-1', actorUserId: 'user-1' };
 
@@ -109,6 +109,46 @@ describe('notifyInternal', () => {
     expect(line).not.toContain('123-45-6789'); // raw SSN never logged
     expect(line).toContain('***-**-6789'); // masked instead
 
+    errSpy.mockRestore();
+  });
+});
+
+describe('notifyInternalDealCreated', () => {
+  it('always posts: split-audits (evaluated/notified) + sends a statusless deal-created packet', async () => {
+    await notifyInternalDealCreated('deal-1', CTX);
+
+    expect(sendInternalComm).toHaveBeenCalledTimes(1);
+    expect(sendInternalComm).toHaveBeenCalledWith({
+      dealId: 'deal-1',
+      channel: 'pipeline',
+      message: 'A new deal has been created and entered the pipeline.',
+    });
+
+    // Split audit: evaluated BEFORE, notified AFTER — both keyed by the trigger token.
+    expect(emitAuditEvent).toHaveBeenCalledTimes(2);
+    const [, evaluated] = vi.mocked(emitAuditEvent).mock.calls[0]!;
+    expect(evaluated).toMatchObject({
+      action: 'internal_comm.evaluated',
+      entityId: 'deal-1',
+      metadata: { trigger: 'deal_created', channel: 'pipeline' },
+    });
+    const [, notified] = vi.mocked(emitAuditEvent).mock.calls[1]!;
+    expect(notified).toMatchObject({
+      action: 'internal_comm.notified',
+      metadata: { trigger: 'deal_created', accepted: true },
+    });
+  });
+
+  it('is best-effort: a failed send is swallowed (never throws) + routed PII-safe', async () => {
+    vi.mocked(sendInternalComm).mockRejectedValue(new Error('slack 500 for SSN 123-45-6789'));
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(notifyInternalDealCreated('deal-1', CTX)).resolves.toBeUndefined();
+
+    const line = errSpy.mock.calls[0]?.[0] as string;
+    expect(line).not.toMatch(/[\r\n]/);
+    expect(line).not.toContain('123-45-6789');
+    expect(line).toContain('***-**-6789');
     errSpy.mockRestore();
   });
 });

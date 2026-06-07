@@ -15,7 +15,7 @@ export class FixtureChannelAdapter implements InternalChannelAdapter {
     this.sent.push(packet);
     return Promise.resolve({
       accepted: true,
-      channelMessageId: `fixture:${packet.dealId}:${packet.status}`,
+      channelMessageId: `fixture:${packet.dealId}:${packet.status ?? 'deal_created'}`,
     });
   }
 }
