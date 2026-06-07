@@ -34,8 +34,18 @@ vi.mock('@/lib/queue', () => ({
   vercelQueueSend: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@cema/cache', () => ({
+  acquireIdempotencyKey: vi.fn().mockResolvedValue(true),
+  releaseIdempotencyKey: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { acquireIdempotencyKey } from '@cema/cache';
 import { getDb } from '@cema/db';
-import { parseSlackEventPayload, verifySlackSignature } from '@cema/integrations-slack';
+import {
+  fetchSlackUserDisplayName,
+  parseSlackEventPayload,
+  verifySlackSignature,
+} from '@cema/integrations-slack';
 
 const SECRET = 'test-secret';
 
@@ -161,5 +171,39 @@ describe('POST /api/webhooks/slack', () => {
       { orgId: 'org-1', communicationId: 'comm-1' },
       expect.any(Function),
     );
+  });
+
+  it('skips the user lookup + writes when the event was already processed', async () => {
+    process.env.SLACK_SIGNING_SECRET = SECRET;
+    vi.mocked(verifySlackSignature).mockReturnValue(true);
+    vi.mocked(acquireIdempotencyKey).mockResolvedValueOnce(false); // duplicate delivery
+    vi.mocked(parseSlackEventPayload).mockReturnValue({
+      type: 'event_callback',
+      team_id: 'T-123',
+      api_app_id: 'A0',
+      event_id: 'Ev0',
+      event_time: 0,
+      event: { type: 'message', channel: 'C0', user: 'U0', text: 'hello', ts: '1716000000.0' },
+    });
+    vi.mocked(getDb).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ organizationId: 'org-1', slackBotToken: 'xoxb-tok' }]),
+          }),
+        }),
+      }),
+      insert: vi.fn(),
+    } as unknown as ReturnType<typeof getDb>);
+
+    const { publish } = await import('@cema/queues');
+    const { POST } = await import('./route');
+    const res = await POST(makeRequest('{}', 'v0=ok', '1716000000'));
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(fetchSlackUserDisplayName)).not.toHaveBeenCalled();
+    expect(vi.mocked(publish)).not.toHaveBeenCalled();
   });
 });

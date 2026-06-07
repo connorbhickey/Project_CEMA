@@ -1,3 +1,4 @@
+import { acquireIdempotencyKey, releaseIdempotencyKey } from '@cema/cache';
 import { emitAuditEvent } from '@cema/compliance';
 import { docusignEnvelopes, getDb, orgDocusignConnections } from '@cema/db';
 import { parseDocusignConnectPayload, verifyDocusignSignature } from '@cema/integrations-docusign';
@@ -70,46 +71,68 @@ export async function POST(req: Request): Promise<Response> {
 
   const isTerminal = ['completed', 'declined', 'voided', 'signed'].includes(newStatus);
 
-  await db
-    .update(docusignEnvelopes)
-    .set({
-      status: newStatus,
-      recipients: parsed.recipients.map((r) => ({
-        email: r.email,
-        name: r.name,
-        role: 'signer',
-        routingOrder: r.routingOrder,
-        status: r.status as 'created' | 'sent' | 'delivered' | 'signed' | 'declined' | 'completed',
-        signedAt: r.signedDateTime,
-      })),
-      completedAt: isTerminal ? new Date() : null,
-      voidedReason: newStatus === 'voided' ? parsed.voidedReason : null,
-      updatedAt: new Date(),
-    })
-    .where(eq(docusignEnvelopes.id, envRow.envelopeRowId));
+  // Idempotency: SETNX on this specific status-change event
+  // (envelopeId:status:statusChangedDateTime). DocuSign Connect re-delivers the
+  // SAME transition on retry (same timestamp), while distinct transitions
+  // (sent -> delivered -> signed -> completed) carry different timestamps and
+  // still each process. Skip a duplicate before the update + audit + publish;
+  // release on failure so a genuine retry can re-acquire.
+  const idempotencyKey = `webhook:idempo:docusign:${envelopeIdHint}:${parsed.status}:${parsed.statusChangedDateTime}`;
+  if (!(await acquireIdempotencyKey(idempotencyKey))) {
+    return new Response('OK', { status: 200 });
+  }
 
-  await emitAuditEvent(db, {
-    organizationId: envRow.organizationId,
-    action: `envelope.${parsed.event}`,
-    entityType: 'docusign_envelope',
-    entityId: envRow.envelopeRowId,
-    metadata: {
-      envelopeId: envelopeIdHint,
-      status: parsed.status,
-      statusChangedDateTime: parsed.statusChangedDateTime,
-    },
-  });
+  try {
+    await db
+      .update(docusignEnvelopes)
+      .set({
+        status: newStatus,
+        recipients: parsed.recipients.map((r) => ({
+          email: r.email,
+          name: r.name,
+          role: 'signer',
+          routingOrder: r.routingOrder,
+          status: r.status as
+            | 'created'
+            | 'sent'
+            | 'delivered'
+            | 'signed'
+            | 'declined'
+            | 'completed',
+          signedAt: r.signedDateTime,
+        })),
+        completedAt: isTerminal ? new Date() : null,
+        voidedReason: newStatus === 'voided' ? parsed.voidedReason : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(docusignEnvelopes.id, envRow.envelopeRowId));
 
-  await publish(
-    'esign.docusign.events',
-    {
-      orgId: envRow.organizationId,
-      envelopeId: envelopeIdHint,
-      event: parsed.event,
-      receivedAt: new Date().toISOString(),
-    },
-    vercelQueueSend,
-  );
+    await emitAuditEvent(db, {
+      organizationId: envRow.organizationId,
+      action: `envelope.${parsed.event}`,
+      entityType: 'docusign_envelope',
+      entityId: envRow.envelopeRowId,
+      metadata: {
+        envelopeId: envelopeIdHint,
+        status: parsed.status,
+        statusChangedDateTime: parsed.statusChangedDateTime,
+      },
+    });
 
-  return new Response('OK', { status: 200 });
+    await publish(
+      'esign.docusign.events',
+      {
+        orgId: envRow.organizationId,
+        envelopeId: envelopeIdHint,
+        event: parsed.event,
+        receivedAt: new Date().toISOString(),
+      },
+      vercelQueueSend,
+    );
+
+    return new Response('OK', { status: 200 });
+  } catch (err) {
+    await releaseIdempotencyKey(idempotencyKey);
+    throw err;
+  }
 }
