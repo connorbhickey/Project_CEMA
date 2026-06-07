@@ -74,6 +74,54 @@ export async function addDealParty(input: AddDealPartyInput): Promise<void> {
   revalidatePath(`/deals/${input.dealId}`);
 }
 
+export interface UpdateDealPartyInput extends AddDealPartyInput {
+  partyId: string;
+}
+
+/**
+ * Edit an existing party (role / name / email / phone) so a processor can fix it
+ * without remove + re-add. Same validation + tenancy as addDealParty; the update is
+ * doubly scoped (`id = partyId AND dealId = <the org-verified deal>`) so a cross-org
+ * partyId cannot match. PII-safe audit `party.updated` (role + partyId only).
+ */
+export async function updateDealParty(input: UpdateDealPartyInput): Promise<void> {
+  const role = parsePartyRole(input.role);
+  if (!role) throw new Error('Invalid party role');
+  const fullName = input.fullName.trim();
+  if (!fullName) throw new Error('Party name is required');
+  const email = input.email?.trim() ? input.email.trim() : null;
+  const phone = input.phone?.trim() ? input.phone.trim() : null;
+
+  const { orgId, userId } = await resolveIdentity();
+  await withRls(orgId, async (tx) => {
+    const [deal] = await tx
+      .select({ id: deals.id })
+      .from(deals)
+      .where(eq(deals.id, input.dealId))
+      .limit(1);
+    if (!deal) throw new Error('Deal not found');
+
+    const [updated] = await tx
+      .update(parties)
+      .set({ role, fullName, email, phone })
+      .where(and(eq(parties.id, input.partyId), eq(parties.dealId, input.dealId)))
+      .returning({ id: parties.id });
+    if (!updated) throw new Error('Party not found');
+
+    await emitAuditEvent(tx, {
+      organizationId: orgId,
+      actorUserId: userId,
+      action: 'party.updated',
+      entityType: 'deal',
+      entityId: input.dealId,
+      metadata: { partyId: updated.id, role },
+    });
+  });
+
+  revalidatePath(`/deals/${input.dealId}/parties`);
+  revalidatePath(`/deals/${input.dealId}`);
+}
+
 /**
  * Remove a party from a deal. The delete is doubly scoped — `id = partyId AND
  * dealId = <the org-verified deal>` — so a partyId from another org cannot match
