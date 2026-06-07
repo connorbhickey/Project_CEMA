@@ -2,6 +2,8 @@ import { blobDel } from '@cema/blob';
 import { auditEvents, driveFiles, getDb } from '@cema/db';
 import { and, inArray, isNotNull, lt, ne, sql } from 'drizzle-orm';
 
+import { withCronSpan } from '@/lib/observability/cron-span';
+
 const BATCH_SIZE = 500;
 
 // Retires the mirrored Vercel Blob for a Drive file 30 days after the source file
@@ -17,61 +19,65 @@ export async function GET(req: Request): Promise<Response> {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const db = getDb();
-
   try {
-    // drive_files carries organization_id directly (unlike recordings), so no join.
-    const expired = await db
-      .select({
-        id: driveFiles.id,
-        organizationId: driveFiles.organizationId,
-        blobUrl: driveFiles.blobUrl,
-      })
-      .from(driveFiles)
-      .where(
-        and(
-          isNotNull(driveFiles.trashedAt),
-          lt(driveFiles.trashedAt, sql`now() - interval '30 days'`),
-          isNotNull(driveFiles.blobUrl),
-          ne(driveFiles.blobUrl, ''),
-        ),
-      )
-      .limit(BATCH_SIZE);
+    const result = await withCronSpan('drive_retention', async () => {
+      const db = getDb();
 
-    if (expired.length === 0) {
-      return Response.json({ purged: 0 });
-    }
+      // drive_files carries organization_id directly (unlike recordings), so no join.
+      const expired = await db
+        .select({
+          id: driveFiles.id,
+          organizationId: driveFiles.organizationId,
+          blobUrl: driveFiles.blobUrl,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            isNotNull(driveFiles.trashedAt),
+            lt(driveFiles.trashedAt, sql`now() - interval '30 days'`),
+            isNotNull(driveFiles.blobUrl),
+            ne(driveFiles.blobUrl, ''),
+          ),
+        )
+        .limit(BATCH_SIZE);
 
-    const ids = expired.map((r) => r.id);
+      if (expired.length === 0) {
+        return { purged: 0, failedDeletes: 0 };
+      }
 
-    // Delete the physical blobs before zeroing the DB refs (best-effort; a failed
-    // del is counted, never blocks the cleanup; Vercel Blob del() is idempotent).
-    const blobUrls = expired
-      .map((r) => r.blobUrl)
-      .filter((u): u is string => typeof u === 'string' && u.length > 0);
-    const delResults = await Promise.allSettled(blobUrls.map((u) => blobDel(u)));
-    const failedDeletes = delResults.filter((r) => r.status === 'rejected').length;
+      const ids = expired.map((r) => r.id);
 
-    await db
-      .update(driveFiles)
-      .set({ blobUrl: null, blobPathname: null })
-      .where(inArray(driveFiles.id, ids));
+      // Delete the physical blobs before zeroing the DB refs (best-effort; a failed
+      // del is counted, never blocks the cleanup; Vercel Blob del() is idempotent).
+      const blobUrls = expired
+        .map((r) => r.blobUrl)
+        .filter((u): u is string => typeof u === 'string' && u.length > 0);
+      const delResults = await Promise.allSettled(blobUrls.map((u) => blobDel(u)));
+      const failedDeletes = delResults.filter((r) => r.status === 'rejected').length;
 
-    // Audit-event per purged file (CLAUDE.md §10.5 — data destruction is audited).
-    const auditRows = expired.map((r) => ({
-      organizationId: r.organizationId,
-      action: 'drive_file.blob_purged',
-      entityType: 'drive_file',
-      entityId: r.id,
-      metadata: {
-        reason: 'trashed_retention_expired',
-        cron: 'drive-retention',
-        batchSize: expired.length,
-      },
-    }));
-    await db.insert(auditEvents).values(auditRows);
+      await db
+        .update(driveFiles)
+        .set({ blobUrl: null, blobPathname: null })
+        .where(inArray(driveFiles.id, ids));
 
-    return Response.json({ purged: ids.length, failedDeletes });
+      // Audit-event per purged file (CLAUDE.md §10.5 — data destruction is audited).
+      const auditRows = expired.map((r) => ({
+        organizationId: r.organizationId,
+        action: 'drive_file.blob_purged',
+        entityType: 'drive_file',
+        entityId: r.id,
+        metadata: {
+          reason: 'trashed_retention_expired',
+          cron: 'drive-retention',
+          batchSize: expired.length,
+        },
+      }));
+      await db.insert(auditEvents).values(auditRows);
+
+      return { purged: ids.length, failedDeletes };
+    });
+
+    return Response.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     return Response.json({ purged: 0, error: message }, { status: 500 });
