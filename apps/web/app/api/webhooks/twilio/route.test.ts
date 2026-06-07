@@ -20,13 +20,13 @@ vi.mock('@/lib/queue', () => ({
 }));
 
 vi.mock('@cema/cache', () => ({
-  isUpstashConfigured: vi.fn().mockReturnValue(false),
-  getRedis: vi.fn(),
+  acquireIdempotencyKey: vi.fn().mockResolvedValue(true),
+  releaseIdempotencyKey: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { getDb } from '@cema/db';
 import { publish } from '@cema/queues';
-import { getRedis, isUpstashConfigured } from '@cema/cache';
+import { acquireIdempotencyKey, releaseIdempotencyKey } from '@cema/cache';
 
 import { POST } from './route';
 
@@ -164,20 +164,16 @@ describe('POST /api/webhooks/twilio', () => {
     expect(vendorPayload['CallSid']).toBe('CA123');
   });
 
-  it('returns 200 without publishing when idempotency key already exists (Upstash configured)', async () => {
-    vi.mocked(isUpstashConfigured).mockReturnValue(true);
-    vi.mocked(getRedis).mockReturnValue({
-      set: vi.fn().mockResolvedValue(null),
-      del: vi.fn().mockResolvedValue(0),
-    } as unknown as ReturnType<typeof getRedis>);
+  it('returns 200 without publishing when the idempotency key was already acquired (duplicate)', async () => {
+    vi.mocked(acquireIdempotencyKey).mockResolvedValueOnce(false);
 
     const res = await POST(makeRequest(COMPLETED_PARAMS));
     expect(res.status).toBe(200);
     expect(publish).not.toHaveBeenCalled();
   });
 
-  it('publishes both topics normally when Upstash is not configured', async () => {
-    vi.mocked(isUpstashConfigured).mockReturnValue(false);
+  it('publishes both topics when the idempotency key is freshly acquired', async () => {
+    // acquireIdempotencyKey defaults to true (fresh / fail-open).
     setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
 
     const res = await POST(makeRequest(COMPLETED_PARAMS));
@@ -187,31 +183,19 @@ describe('POST /api/webhooks/twilio', () => {
   });
 
   it('releases idempotency key when communication is not found (so Twilio retry can succeed)', async () => {
-    vi.mocked(isUpstashConfigured).mockReturnValue(true);
-    const delMock = vi.fn().mockResolvedValue(1);
-    vi.mocked(getRedis).mockReturnValue({
-      set: vi.fn().mockResolvedValue('OK'),
-      del: delMock,
-    } as unknown as ReturnType<typeof getRedis>);
     setupDbMock([]);
 
     const res = await POST(makeRequest(COMPLETED_PARAMS));
     expect(res.status).toBe(404);
-    expect(delMock).toHaveBeenCalledWith('telephony:idempo:RE456');
+    expect(releaseIdempotencyKey).toHaveBeenCalledWith('telephony:idempo:RE456');
     expect(publish).not.toHaveBeenCalled();
   });
 
   it('releases idempotency key when publish throws (so Twilio retry can succeed)', async () => {
-    vi.mocked(isUpstashConfigured).mockReturnValue(true);
-    const delMock = vi.fn().mockResolvedValue(1);
-    vi.mocked(getRedis).mockReturnValue({
-      set: vi.fn().mockResolvedValue('OK'),
-      del: delMock,
-    } as unknown as ReturnType<typeof getRedis>);
     setupDbMock([{ id: 'comm-uuid-1', organizationId: 'org-uuid-1' }]);
     vi.mocked(publish).mockRejectedValueOnce(new Error('queue down'));
 
     await expect(POST(makeRequest(COMPLETED_PARAMS))).rejects.toThrow('queue down');
-    expect(delMock).toHaveBeenCalledWith('telephony:idempo:RE456');
+    expect(releaseIdempotencyKey).toHaveBeenCalledWith('telephony:idempo:RE456');
   });
 });
