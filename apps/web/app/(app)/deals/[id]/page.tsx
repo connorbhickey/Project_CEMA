@@ -7,6 +7,7 @@ import { parseDealRecording } from '@/lib/deals/deal-recording';
 import { dealStatusLabel } from '@/lib/deals/deal-status';
 import { cemaTypeLabel, loanProgramLabel, propertyTypeLabel } from '@/lib/deals/enum-labels';
 import { partyRoleLabel } from '@/lib/deals/party-role';
+import { parseSavingsNarrative } from '@/lib/deals/savings-narrative';
 import { getDealParties } from '@/lib/queries/deal-parties';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!data) notFound();
   const { deal, property, newLoan, existingLoans } = data;
   const recording = parseDealRecording(deal.metadata);
+  const savingsNarrative = parseSavingsNarrative(deal.metadata);
   const parties = await getDealParties(id);
   return (
     <div>
@@ -48,6 +50,21 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </Link>
       </nav>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {savingsNarrative ? (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Estimated savings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-line text-sm">{savingsNarrative.text}</p>
+              <p className="text-muted-foreground mt-2 text-xs">
+                AI-generated estimate
+                {savingsNarrative.generatedAt ? ` · ${savingsNarrative.generatedAt}` : ''} —
+                internal only; not borrower-facing without attorney review.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
         <Card>
           <CardHeader>
             <CardTitle>Property</CardTitle>
