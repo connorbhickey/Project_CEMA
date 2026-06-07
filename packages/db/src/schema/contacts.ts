@@ -2,11 +2,13 @@ import { sql } from 'drizzle-orm';
 import {
   check,
   doublePrecision,
+  foreignKey,
   index,
   jsonb,
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
   varchar,
@@ -37,6 +39,9 @@ export const contacts = pgTable(
     index('contacts_organization_id_idx').on(t.organizationId),
     index('contacts_primary_email_idx').on(t.organizationId, t.primaryEmail),
     index('contacts_primary_phone_idx').on(t.organizationId, t.primaryPhone),
+    // Composite-FK target: lets contact_identities reference (id, organization_id)
+    // together so an identity's org MUST match its contact's org (tenancy guard).
+    unique('contacts_id_organization_id_key').on(t.id, t.organizationId),
   ],
 );
 
@@ -44,9 +49,10 @@ export const contactIdentities = pgTable(
   'contact_identities',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id')
-      .notNull()
-      .references(() => contacts.id, { onDelete: 'cascade' }),
+    // contactId's FK is the COMPOSITE (contact_id, organization_id) one below, not
+    // a standalone reference — that's what couples the identity's org to the
+    // contact's org. Kept notNull here; the reference lives in the table config.
+    contactId: uuid('contact_id').notNull(),
     organizationId: uuid('organization_id')
       .notNull()
       .references(() => organizations.id, { onDelete: 'restrict' }),
@@ -82,5 +88,14 @@ export const contactIdentities = pgTable(
       'contact_identities_confidence_range',
       sql`${t.confidence} >= 0 AND ${t.confidence} <= 1`,
     ),
+    // Org-integrity: (contact_id, organization_id) must be a real pair in contacts,
+    // so an identity can never reference a contact in a DIFFERENT org (RLS scopes
+    // by organization_id, so a mismatch would be a cross-tenant leak). Replaces the
+    // old single-column contact_id FK; cascade preserves delete-with-contact.
+    foreignKey({
+      columns: [t.contactId, t.organizationId],
+      foreignColumns: [contacts.id, contacts.organizationId],
+      name: 'contact_identities_contact_org_fk',
+    }).onDelete('cascade'),
   ],
 );
