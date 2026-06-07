@@ -3,6 +3,7 @@ import type { Route } from 'next';
 import Link from 'next/link';
 
 import { getOrgExceptions } from '@/lib/agents/exception-triage/get-org-exceptions';
+import { exceptionKindLabel, exceptionRouteLabel } from '@/lib/exceptions/exception-labels';
 
 // blocking first, low last.
 const SEVERITY_RANK: Record<ExceptionSeverity, number> = {
@@ -63,9 +64,9 @@ export default async function Page() {
                     >
                       {row.exception.severity}
                     </span>
-                    <span className="font-medium">{row.exception.kind}</span>
+                    <span className="font-medium">{exceptionKindLabel(row.exception.kind)}</span>
                     <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-                      → {row.exception.route}
+                      → {exceptionRouteLabel(row.exception.route)}
                     </span>
                     <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
                       deal {row.dealStatus}
