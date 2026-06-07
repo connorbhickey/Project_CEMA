@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:#E7ECF3;color:#0F172A;-webkit-font-smoothing:antialiased;padding:26px 26px 34px}
+.tnum{font-variant-numeric:tabular-nums}
+.mono{font-family:'Geist Mono','JetBrains Mono',monospace}
+.ic{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kick{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0D9488;margin-bottom:6px}
+.lead{font-size:15px;color:#475569;margin:0 auto 16px;max-width:1080px}
+.lead b{color:#10213F}
+
+.app{max-width:1080px;margin:0 auto;background:#fff;border:1px solid #DBE2EC;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 44px rgba(15,33,63,.13)}
+
+/* NAVY TOP HEADER */
+.appbar{height:58px;background:#0E1B33;display:flex;align-items:center;gap:16px;padding:0 16px 0 14px}
+.brandh{display:flex;align-items:center;gap:10px}
+.markh{width:30px;height:30px;border-radius:8px;background:#14B8A6;display:flex;align-items:center;justify-content:center}
+.markh .ic{width:17px;height:17px;stroke:#0A1A33;stroke-width:2.2}
+.wsname{color:#EAF1F9;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.wsname .ic{width:14px;height:14px;stroke:#7E93B2}
+.hsearch{flex:1;max-width:400px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 11px;color:#9DB0CC;font-size:13px}
+.hsearch .kbd{margin-left:auto;font-size:10px;font-weight:600;color:#9DB0CC;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:1px 5px}
+.hright{margin-left:auto;display:flex;align-items:center;gap:9px}
+.hicon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#B9C7DC;border:1px solid rgba(255,255,255,.13)}
+.btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;font-family:'Hanken Grotesk';cursor:pointer}
+.btn-teal{background:#14B8A6;color:#06241F}
+.btn-primary{background:#10213F;color:#fff}
+.btn-out{background:#fff;color:#0F766E;border:1px solid #B6F0E6}
+
+.shell{display:flex;min-width:0}
+/* sidebar */
+.side{width:230px;border-right:1px solid #DDE4EF;background:#ECF0F7;display:flex;flex-direction:column;padding:12px 12px}
+.navlbl{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9AA7B8;padding:8px 8px 5px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:8px;color:#475569;text-decoration:none;font-size:13.5px;font-weight:500;margin-bottom:1px}
+.nav a .ic{color:#94A3B8}
+.nav a.on{background:#F0FDFA;color:#0F766E;font-weight:600}
+.nav a.on .ic{color:#0D9488}
+.nav a .ct{margin-left:auto;font-size:11px;font-weight:600;color:#64748B;background:#DFE6F1;border-radius:6px;padding:0 6px}
+.nav a.on .ct{background:#CCFBF1;color:#0F766E}
+.userchip{margin-top:auto;display:flex;align-items:center;gap:9px;padding:10px 8px 4px;border-top:1px solid #D6DEEB}
+.ava{width:30px;height:30px;border-radius:50%;background:#10213F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.crumbbar{height:46px;border-bottom:1px solid #EDF1F6;display:flex;align-items:center;padding:0 20px}
+.crumb{display:flex;align-items:center;gap:7px;font-size:13px;color:#64748B}
+.crumb .cur{color:#10213F;font-weight:600}
+.crumb .ic{width:15px;height:15px;color:#CBD5E1}
+.content{padding:20px 22px;background:#F8FAFC;flex:1}
+
+.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.dtitle{font-size:21px;font-weight:700;color:#10213F;letter-spacing:-.02em}
+.dmeta{font-size:12px;color:#64748B;margin-top:3px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.chip .dot{width:6px;height:6px;border-radius:50%}
+.chip.teal{background:#F0FDFA;color:#0F766E;border:1px solid #CCFBF1}
+.chip.agent{background:#F4F6FB;color:#475569;border:1px solid #E6EBF2}
+.chip.agent .ic{width:13px;height:13px;color:#0D9488}
+.saveb{text-align:right;flex:none}
+.saveb .l{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#94A3B8}
+.saveb .f{font-size:25px;font-weight:700;color:#047857;letter-spacing:-.01em}
+.acts{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid #E7ECF2;margin:16px 0 0}
+.tabs a{display:flex;align-items:center;gap:7px;padding:9px 12px;font-size:13px;font-weight:500;color:#64748B;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a .ic{width:15px;height:15px;color:#94A3B8}
+.tabs a.on{color:#0F766E;border-bottom-color:#0D9488;font-weight:600}
+.tabs a.on .ic{color:#0D9488}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:18px}
+.stat{background:#fff;border:1px solid #E7ECF2;border-radius:10px;padding:13px 14px}
+.stat .l{font-size:11.5px;color:#64748B;font-weight:500}
+.stat .n{font-size:23px;font-weight:700;color:#10213F;margin-top:4px;letter-spacing:-.01em}
+.stat .n.g{color:#047857}.stat .n.a{color:#C2410C}
+.stat .d{font-size:11px;color:#94A3B8;margin-top:1px}
+
+.tcard{background:#fff;border:1px solid #E7ECF2;border-radius:10px;overflow:hidden;margin-top:14px}
+.tcap{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #EEF2F7}
+.tcap h3{font-size:13.5px;font-weight:600;color:#10213F}
+.tcap a{font-size:12.5px;color:#0F766E;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;padding:9px 16px;border-bottom:1px solid #EEF2F7}
+th.r,td.r{text-align:right}
+td{padding:11px 16px;font-size:13px;color:#334155;border-bottom:1px solid #F2F5F9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.dn{font-weight:600;color:#10213F}
+.di{font-size:11px;color:#94A3B8}
+.lk{color:#0F766E;font-weight:600;text-decoration:none}
+.sbadge{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:3px 8px;font-size:11px;font-weight:600}
+.sbadge .ic{width:13px;height:13px}
+.s-teal{background:#F0FDFA;color:#0F766E}
+.s-blue{background:#EFF6FF;color:#1D4ED8}
+.s-amber{background:#FFF7ED;color:#C2410C}
+.s-green{background:#ECFDF5;color:#047857}
+.money{color:#047857;font-weight:600}
+.muted{color:#94A3B8}
+</style>
+</head>
+<body>
+  <div style="max-width:1080px;margin:0 auto">
+    <div class="kick">CEMA · refined</div>
+    <p class="lead">Navy top header, accent rationed, buttons on navy go <b>teal</b> (never navy-on-navy). Name is a placeholder — that's a separate decision.</p>
+  </div>
+
+  <div class="app">
+
+    <!-- NAVY TOP HEADER -->
+    <header class="appbar">
+      <div class="brandh">
+        <div class="markh"><svg class="ic" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div>
+        <span class="wsname">Workspace<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+      </div>
+      <div class="hsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search deals, parties, documents…<span class="kbd">⌘K</span></div>
+      <div class="hright">
+        <div class="hicon"><svg class="ic" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></div>
+        <button class="btn btn-teal"><svg class="ic" viewBox="0 0 24 24" style="stroke:#06241F"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New deal</button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <!-- SIDEBAR -->
+      <aside class="side">
+        <div class="navlbl">Workspace</div>
+        <nav class="nav">
+          <a href="#"><svg class="ic" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Dashboard</a>
+          <a class="on" href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Deals<span class="ct">24</span></a>
+          <a href="#"><svg class="ic" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Queues<span class="ct">6</span></a>
+          <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Exceptions<span class="ct">3</span></a>
+          <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contacts</a>
+        </nav>
+        <div class="navlbl" style="margin-top:12px">Account</div>
+        <nav class="nav">
+          <a href="#"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>Settings</a>
+        </nav>
+        <div class="userchip">
+          <div class="ava">CH</div>
+          <div style="min-width:0"><div style="font-size:12.5px;font-weight:600;color:#10213F">Connor Hickey</div><div style="font-size:11px;color:#94A3B8">Processor</div></div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="crumbbar">
+          <div class="crumb">Deals<svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span class="cur">Refi CEMA · 123 Main St</span></div>
+        </div>
+
+        <div class="content">
+          <div class="dhead">
+            <div>
+              <div class="dtitle">Refi CEMA · 123 Main Street</div>
+              <div class="dmeta mono">DEAL-2026-0481 · Brooklyn, NY · Kings County</div>
+              <div style="display:flex;gap:7px;margin-top:9px">
+                <span class="chip teal"><span class="dot" style="background:#0D9488"></span>Title Work</span>
+                <span class="chip agent"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>Chain-of-Title agent · active</span>
+              </div>
+            </div>
+            <div class="saveb">
+              <div class="l">Est. §255 savings</div>
+              <div class="f tnum">$12,400</div>
+              <div class="acts">
+                <button class="btn btn-out"><svg class="ic" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>Chain of title</button>
+                <button class="btn btn-primary"><svg class="ic" viewBox="0 0 24 24" style="stroke:#fff"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>Review file</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <a class="on" href="#"><svg class="ic" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Overview</a>
+            <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>Parties</a>
+            <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>Documents</a>
+            <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>Chain of title</a>
+            <a href="#"><svg class="ic" viewBox="0 0 24 24"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>Loans</a>
+            <a href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>Activity</a>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="l">Active pipeline</div><div class="n tnum">24</div><div class="d">deals in flight</div></div>
+            <div class="stat"><div class="l">In attorney review</div><div class="n tnum">6</div><div class="d">2 awaiting signature</div></div>
+            <div class="stat"><div class="l">Open exceptions</div><div class="n a tnum">3</div><div class="d">1 high severity</div></div>
+            <div class="stat"><div class="l">Saved YTD</div><div class="n g tnum">$1.24M</div><div class="d">across 118 deals</div></div>
+          </div>
+
+          <div class="tcard">
+            <div class="tcap"><h3>Active deals</h3><a href="#">View all<svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+            <table>
+              <thead><tr><th>Deal</th><th>Property</th><th>Stage</th><th class="r">Savings</th><th>Next action</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="dn">Refi CEMA</div><div class="di mono">DEAL-2026-0481</div></td>
+                  <td>123 Main St, Brooklyn</td>
+                  <td><span class="sbadge s-teal"><span style="width:6px;height:6px;border-radius:50%;background:#0D9488;display:inline-block"></span>Title Work</span></td>
+                  <td class="r money tnum">$12,400</td>
+                  <td><a class="lk" href="#">Review chain</a></td>
+                </tr>
+                <tr>
+                  <td><div class="dn">Purchase CEMA</div><div class="di mono">DEAL-2026-0477</div></td>
+                  <td>88 Clinton Ave, Queens</td>
+                  <td><span class="sbadge s-blue"><span style="width:6px;height:6px;border-radius:50%;background:#2563EB;display:inline-block"></span>Recording</span></td>
+                  <td class="r money tnum">$9,150</td>
+                  <td><a class="lk" href="#">Submit ACRIS</a></td>
+                </tr>
+                <tr>
+                  <td><div class="dn">Refi CEMA</div><div class="di mono">DEAL-2026-0470</div></td>
+                  <td>500 Grand St, Manhattan</td>
+                  <td><span class="sbadge s-amber"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Exception</span></td>
+                  <td class="r money tnum">$21,800</td>
+                  <td><a class="lk" href="#">Resolve break</a></td>
+                </tr>
+                <tr>
+                  <td><div class="dn">Refi CEMA</div><div class="di mono">DEAL-2026-0462</div></td>
+                  <td>17 Bedford Rd, Yonkers</td>
+                  <td><span class="sbadge s-green"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Completed</span></td>
+                  <td class="r money tnum">$7,600</td>
+                  <td><span class="muted mono" style="font-size:11.5px">CRFN 2026000148…</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
