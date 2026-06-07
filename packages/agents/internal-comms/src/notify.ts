@@ -1,4 +1,10 @@
-import { NOTIFY_STATUSES, type InternalNotification, type NotifyStatus } from './types';
+import {
+  DEAL_CREATED_MESSAGE,
+  NOTIFY_STATUSES,
+  type DealCreatedNotification,
+  type InternalNotification,
+  type NotifyStatus,
+} from './types';
 
 // Static, PII-free message per notify-worthy status (no ids/counts/party names).
 const MESSAGE_BY_STATUS: Record<NotifyStatus, string> = {
@@ -27,4 +33,13 @@ export function notificationForStatus(status: string): InternalNotification | nu
   if (!(NOTIFY_STATUSES as readonly string[]).includes(status)) return null;
   const s = status as NotifyStatus;
   return { status: s, channel: 'pipeline', message: MESSAGE_BY_STATUS[s] };
+}
+
+/**
+ * The internal notification posted when a NEW deal is created (ADR 0010 #8). Pure
+ * + always non-null — every new deal warrants a "entered the pipeline" notice, so
+ * (unlike notificationForStatus) there is no skip case. PII-safe static message.
+ */
+export function dealCreatedNotification(): DealCreatedNotification {
+  return { channel: 'pipeline', message: DEAL_CREATED_MESSAGE };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { notificationForStatus } from './notify';
+import { dealCreatedNotification, notificationForStatus } from './notify';
 import { INTERNAL_CHANNELS, NOTIFY_STATUSES } from './types';
 
 describe('notificationForStatus', () => {
@@ -47,5 +47,16 @@ describe('notificationForStatus', () => {
       'exception',
     ]);
     expect(INTERNAL_CHANNELS).toEqual(['pipeline']);
+  });
+});
+
+describe('dealCreatedNotification', () => {
+  it('always returns a pipeline notification with a static PII-free message', () => {
+    const n = dealCreatedNotification();
+    expect(n.channel).toBe('pipeline');
+    expect(n.message.length).toBeGreaterThan(0);
+    expect(n.message).not.toMatch(/\d/); // no count/id/amount leaks
+    // it carries NO status (creation is not a deal_status)
+    expect('status' in n).toBe(false);
   });
 });
