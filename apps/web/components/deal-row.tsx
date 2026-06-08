@@ -1,10 +1,10 @@
 import { format } from 'date-fns';
-import type { Route } from 'next';
 import Link from 'next/link';
 
 import { DealStatusBadge } from './deal-status-badge';
 
 import { type DealRow } from '@/lib/actions/list-deals';
+import { routeHref } from '@/lib/routes';
 
 // ─── Deal cema-type label ─────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export function DealRowItem({ deal }: DealRowItemProps) {
 
   return (
     <Link
-      href={`/deals/${deal.id}` as Route}
+      href={routeHref(`/deals/${deal.id}`)}
       className="border-border hover:bg-accent/40 group flex min-h-[44px] items-center gap-0 border-b transition-colors last:border-b-0"
     >
       {/* Deal column */}

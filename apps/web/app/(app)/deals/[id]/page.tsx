@@ -7,7 +7,6 @@
  */
 
 import { BadgeDollarSign, BookOpen, Building2, Landmark, Users } from 'lucide-react';
-import type { Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -18,6 +17,7 @@ import { loanProgramLabel, propertyTypeLabel } from '@/lib/deals/enum-labels';
 import { partyRoleLabel } from '@/lib/deals/party-role';
 import { parseSavingsNarrative } from '@/lib/deals/savings-narrative';
 import { getDealParties } from '@/lib/queries/deal-parties';
+import { routeHref } from '@/lib/routes';
 
 // ─── Party role pill colours ──────────────────────────────────────────────────
 
@@ -110,14 +110,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           icon={<BookOpen className="h-4 w-4 text-cyan-600 dark:text-cyan-400" strokeWidth={2} />}
           iconTile="bg-cyan-500/10"
           title={`Existing loans${existingLoans.length > 0 ? ` (${existingLoans.length})` : ''}`}
-          linkHref={`/deals/${id}/loans` as Route}
+          linkHref={routeHref(`/deals/${id}/loans`)}
           linkLabel="Edit"
         >
           {existingLoans.length === 0 ? (
             <CardEmptyState>
               No existing loans yet.{' '}
               <Link
-                href={`/deals/${id}/loans` as Route}
+                href={routeHref(`/deals/${id}/loans`)}
                 className="text-teal-600 hover:text-teal-700 dark:text-teal-400"
               >
                 Add them →
@@ -147,14 +147,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           icon={<Users className="h-4 w-4 text-sky-600 dark:text-sky-400" strokeWidth={2} />}
           iconTile="bg-sky-500/10"
           title={`Parties${parties.length > 0 ? ` (${parties.length})` : ''}`}
-          linkHref={`/deals/${id}/parties` as Route}
+          linkHref={routeHref(`/deals/${id}/parties`)}
           linkLabel="Edit"
         >
           {parties.length === 0 ? (
             <CardEmptyState>
               No parties yet.{' '}
               <Link
-                href={`/deals/${id}/parties` as Route}
+                href={routeHref(`/deals/${id}/parties`)}
                 className="text-teal-600 hover:text-teal-700 dark:text-teal-400"
               >
                 Add them →

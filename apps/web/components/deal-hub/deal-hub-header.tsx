@@ -19,7 +19,6 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import type { Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -28,6 +27,7 @@ import { getDeal } from '@/lib/actions/get-deal';
 import { parseDealRecording } from '@/lib/deals/deal-recording';
 import { cemaTypeLabel } from '@/lib/deals/enum-labels';
 import { parseSavingsNarrative } from '@/lib/deals/savings-narrative';
+import { routeHref } from '@/lib/routes';
 
 export type DealHubTab =
   | 'overview'
@@ -133,7 +133,7 @@ export async function DealHubHeader({ dealId, active }: { dealId: string; active
           return (
             <Link
               key={key}
-              href={`/deals/${dealId}${segment}` as Route}
+              href={routeHref(`/deals/${dealId}${segment}`)}
               className={`flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 pb-2.5 pt-1 text-[12.5px] font-semibold transition-colors ${
                 isActive
                   ? 'border-teal-600 text-teal-700 dark:border-teal-400 dark:text-teal-400'
