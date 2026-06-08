@@ -1,6 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Zap } from 'lucide-react';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
+import { BentoCard, CardEmptyState } from '@/components/deal-hub/bento-card';
+import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
 import { LoadOlderLink } from '@/components/load-older-link';
 import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
@@ -54,42 +57,57 @@ export default async function DealAgentActivityPage({ params, searchParams }: Pa
   }));
 
   return (
-    <div className="p-6">
-      <h2 className="mb-4 text-lg font-semibold">Agent activity</h2>
-      <AgentFilterChips chips={agentChips} />
-      <AgentFilterChips chips={sinceChips} />
-      {events.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          {activeAgent || activeSince ? 'No activity for this filter.' : 'No agent activity yet.'}
-        </p>
-      ) : (
-        <ol className="border-border relative space-y-6 border-l">
-          {events.map((event) => {
-            const { label, detail } = describeAuditEvent(event.action, event.metadata);
-            return (
-              <li key={event.id} className="ml-4">
-                <span className="border-background bg-muted absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border" />
-                <p className="text-foreground text-sm font-medium">{label}</p>
-                {detail && (
-                  <p className="text-muted-foreground max-w-md truncate text-sm">{detail}</p>
-                )}
-                <time className="text-muted-foreground text-xs">
-                  {formatDistanceToNow(event.occurredAt, { addSuffix: true })}
-                </time>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-      {nextCursor && (
-        <LoadOlderLink
-          href={activityHref(base, {
-            agent: activeAgent,
-            since: activeSince,
-            cursor: nextCursor,
-          })}
-        />
-      )}
+    <div className="bg-muted -m-6 min-h-full p-5">
+      <DealHubHeader dealId={id} active="activity" />
+
+      <BentoCard
+        icon={<Zap className="h-4 w-4 text-teal-600 dark:text-teal-400" strokeWidth={2} />}
+        iconTile="bg-teal-500/10"
+        title="Agent activity"
+      >
+        <div className="mb-4 space-y-1.5">
+          <AgentFilterChips chips={agentChips} />
+          <AgentFilterChips chips={sinceChips} />
+        </div>
+
+        {events.length === 0 ? (
+          <CardEmptyState>
+            {activeAgent || activeSince ? 'No activity for this filter.' : 'No agent activity yet.'}
+          </CardEmptyState>
+        ) : (
+          <ol className="border-border relative space-y-5 border-l">
+            {events.map((event) => {
+              const { label, detail } = describeAuditEvent(event.action, event.metadata);
+              return (
+                <li key={event.id} className="ml-4">
+                  <span className="border-background absolute -left-[6.5px] mt-1.5 h-3 w-3 rounded-full border-2 bg-teal-500" />
+                  <p className="text-foreground text-[13px] font-semibold">{label}</p>
+                  {detail ? (
+                    <p className="text-muted-foreground max-w-md truncate text-[12.5px]">
+                      {detail}
+                    </p>
+                  ) : null}
+                  <time className="text-muted-foreground text-[11px]">
+                    {formatDistanceToNow(event.occurredAt, { addSuffix: true })}
+                  </time>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {nextCursor ? (
+          <div className="mt-4">
+            <LoadOlderLink
+              href={activityHref(base, {
+                agent: activeAgent,
+                since: activeSince,
+                cursor: nextCursor,
+              })}
+            />
+          </div>
+        ) : null}
+      </BentoCard>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 'use client';
 
+import { BookOpen, Landmark } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
+import { BentoCard } from '@/components/deal-hub/bento-card';
 import {
   addExistingLoan,
   removeExistingLoan,
@@ -19,7 +21,7 @@ export interface DealLoanRow {
 }
 
 const inputClass =
-  'rounded-md border px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+  'border-border bg-card rounded-md border px-3 py-1.5 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring';
 
 export function DealLoansEditor({ dealId, loans }: { dealId: string; loans: DealLoanRow[] }) {
   const [isPending, startTransition] = useTransition();
@@ -60,11 +62,14 @@ export function DealLoansEditor({ dealId, loans }: { dealId: string; loans: Deal
   const sorted = [...loans].sort((a, b) => a.chainPosition - b.chainPosition);
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h2 className="mb-3 text-sm font-medium">Consolidation chain ({loans.length})</h2>
+    <div className="space-y-3">
+      <BentoCard
+        icon={<BookOpen className="h-4 w-4 text-teal-600 dark:text-teal-400" strokeWidth={2} />}
+        iconTile="bg-teal-500/10"
+        title={`Consolidation chain (${loans.length})`}
+      >
         {loans.length === 0 ? (
-          <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+          <div className="text-muted-foreground border-border rounded-lg border border-dashed p-8 text-center text-sm">
             No existing loans yet. Add each prior mortgage being consolidated (Schedule A).
           </div>
         ) : (
@@ -74,10 +79,13 @@ export function DealLoansEditor({ dealId, loans }: { dealId: string; loans: Deal
             ))}
           </ul>
         )}
-      </section>
+      </BentoCard>
 
-      <section>
-        <h2 className="mb-1 text-sm font-medium">Add a prior loan</h2>
+      <BentoCard
+        icon={<Landmark className="h-4 w-4 text-cyan-600 dark:text-cyan-400" strokeWidth={2} />}
+        iconTile="bg-cyan-500/10"
+        title="Add a prior loan"
+      >
         <p className="text-muted-foreground mb-3 text-xs">
           UPB is the unpaid principal balance (the §255 tax-exempt portion). Provide a reel/page
           (upstate) <em>or</em> a CRFN (NYC), not both.
@@ -109,13 +117,13 @@ export function DealLoansEditor({ dealId, loans }: { dealId: string; loans: Deal
           <button
             type="submit"
             disabled={isPending || upb.trim().length === 0}
-            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? 'Saving…' : 'Add loan'}
           </button>
         </form>
         {error ? <p className="mt-2 text-xs text-red-700">{error}</p> : null}
-      </section>
+      </BentoCard>
     </div>
   );
 }
@@ -163,7 +171,7 @@ function LoanRow({ dealId, loan }: { dealId: string; loan: DealLoanRow }) {
 
   if (editing) {
     return (
-      <li className="rounded-lg border p-3 text-sm">
+      <li className="border-border rounded-lg border p-3 text-sm">
         <div className="flex flex-wrap items-end gap-3">
           <Field label="UPB" value={upb} onChange={setUpb} required inputMode="decimal" />
           <Field
@@ -186,7 +194,7 @@ function LoanRow({ dealId, loan }: { dealId: string; loan: DealLoanRow }) {
             type="button"
             disabled={isPending || upb.trim().length === 0}
             onClick={handleSave}
-            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? 'Saving…' : 'Save'}
           </button>
@@ -208,16 +216,16 @@ function LoanRow({ dealId, loan }: { dealId: string; loan: DealLoanRow }) {
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-3 text-sm">
-      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">
+    <li className="border-border flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-3 text-sm">
+      <span className="rounded-full bg-slate-400/10 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
         #{loan.chainPosition}
       </span>
-      <span className="font-medium">UPB ${loan.upb}</span>
+      <span className="font-mono font-medium tabular-nums">UPB ${loan.upb}</span>
       {loan.investor ? (
         <span className="text-muted-foreground text-xs">{loan.investor}</span>
       ) : null}
       {(loan.recordedCrfn ?? loan.recordedReelPage) ? (
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground font-mono text-xs tabular-nums">
           {loan.recordedCrfn ?? loan.recordedReelPage}
         </span>
       ) : null}
@@ -226,7 +234,7 @@ function LoanRow({ dealId, loan }: { dealId: string; loan: DealLoanRow }) {
           type="button"
           disabled={isPending}
           onClick={() => setEditing(true)}
-          className="text-muted-foreground text-xs hover:text-blue-700 disabled:opacity-50"
+          className="text-muted-foreground text-xs hover:text-teal-700 disabled:opacity-50 dark:hover:text-teal-400"
         >
           Edit
         </button>

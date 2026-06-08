@@ -1,30 +1,20 @@
 /**
  * Deal hub overview — Command Center design language.
- * Server-rendered RSC. Canvas: bg-muted cool-gray; cards: bg-card rounded-2xl
- * hairline border + subtle shadow. On-brand: teal / blue / cyan / sky / amber /
- * slate / emerald. No violet / indigo / purple. No raw hex.
+ * Server-rendered RSC. Canvas: bg-muted cool-gray; cards: shared BentoCard
+ * (bg-card rounded-2xl hairline border + subtle shadow). The sticky header + tab
+ * nav come from the shared <DealHubHeader>. On-brand: teal / blue / cyan / sky /
+ * amber / slate / emerald. No violet / indigo / purple. No raw hex.
  */
 
-import {
-  BadgeDollarSign,
-  BookOpen,
-  Building2,
-  FileStack,
-  GitFork,
-  Landmark,
-  LayoutDashboard,
-  TriangleAlert,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { BadgeDollarSign, BookOpen, Building2, Landmark, Users } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { DealStatusBadge } from '@/components/deal-status-badge';
+import { BentoCard, CardEmptyState, DataRow } from '@/components/deal-hub/bento-card';
+import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
 import { getDeal } from '@/lib/actions/get-deal';
-import { parseDealRecording } from '@/lib/deals/deal-recording';
-import { cemaTypeLabel, loanProgramLabel, propertyTypeLabel } from '@/lib/deals/enum-labels';
+import { loanProgramLabel, propertyTypeLabel } from '@/lib/deals/enum-labels';
 import { partyRoleLabel } from '@/lib/deals/party-role';
 import { parseSavingsNarrative } from '@/lib/deals/savings-narrative';
 import { getDealParties } from '@/lib/queries/deal-parties';
@@ -51,18 +41,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const data = await getDeal(id);
   if (!data) notFound();
 
-  const { deal, property, newLoan, existingLoans } = data;
-  const recording = parseDealRecording(deal.metadata);
-  const savingsNarrative = parseSavingsNarrative(deal.metadata);
+  const { property, newLoan, existingLoans } = data;
+  const savingsNarrative = parseSavingsNarrative(data.deal.metadata);
   const parties = await getDealParties(id);
 
-  const shortId = deal.id.slice(0, 8);
   const streetLine = property?.streetAddress
     ? property.unit
       ? `${property.streetAddress} ${property.unit}`
       : property.streetAddress
     : null;
-  const cityLine = property?.city ?? null;
 
   // Format money amounts without raw string concatenation
   const fmtUsd = (raw: unknown): string => {
@@ -70,126 +57,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return isNaN(n) ? '—' : `$${n.toLocaleString('en-US')}`;
   };
 
-  // Extract savings amount from the narrative text (look for a $N,NNN pattern)
-  const savingsAmount: string | null = (() => {
-    if (!savingsNarrative) return null;
-    const m = savingsNarrative.text.match(/\$([\d,]+)/);
-    return m ? `$${m[1]}` : null;
-  })();
-
   return (
     // Cool-gray canvas — same -m-6 p-5 trick as the dashboard
     <div className="bg-muted -m-6 min-h-full p-5">
-      {/* ── Sticky deal header ─────────────────────────────────────────── */}
-      <div className="bg-card border-border sticky top-0 z-10 mb-5 rounded-2xl border px-5 py-4 shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          {/* Left: title + id + county */}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-foreground text-xl font-extrabold tracking-tight">
-                {cemaTypeLabel(deal.cemaType)}
-                {streetLine ? (
-                  <>
-                    {' '}
-                    <span className="text-muted-foreground font-semibold">·</span>{' '}
-                    <span>{streetLine}</span>
-                    {cityLine ? <span className="text-muted-foreground">, {cityLine}</span> : null}
-                  </>
-                ) : null}
-              </h1>
-              <DealStatusBadge status={deal.status} size="lg" />
-            </div>
-            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px]">
-              <span className="font-mono">{shortId}…</span>
-              {property?.county ? (
-                <>
-                  <span className="opacity-40">·</span>
-                  <span>{property.county} County</span>
-                </>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Right: savings amount + recorded chip */}
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {savingsAmount ? (
-              <div className="flex flex-col items-end">
-                <span className="text-xl font-extrabold tabular-nums leading-none text-emerald-600 dark:text-emerald-400">
-                  {savingsAmount}
-                </span>
-                <span className="text-muted-foreground mt-0.5 text-[11px] font-medium">
-                  Est. §255 savings
-                </span>
-              </div>
-            ) : null}
-            {recording ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                Recorded
-                {recording.crfn ? (
-                  <> · CRFN {recording.crfn}</>
-                ) : recording.reelPage ? (
-                  <> · Reel/Page {recording.reelPage}</>
-                ) : null}
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        {/* ── Sub-tab nav ─────────────────────────────────────────────── */}
-        <nav className="border-border mt-4 flex gap-0 border-b">
-          {[
-            {
-              label: 'Overview',
-              href: `/deals/${id}` as Route,
-              icon: LayoutDashboard,
-              active: true,
-            },
-            { label: 'Parties', href: `/deals/${id}/parties` as Route, icon: Users, active: false },
-            {
-              label: 'Loans',
-              href: `/deals/${id}/loans` as Route,
-              icon: BadgeDollarSign,
-              active: false,
-            },
-            {
-              label: 'Documents',
-              href: `/deals/${id}/documents` as Route,
-              icon: FileStack,
-              active: false,
-            },
-            {
-              label: 'Activity',
-              href: `/deals/${id}/agent-activity` as Route,
-              icon: Zap,
-              active: false,
-            },
-            { label: 'Graph', href: `/deals/${id}/graph` as Route, icon: GitFork, active: false },
-            {
-              label: 'Exceptions',
-              href: `/deals/${id}/exceptions` as Route,
-              icon: TriangleAlert,
-              active: false,
-            },
-          ].map(({ label, href, icon: Icon, active }) => (
-            <Link
-              key={label}
-              href={href}
-              className={`flex items-center gap-1.5 border-b-2 px-3.5 pb-2.5 pt-1 text-[12.5px] font-semibold transition-colors ${
-                active
-                  ? 'border-teal-600 text-teal-700 dark:border-teal-400 dark:text-teal-400'
-                  : 'text-muted-foreground hover:text-foreground hover:border-border border-transparent'
-              }`}
-            >
-              <Icon
-                className={`h-3.5 w-3.5 ${active ? 'text-teal-600 dark:text-teal-400' : ''}`}
-                strokeWidth={2}
-              />
-              {label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <DealHubHeader dealId={id} active="overview" />
 
       {/* ── Bento grid ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -214,7 +85,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <DataRow label="Type" value={propertyTypeLabel(property.propertyType)} />
             </dl>
           ) : (
-            <EmptyState>No property on file.</EmptyState>
+            <CardEmptyState>No property on file.</CardEmptyState>
           )}
         </BentoCard>
 
@@ -230,7 +101,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               <DataRow label="Program" value={loanProgramLabel(newLoan.program)} />
             </dl>
           ) : (
-            <EmptyState>No new loan on file.</EmptyState>
+            <CardEmptyState>No new loan on file.</CardEmptyState>
           )}
         </BentoCard>
 
@@ -243,7 +114,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           linkLabel="Edit"
         >
           {existingLoans.length === 0 ? (
-            <EmptyState>
+            <CardEmptyState>
               No existing loans yet.{' '}
               <Link
                 href={`/deals/${id}/loans` as Route}
@@ -251,7 +122,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               >
                 Add them →
               </Link>
-            </EmptyState>
+            </CardEmptyState>
           ) : (
             <ul className="divide-border divide-y">
               {existingLoans.map((loan) => (
@@ -280,7 +151,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           linkLabel="Edit"
         >
           {parties.length === 0 ? (
-            <EmptyState>
+            <CardEmptyState>
               No parties yet.{' '}
               <Link
                 href={`/deals/${id}/parties` as Route}
@@ -288,7 +159,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               >
                 Add them →
               </Link>
-            </EmptyState>
+            </CardEmptyState>
           ) : (
             <ul className="divide-border divide-y">
               {parties.map((p) => (
@@ -339,87 +210,5 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         ) : null}
       </div>
     </div>
-  );
-}
-
-// ─── Card shell ───────────────────────────────────────────────────────────────
-
-function BentoCard({
-  icon,
-  iconTile,
-  title,
-  linkHref,
-  linkLabel,
-  children,
-}: {
-  icon: React.ReactNode;
-  iconTile: string;
-  title: string;
-  linkHref?: Route;
-  linkLabel?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-card border-border rounded-2xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${iconTile}`}
-          >
-            {icon}
-          </div>
-          <h3 className="text-foreground text-[13px] font-bold">{title}</h3>
-        </div>
-        {linkHref && linkLabel ? (
-          <Link
-            href={linkHref}
-            className="flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
-          >
-            {linkLabel}
-            <ChevronRightIcon className="h-3 w-3" />
-          </Link>
-        ) : null}
-      </div>
-      <div className="text-sm">{children}</div>
-    </div>
-  );
-}
-
-// ─── Data row ─────────────────────────────────────────────────────────────────
-
-function DataRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-muted-foreground shrink-0 text-[12.5px]">{label}</dt>
-      <dd
-        className={`text-foreground text-right text-[13px] font-medium ${mono ? 'font-mono tabular-nums' : ''}`}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-function EmptyState({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground text-[12.5px]">{children}</p>;
-}
-
-// ─── Icon ─────────────────────────────────────────────────────────────────────
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
   );
 }
