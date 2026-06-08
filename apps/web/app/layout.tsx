@@ -18,7 +18,7 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Project_CEMA',
+  title: 'Empyre',
   description: 'AI-powered CEMA mortgage processing for NY-state lenders',
 };
 
