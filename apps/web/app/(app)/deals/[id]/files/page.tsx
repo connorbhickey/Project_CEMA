@@ -14,7 +14,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="bg-muted -m-6 min-h-full p-5">
-      <DealHubHeader dealId={dealId} active={null} />
+      <DealHubHeader dealId={dealId} active="documents" />
 
       <div className="mb-4">
         <h2 className="text-foreground text-lg font-bold tracking-tight">Files</h2>

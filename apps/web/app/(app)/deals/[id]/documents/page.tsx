@@ -5,7 +5,8 @@
  * No violet / indigo / purple / fuchsia. No raw hex.
  */
 
-import { FileStack, FileText, Files, Link2 } from 'lucide-react';
+import { FileStack, FileText, Files, FolderOpen, Link2 } from 'lucide-react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -24,6 +25,7 @@ import {
   getDealDocumentsReview,
   type DealDocumentReviewItem,
 } from '@/lib/queries/deal-documents-review';
+import { routeHref } from '@/lib/routes';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,6 +55,16 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <DealHubHeader dealId={id} active="documents" />
 
       <div className="space-y-3">
+        <div className="flex justify-end">
+          <Link
+            href={routeHref(`/deals/${id}/files`)}
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+          >
+            <FolderOpen className="h-3.5 w-3.5" strokeWidth={2} />
+            Drive files
+          </Link>
+        </div>
+
         {items.length === 0 ? (
           <BentoCard
             icon={
