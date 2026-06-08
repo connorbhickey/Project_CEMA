@@ -109,7 +109,7 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
 
             {/* Rows */}
-            <div>
+            <div role="list" aria-label="Deals">
               {deals.map((deal) => (
                 <DealRowItem key={deal.id} deal={deal} />
               ))}

@@ -1,7 +1,8 @@
 import { ThemeProvider } from '@cema/ui';
-import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Geist_Mono, Hanken_Grotesk } from 'next/font/google';
+
+import { ClerkThemeProvider } from '@/components/clerk-theme-provider';
 
 import './globals.css';
 
@@ -35,17 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <ClerkProvider
-            appearance={{
-              variables: {
-                colorPrimary: '#10213f', // brand navy — matches the app's primary buttons
-                borderRadius: '0.5rem',
-                fontFamily: 'var(--font-hanken)',
-              },
-            }}
-          >
-            {children}
-          </ClerkProvider>
+          <ClerkThemeProvider>{children}</ClerkThemeProvider>
         </ThemeProvider>
       </body>
     </html>

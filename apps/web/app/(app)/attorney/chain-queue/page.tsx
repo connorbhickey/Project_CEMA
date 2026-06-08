@@ -41,7 +41,11 @@ export default async function Page() {
       </div>
 
       {/* Inbox card */}
-      <div className="bg-card border-border overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]">
+      <div
+        role="list"
+        aria-label="Chain-of-title review queue"
+        className="bg-card border-border overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]"
+      >
         {items.length === 0 ? (
           <EmptyState />
         ) : (

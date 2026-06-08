@@ -29,6 +29,7 @@ export function DealRowItem({ deal }: DealRowItemProps) {
   return (
     <Link
       href={routeHref(`/deals/${deal.id}`)}
+      role="listitem"
       className="border-border hover:bg-accent/40 group flex min-h-[44px] items-center gap-0 border-b transition-colors last:border-b-0"
     >
       {/* Deal column */}
