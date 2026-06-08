@@ -1,17 +1,18 @@
-import { Activity, type LucideIcon, MessagesSquare, Zap } from 'lucide-react';
+import { Activity, LayoutList, type LucideIcon, MessagesSquare, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 import { routeHref } from '@/lib/routes';
 
 /**
  * Secondary nav for the deal-hub **Timeline** tab — the "source filter" the spec
- * calls for, letting the user switch between the three timeline streams
- * (Communications / Activity / Agent activity), all of which sit under the single
- * "Timeline" tab. Rendered below <DealHubHeader> on those three pages.
+ * calls for. "All" is the unified merged stream (`/timeline`); the other three are
+ * the richer per-source views (Communications / Activity / Agent activity). All
+ * four sit under the single "Timeline" tab; rendered below <DealHubHeader>.
  */
-export type TimelineSource = 'communications' | 'activity' | 'agent-activity';
+export type TimelineSource = 'all' | 'communications' | 'activity' | 'agent-activity';
 
 const SOURCES: { key: TimelineSource; label: string; segment: string; icon: LucideIcon }[] = [
+  { key: 'all', label: 'All', segment: '/timeline', icon: LayoutList },
   {
     key: 'communications',
     label: 'Communications',

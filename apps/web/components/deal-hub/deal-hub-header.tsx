@@ -43,7 +43,7 @@ const TABS: { key: DealHubTab; label: string; segment: string; icon: LucideIcon 
   { key: 'parties', label: 'Parties', segment: '/parties', icon: Users },
   { key: 'loans', label: 'Loans', segment: '/loans', icon: BadgeDollarSign },
   { key: 'documents', label: 'Documents', segment: '/documents', icon: FileStack },
-  { key: 'activity', label: 'Timeline', segment: '/communications', icon: MessagesSquare },
+  { key: 'activity', label: 'Timeline', segment: '/timeline', icon: MessagesSquare },
   { key: 'graph', label: 'Graph', segment: '/graph', icon: GitFork },
   { key: 'exceptions', label: 'Exceptions', segment: '/exceptions', icon: TriangleAlert },
 ];
