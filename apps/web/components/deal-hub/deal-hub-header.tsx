@@ -48,7 +48,16 @@ const TABS: { key: DealHubTab; label: string; segment: string; icon: LucideIcon 
   { key: 'exceptions', label: 'Exceptions', segment: '/exceptions', icon: TriangleAlert },
 ];
 
-export async function DealHubHeader({ dealId, active }: { dealId: string; active: DealHubTab }) {
+export async function DealHubHeader({
+  dealId,
+  active,
+}: {
+  dealId: string;
+  /** The active tab, or `null` for deal sub-routes that aren't one of the 7 tabs
+   *  (Communications / Files / Activity) — renders the header + nav with nothing
+   *  highlighted so the user can still navigate back to a tab. */
+  active: DealHubTab | null;
+}) {
   const data = await getDeal(dealId);
   if (!data) notFound();
 

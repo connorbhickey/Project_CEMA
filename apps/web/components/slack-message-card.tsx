@@ -1,6 +1,7 @@
 import type { communications, slackMessages } from '@cema/db';
-import type { Route } from 'next';
 import Link from 'next/link';
+
+import { routeHref } from '@/lib/routes';
 
 type Communication = typeof communications.$inferSelect;
 type SlackMessage = typeof slackMessages.$inferSelect;
@@ -17,9 +18,9 @@ function formatDate(date: Date | null | undefined): string {
 }
 
 const TYPE_BADGE: Record<string, string> = {
-  message: 'bg-purple-100 text-purple-700',
-  app_mention: 'bg-orange-100 text-orange-700',
-  thread_reply: 'bg-blue-100 text-blue-700',
+  message: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  app_mention: 'bg-orange-500/10 text-orange-700 dark:text-orange-400',
+  thread_reply: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
 };
 
 export function SlackMessageCard({ communication, slackMessage, dealId }: SlackMessageCardProps) {
@@ -29,8 +30,8 @@ export function SlackMessageCard({ communication, slackMessage, dealId }: SlackM
 
   return (
     <Link
-      href={`/deals/${dealId}/communications/${communication.id}` as Route}
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
+      href={routeHref(`/deals/${dealId}/communications/${communication.id}`)}
+      className="bg-card border-border hover:bg-accent/40 block rounded-xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05)] transition-colors"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -49,7 +50,7 @@ export function SlackMessageCard({ communication, slackMessage, dealId }: SlackM
         <div className="flex shrink-0 flex-col items-end gap-1">
           <p className="text-muted-foreground text-xs">{formatDate(communication.startedAt)}</p>
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE[type] ?? 'bg-gray-100 text-gray-600'}`}
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TYPE_BADGE[type] ?? 'bg-slate-400/10 text-slate-600 dark:text-slate-400'}`}
           >
             {type.replace('_', ' ')}
           </span>

@@ -1,6 +1,7 @@
 import type { communications, emailThreads } from '@cema/db';
-import type { Route } from 'next';
 import Link from 'next/link';
+
+import { routeHref } from '@/lib/routes';
 
 type Communication = typeof communications.$inferSelect;
 type EmailThread = typeof emailThreads.$inferSelect;
@@ -21,8 +22,8 @@ export function EmailThreadCard({ communication, emailThread, dealId }: EmailThr
 
   return (
     <Link
-      href={`/deals/${dealId}/communications/${communication.id}` as Route}
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
+      href={routeHref(`/deals/${dealId}/communications/${communication.id}`)}
+      className="bg-card border-border hover:bg-accent/40 block rounded-xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05)] transition-colors"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -41,7 +42,7 @@ export function EmailThreadCard({ communication, emailThread, dealId }: EmailThr
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <p className="text-muted-foreground text-xs">{formatDate(communication.startedAt)}</p>
-          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
+          <span className="rounded-full bg-slate-400/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-slate-600 dark:text-slate-400">
             {communication.medium}
           </span>
           {emailThread?.hasAttachments && attachmentCount > 0 ? (

@@ -19,11 +19,11 @@ function formatDate(date: Date | null): string {
 }
 
 const SYNC_BADGE: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-600',
-  syncing: 'bg-yellow-100 text-yellow-700',
-  synced: 'bg-green-100 text-green-700',
-  error: 'bg-red-100 text-red-700',
-  trashed: 'bg-gray-200 text-gray-500 line-through',
+  pending: 'bg-slate-400/10 text-slate-600 dark:text-slate-400',
+  syncing: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  synced: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  error: 'bg-red-500/10 text-red-700 dark:text-red-400',
+  trashed: 'bg-slate-400/10 text-slate-500 line-through dark:text-slate-500',
 };
 
 export function DriveFileCard({ file }: DriveFileCardProps) {
@@ -33,7 +33,7 @@ export function DriveFileCard({ file }: DriveFileCardProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
+      className="bg-card border-border hover:bg-accent/40 block rounded-xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05)] transition-colors"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -48,7 +48,7 @@ export function DriveFileCard({ file }: DriveFileCardProps) {
         <div className="flex shrink-0 flex-col items-end gap-1">
           <p className="text-muted-foreground text-xs">{formatDate(file.lastSyncedAt)}</p>
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${SYNC_BADGE[file.syncStatus] ?? 'bg-gray-100 text-gray-600'}`}
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${SYNC_BADGE[file.syncStatus] ?? 'bg-slate-400/10 text-slate-600 dark:text-slate-400'}`}
           >
             {file.syncStatus}
           </span>

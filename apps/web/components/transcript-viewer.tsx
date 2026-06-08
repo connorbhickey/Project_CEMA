@@ -8,10 +8,10 @@ interface TranscriptViewerProps {
 }
 
 const SPEAKER_COLORS = [
-  'border-l-blue-500 bg-blue-50',
-  'border-l-green-500 bg-green-50',
-  'border-l-purple-500 bg-purple-50',
-  'border-l-orange-500 bg-orange-50',
+  'border-l-blue-500 bg-blue-50 dark:bg-blue-950/30',
+  'border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/30',
+  'border-l-sky-500 bg-sky-50 dark:bg-sky-950/30',
+  'border-l-orange-500 bg-orange-50 dark:bg-orange-950/20',
 ];
 
 function speakerLabel(speakerId: number): string {
@@ -34,11 +34,11 @@ export function TranscriptViewer({ transcript, onWordClick }: TranscriptViewerPr
           SPEAKER_COLORS[para.speaker % SPEAKER_COLORS.length] ?? SPEAKER_COLORS[0]!;
         return (
           <div key={i} className={`rounded-r border-l-4 p-3 ${colorClass}`}>
-            <p className="mb-1 text-xs font-semibold text-gray-500">
+            <p className="text-muted-foreground mb-1 text-xs font-semibold">
               {speakerLabel(para.speaker)}
-              <span className="ml-2 font-normal text-gray-400">{para.start.toFixed(1)}s</span>
+              <span className="ml-2 font-normal opacity-60">{para.start.toFixed(1)}s</span>
             </p>
-            <p className="text-sm leading-relaxed text-gray-800">
+            <p className="text-foreground text-sm leading-relaxed">
               {onWordClick
                 ? transcript.words
                     .filter((w) => w.start >= para.start && w.end <= para.end + 0.1)

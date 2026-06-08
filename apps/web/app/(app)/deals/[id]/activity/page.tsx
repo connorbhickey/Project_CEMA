@@ -1,6 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Activity } from 'lucide-react';
 
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
+import { BentoCard, CardEmptyState } from '@/components/deal-hub/bento-card';
+import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
 import { LoadOlderLink } from '@/components/load-older-link';
 import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
@@ -45,32 +48,47 @@ export default async function DealActivityPage({ params, searchParams }: PagePro
   ];
 
   return (
-    <div className="p-6">
-      <h2 className="mb-4 text-lg font-semibold">Activity</h2>
-      <AgentFilterChips chips={typeChips} />
-      {events.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          {activeType ? 'No activity for this filter.' : 'No activity yet.'}
-        </p>
-      ) : (
-        <ol className="border-border relative space-y-6 border-l">
-          {events.map((event) => (
-            <li key={`${event.type}-${event.id}`} className="ml-4">
-              <span className="border-background bg-muted absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border" />
-              <p className="text-foreground text-sm font-medium">{event.label}</p>
-              {event.detail && (
-                <p className="text-muted-foreground max-w-md truncate text-sm">{event.detail}</p>
-              )}
-              <time className="text-muted-foreground text-xs">
-                {formatDistanceToNow(event.occurredAt, { addSuffix: true })}
-              </time>
-            </li>
-          ))}
-        </ol>
-      )}
-      {nextCursor && (
-        <LoadOlderLink href={activityHref(base, { type: activeType, cursor: nextCursor })} />
-      )}
+    <div className="bg-muted -m-6 min-h-full p-5">
+      <DealHubHeader dealId={id} active={null} />
+
+      <BentoCard
+        icon={<Activity className="h-4 w-4 text-teal-600 dark:text-teal-400" strokeWidth={2} />}
+        iconTile="bg-teal-500/10"
+        title="Activity"
+      >
+        <div className="mb-4">
+          <AgentFilterChips chips={typeChips} />
+        </div>
+
+        {events.length === 0 ? (
+          <CardEmptyState>
+            {activeType ? 'No activity for this filter.' : 'No activity yet.'}
+          </CardEmptyState>
+        ) : (
+          <ol className="border-border relative space-y-5 border-l">
+            {events.map((event) => (
+              <li key={`${event.type}-${event.id}`} className="ml-4">
+                <span className="border-background absolute -left-[6.5px] mt-1.5 h-3 w-3 rounded-full border-2 bg-teal-500" />
+                <p className="text-foreground text-[13px] font-semibold">{event.label}</p>
+                {event.detail ? (
+                  <p className="text-muted-foreground max-w-md truncate text-[12.5px]">
+                    {event.detail}
+                  </p>
+                ) : null}
+                <time className="text-muted-foreground text-[11px]">
+                  {formatDistanceToNow(event.occurredAt, { addSuffix: true })}
+                </time>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {nextCursor ? (
+          <div className="mt-4">
+            <LoadOlderLink href={activityHref(base, { type: activeType, cursor: nextCursor })} />
+          </div>
+        ) : null}
+      </BentoCard>
     </div>
   );
 }
