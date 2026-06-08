@@ -29,16 +29,16 @@ const STATUS_BADGE: Record<DealStatus, { dot: string; badge: string }> = {
     badge: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
   },
   title_work: {
-    dot: 'bg-indigo-500',
-    badge: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400',
+    dot: 'bg-teal-600',
+    badge: 'bg-teal-600/10 text-teal-700 dark:text-teal-400',
   },
   doc_prep: {
-    dot: 'bg-violet-500',
-    badge: 'bg-violet-500/10 text-violet-700 dark:text-violet-400',
+    dot: 'bg-cyan-600',
+    badge: 'bg-cyan-600/10 text-cyan-700 dark:text-cyan-400',
   },
   attorney_review: {
-    dot: 'bg-purple-500',
-    badge: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
+    dot: 'bg-blue-600',
+    badge: 'bg-blue-600/10 text-blue-700 dark:text-blue-400',
   },
   closing: {
     dot: 'bg-blue-600',
