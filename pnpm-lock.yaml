@@ -176,6 +176,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260523.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.1)(@types/pg@8.11.6)(@upstash/redis@1.38.0)(better-sqlite3@12.10.0)(pg@8.11.3)(postgres@3.4.9)
+      lucide-react:
+        specifier: ^0.460.0
+        version: 0.460.0(react@19.2.6)
       next:
         specifier: ^16.0.0
         version: 16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -218,7 +221,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@workflow/vitest':
         specifier: ^4.0.6
-        version: 4.0.6(@opentelemetry/api@1.9.1)(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)
+        version: 4.0.6(@opentelemetry/api@1.9.1)(vite@5.4.21(@types/node@22.19.19)(lightningcss@1.32.0))(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)
       autoprefixer:
         specifier: ^10.4.0
         version: 10.5.0(postcss@8.5.14)
@@ -10129,7 +10132,7 @@ snapshots:
       - '@swc/helpers'
       - supports-color
 
-  '@workflow/vitest@4.0.6(@opentelemetry/api@1.9.1)(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)':
+  '@workflow/vitest@4.0.6(@opentelemetry/api@1.9.1)(vite@5.4.21(@types/node@22.19.19)(lightningcss@1.32.0))(vitest@2.1.9(@types/node@22.19.19)(lightningcss@1.32.0))(zod@3.25.76)':
     dependencies:
       '@workflow/builders': 4.0.6(@opentelemetry/api@1.9.1)
       '@workflow/core': 4.2.5(@opentelemetry/api@1.9.1)
@@ -10137,6 +10140,8 @@ snapshots:
       '@workflow/world': 4.1.2(zod@3.25.76)
       '@workflow/world-local': 4.1.2(@opentelemetry/api@1.9.1)
       vitest: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
+    optionalDependencies:
+      vite: 5.4.21(@types/node@22.19.19)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@swc/helpers'

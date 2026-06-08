@@ -1,6 +1,7 @@
 import { ThemeToggle } from '@cema/ui';
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
+import { Layers } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
 import { Sidebar } from '@/components/sidebar';
@@ -21,16 +22,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     );
   }
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex flex-1 flex-col">
-        <header className="bg-card flex items-center justify-between border-b px-6 py-3">
-          <OrganizationSwitcher />
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <UserButton />
+    <div className="flex min-h-screen flex-col">
+      <header className="bg-brand-navy-header flex h-14 items-center justify-between px-4 text-white">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-brand-teal-bright flex h-8 w-8 items-center justify-center rounded-lg">
+            <Layers className="text-brand-navy h-[18px] w-[18px]" strokeWidth={2.2} />
           </div>
-        </header>
+          <span className="text-[15px] font-bold tracking-tight text-white">Project_CEMA</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <OrganizationSwitcher
+            appearance={{ elements: { organizationSwitcherTrigger: 'text-white' } }}
+          />
+          <ThemeToggle />
+          <UserButton />
+        </div>
+      </header>
+      <div className="flex flex-1">
+        <Sidebar />
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
