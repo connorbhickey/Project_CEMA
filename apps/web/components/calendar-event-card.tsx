@@ -1,6 +1,7 @@
 import type { calendarEvents, communications } from '@cema/db';
-import type { Route } from 'next';
 import Link from 'next/link';
+
+import { routeHref } from '@/lib/routes';
 
 type Communication = typeof communications.$inferSelect;
 type CalendarEvent = typeof calendarEvents.$inferSelect;
@@ -12,9 +13,9 @@ interface CalendarEventCardProps {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  confirmed: 'bg-green-100 text-green-700',
-  tentative: 'bg-yellow-100 text-yellow-700',
-  cancelled: 'bg-red-100 text-red-700',
+  confirmed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  tentative: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  cancelled: 'bg-red-500/10 text-red-700 dark:text-red-400',
 };
 
 function formatDateRange(start: Date | null | undefined, end: Date | null | undefined): string {
@@ -39,8 +40,8 @@ export function CalendarEventCard({
 
   return (
     <Link
-      href={`/deals/${dealId}/communications/${communication.id}` as Route}
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
+      href={routeHref(`/deals/${dealId}/communications/${communication.id}`)}
+      className="bg-card border-border hover:bg-accent/40 block rounded-xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05)] transition-colors"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -66,13 +67,13 @@ export function CalendarEventCard({
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-              STATUS_COLOR[status] ?? 'bg-gray-100 text-gray-600'
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
+              STATUS_COLOR[status] ?? 'bg-slate-400/10 text-slate-600 dark:text-slate-400'
             }`}
           >
             {status}
           </span>
-          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
+          <span className="rounded-full bg-slate-400/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-slate-600 dark:text-slate-400">
             {communication.medium}
           </span>
         </div>

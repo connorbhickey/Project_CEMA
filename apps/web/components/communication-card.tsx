@@ -3,11 +3,11 @@ import type { communications } from '@cema/db';
 type Communication = typeof communications.$inferSelect;
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-600',
-  ingested: 'bg-blue-100 text-blue-700',
-  transcribing: 'bg-yellow-100 text-yellow-700',
-  ready: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
+  pending: 'bg-slate-400/10 text-slate-600 dark:text-slate-400',
+  ingested: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  transcribing: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  ready: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  failed: 'bg-red-500/10 text-red-700 dark:text-red-400',
 };
 
 function formatE164(e164: string | null | undefined): string {
@@ -40,12 +40,14 @@ export function CommunicationCard({ comm }: { comm: Communication }) {
   const isOutbound = comm.direction === 'outbound';
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="bg-card border-border hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-4 shadow-[0_1px_2px_rgba(16,33,63,.05)] transition-colors">
       {/* Direction indicator */}
       <div
         aria-label={isOutbound ? 'Outbound call' : 'Inbound call'}
         className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-          isOutbound ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+          isOutbound
+            ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
+            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
         }`}
       >
         {isOutbound ? '↑' : '↓'}
@@ -66,14 +68,14 @@ export function CommunicationCard({ comm }: { comm: Communication }) {
 
       {/* Provider badge */}
       {comm.provider && (
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+        <span className="rounded-full bg-slate-400/10 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
           {comm.provider}
         </span>
       )}
 
       {/* Status pill */}
       <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[comm.status] ?? 'bg-gray-100 text-gray-600'}`}
+        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_COLOR[comm.status] ?? 'bg-slate-400/10 text-slate-600 dark:text-slate-400'}`}
       >
         {comm.status}
       </span>
