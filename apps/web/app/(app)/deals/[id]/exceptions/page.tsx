@@ -1,16 +1,12 @@
-import type { ExceptionSeverity } from '@cema/agents-exception-triage';
+import { CheckCircle2, TriangleAlert } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
+import { BentoCard } from '@/components/deal-hub/bento-card';
+import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
+import { SeverityBadge } from '@/components/queue/severity-badge';
 import { getDeal } from '@/lib/actions/get-deal';
 import { getDealExceptions } from '@/lib/agents/exception-triage/get-deal-exceptions';
 import { exceptionKindLabel, exceptionRouteLabel } from '@/lib/exceptions/exception-labels';
-
-const SEVERITY_CLASS: Record<ExceptionSeverity, string> = {
-  blocking: 'bg-red-100 text-red-800',
-  high: 'bg-orange-100 text-orange-800',
-  medium: 'bg-amber-100 text-amber-800',
-  low: 'bg-gray-100 text-gray-700',
-};
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,33 +16,40 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const exceptions = await getDealExceptions(id);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Exceptions</h1>
+    <div className="bg-muted -m-6 min-h-full p-5">
+      <DealHubHeader dealId={id} active="exceptions" />
 
-      {exceptions.length === 0 ? (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-          No open exceptions on this deal.
-        </div>
-      ) : (
-        <ul className="space-y-2" role="list" aria-label="Deal exceptions">
-          {exceptions.map((e) => (
-            <li key={e.kind} className="rounded-lg border p-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-medium ${SEVERITY_CLASS[e.severity]}`}
-                >
-                  {e.severity}
-                </span>
-                <span className="font-medium">{exceptionKindLabel(e.kind)}</span>
-                <span className="text-muted-foreground rounded px-2 py-0.5 text-xs">
-                  → {exceptionRouteLabel(e.route)}
-                </span>
-              </div>
-              <p className="text-muted-foreground mt-1">{e.reason}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <BentoCard
+        icon={
+          <TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+        }
+        iconTile="bg-amber-500/10"
+        title={`Exceptions${exceptions.length > 0 ? ` (${exceptions.length})` : ''}`}
+      >
+        {exceptions.length === 0 ? (
+          <div className="flex items-center gap-2 text-[13px] font-medium text-emerald-700 dark:text-emerald-400">
+            <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+            No open exceptions on this deal.
+          </div>
+        ) : (
+          <ul className="space-y-2" role="list" aria-label="Deal exceptions">
+            {exceptions.map((e) => (
+              <li key={e.kind} className="border-border rounded-xl border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <SeverityBadge severity={e.severity} />
+                  <span className="text-foreground text-[13px] font-semibold">
+                    {exceptionKindLabel(e.kind)}
+                  </span>
+                  <span className="text-muted-foreground text-[11px]">
+                    → {exceptionRouteLabel(e.route)}
+                  </span>
+                </div>
+                <p className="text-muted-foreground mt-1 text-[12.5px]">{e.reason}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </BentoCard>
     </div>
   );
 }

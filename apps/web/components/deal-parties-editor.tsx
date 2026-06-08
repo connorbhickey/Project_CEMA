@@ -1,13 +1,30 @@
 'use client';
 
+import { UserPlus, Users } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
+import { BentoCard } from '@/components/deal-hub/bento-card';
 import { addDealParty, removeDealParty, updateDealParty } from '@/lib/actions/manage-deal-parties';
 import { PARTY_ROLES, partyRoleLabel } from '@/lib/deals/party-role';
 import type { DealParty } from '@/lib/queries/deal-parties';
 
+// ─── Role pill colours (mirrors the overview RSC) ────────────────────────────
+
+const ROLE_PILL: Record<string, string> = {
+  borrower: 'bg-teal-500/10 text-teal-700 dark:text-teal-400',
+  co_borrower: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-400',
+  seller: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
+  seller_attorney: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  closing_attorney: 'bg-blue-600/10 text-blue-700 dark:text-blue-400',
+  loan_officer: 'bg-teal-600/10 text-teal-700 dark:text-teal-400',
+  processor: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+  title_agent: 'bg-slate-400/10 text-slate-500 dark:text-slate-400',
+  doc_custodian: 'bg-slate-400/10 text-slate-500 dark:text-slate-400',
+};
+const ROLE_PILL_FALLBACK = 'bg-slate-400/10 text-slate-500 dark:text-slate-400';
+
 const inputClass =
-  'rounded-md border px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+  'border-border bg-card rounded-md border px-3 py-1.5 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring';
 
 export function DealPartiesEditor({ dealId, parties }: { dealId: string; parties: DealParty[] }) {
   const [isPending, startTransition] = useTransition();
@@ -33,11 +50,14 @@ export function DealPartiesEditor({ dealId, parties }: { dealId: string; parties
   }
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h2 className="mb-3 text-sm font-medium">On this deal ({parties.length})</h2>
+    <div className="space-y-3">
+      <BentoCard
+        icon={<Users className="h-4 w-4 text-sky-600 dark:text-sky-400" strokeWidth={2} />}
+        iconTile="bg-sky-500/10"
+        title={`On this deal (${parties.length})`}
+      >
         {parties.length === 0 ? (
-          <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+          <div className="text-muted-foreground border-border rounded-lg border border-dashed p-8 text-center text-sm">
             No parties yet. Add the borrower (buyer) and, for a Purchase CEMA, the seller.
           </div>
         ) : (
@@ -47,10 +67,13 @@ export function DealPartiesEditor({ dealId, parties }: { dealId: string; parties
             ))}
           </ul>
         )}
-      </section>
+      </BentoCard>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium">Add a party</h2>
+      <BentoCard
+        icon={<UserPlus className="h-4 w-4 text-teal-600 dark:text-teal-400" strokeWidth={2} />}
+        iconTile="bg-teal-500/10"
+        title="Add a party"
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -105,13 +128,13 @@ export function DealPartiesEditor({ dealId, parties }: { dealId: string; parties
           <button
             type="submit"
             disabled={isPending || fullName.trim().length === 0}
-            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? 'Saving…' : 'Add party'}
           </button>
         </form>
         {error ? <p className="mt-2 text-xs text-red-700">{error}</p> : null}
-      </section>
+      </BentoCard>
     </div>
   );
 }
@@ -150,7 +173,7 @@ function PartyRow({ dealId, party }: { dealId: string; party: DealParty }) {
 
   if (editing) {
     return (
-      <li className="rounded-lg border p-3 text-sm">
+      <li className="border-border rounded-lg border p-3 text-sm">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs">
             <span className="text-muted-foreground">Role</span>
@@ -199,7 +222,7 @@ function PartyRow({ dealId, party }: { dealId: string; party: DealParty }) {
             type="button"
             disabled={isPending || fullName.trim().length === 0}
             onClick={handleSave}
-            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? 'Saving…' : 'Save'}
           </button>
@@ -221,8 +244,10 @@ function PartyRow({ dealId, party }: { dealId: string; party: DealParty }) {
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-3 text-sm">
-      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">
+    <li className="border-border flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-3 text-sm">
+      <span
+        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ROLE_PILL[party.role] ?? ROLE_PILL_FALLBACK}`}
+      >
         {partyRoleLabel(party.role)}
       </span>
       <span className="font-medium">{party.fullName ?? '—'}</span>
@@ -233,7 +258,7 @@ function PartyRow({ dealId, party }: { dealId: string; party: DealParty }) {
           type="button"
           disabled={isPending}
           onClick={() => setEditing(true)}
-          className="text-muted-foreground text-xs hover:text-blue-700 disabled:opacity-50"
+          className="text-muted-foreground text-xs hover:text-teal-700 disabled:opacity-50 dark:hover:text-teal-400"
         >
           Edit
         </button>

@@ -1,6 +1,7 @@
 import { getCurrentOrganizationId } from '@cema/auth';
 import { deals, existingLoans, getDb, newLoans, organizations, properties } from '@cema/db';
 import { and, eq } from 'drizzle-orm';
+import { cache } from 'react';
 
 import { withRls } from '@/lib/with-rls';
 
@@ -16,7 +17,11 @@ export type DealDetail = {
   existingLoans: ExistingLoan[];
 };
 
-export async function getDeal(id: string): Promise<DealDetail | null> {
+/**
+ * Wrapped in React `cache()` so the shared `DealHubHeader` (which self-fetches the
+ * deal for its sticky header) and the page body dedupe to one query per render.
+ */
+export const getDeal = cache(async (id: string): Promise<DealDetail | null> => {
   const clerkOrgId = await getCurrentOrganizationId();
   const db = getDb();
   const org = await db.query.organizations.findFirst({
@@ -44,4 +49,4 @@ export async function getDeal(id: string): Promise<DealDetail | null> {
       existingLoans: existing,
     };
   });
-}
+});
