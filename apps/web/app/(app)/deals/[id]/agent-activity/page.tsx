@@ -4,6 +4,7 @@ import { Zap } from 'lucide-react';
 import { AgentFilterChips, type AgentFilterChip } from '@/components/agent-filter-chips';
 import { BentoCard, CardEmptyState } from '@/components/deal-hub/bento-card';
 import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
+import { DealTimelineSubnav } from '@/components/deal-hub/deal-timeline-subnav';
 import { LoadOlderLink } from '@/components/load-older-link';
 import { parseActivityCursor } from '@/lib/agent-activity/activity-cursor';
 import { activityHref } from '@/lib/agent-activity/activity-href';
@@ -59,6 +60,7 @@ export default async function DealAgentActivityPage({ params, searchParams }: Pa
   return (
     <div className="bg-muted -m-6 min-h-full p-5">
       <DealHubHeader dealId={id} active="activity" />
+      <DealTimelineSubnav dealId={id} active="agent-activity" />
 
       <BentoCard
         icon={<Zap className="h-4 w-4 text-teal-600 dark:text-teal-400" strokeWidth={2} />}

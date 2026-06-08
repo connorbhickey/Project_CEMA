@@ -15,9 +15,9 @@ import {
   GitFork,
   LayoutDashboard,
   type LucideIcon,
+  MessagesSquare,
   TriangleAlert,
   Users,
-  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -43,7 +43,7 @@ const TABS: { key: DealHubTab; label: string; segment: string; icon: LucideIcon 
   { key: 'parties', label: 'Parties', segment: '/parties', icon: Users },
   { key: 'loans', label: 'Loans', segment: '/loans', icon: BadgeDollarSign },
   { key: 'documents', label: 'Documents', segment: '/documents', icon: FileStack },
-  { key: 'activity', label: 'Activity', segment: '/agent-activity', icon: Zap },
+  { key: 'activity', label: 'Timeline', segment: '/communications', icon: MessagesSquare },
   { key: 'graph', label: 'Graph', segment: '/graph', icon: GitFork },
   { key: 'exceptions', label: 'Exceptions', segment: '/exceptions', icon: TriangleAlert },
 ];

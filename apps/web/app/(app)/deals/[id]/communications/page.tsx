@@ -7,6 +7,7 @@ import { CalendarEventCard } from '@/components/calendar-event-card';
 import { CommunicationCard } from '@/components/communication-card';
 import { BentoCard } from '@/components/deal-hub/bento-card';
 import { DealHubHeader } from '@/components/deal-hub/deal-hub-header';
+import { DealTimelineSubnav } from '@/components/deal-hub/deal-timeline-subnav';
 import { EmailThreadCard } from '@/components/email-thread-card';
 import { SlackMessageCard } from '@/components/slack-message-card';
 import { listCalendarEvents } from '@/lib/actions/list-calendar-events';
@@ -87,7 +88,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="bg-muted -m-6 min-h-full p-5">
-      <DealHubHeader dealId={dealId} active={null} />
+      <DealHubHeader dealId={dealId} active="activity" />
+      <DealTimelineSubnav dealId={dealId} active="communications" />
 
       <BentoCard
         icon={

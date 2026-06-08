@@ -35,7 +35,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <ClerkProvider>{children}</ClerkProvider>
+          <ClerkProvider
+            appearance={{
+              variables: {
+                colorPrimary: '#10213f', // brand navy — matches the app's primary buttons
+                borderRadius: '0.5rem',
+                fontFamily: 'var(--font-hanken)',
+              },
+            }}
+          >
+            {children}
+          </ClerkProvider>
         </ThemeProvider>
       </body>
     </html>
