@@ -1,4 +1,4 @@
-import type { Route } from 'next';
+import { SearchX } from 'lucide-react';
 
 import { CitationCard } from './citation-card';
 
@@ -9,21 +9,27 @@ interface SearchResultsProps {
   query: string;
 }
 
-function hrefForHit(hit: SearchHit): Route {
-  if (hit.kind === 'communication') return `/communications/${hit.id}` as Route;
-  return `/documents/${hit.id}` as Route;
+function hrefForHit(hit: SearchHit): string {
+  if (hit.kind === 'communication') return `/communications/${hit.id}`;
+  return `/documents/${hit.id}`;
 }
 
 export function SearchResults({ hits, query }: SearchResultsProps) {
   if (hits.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground text-sm font-medium">
-          No matches for &ldquo;{query}&rdquo;
-        </p>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Communications + documents must be embedded first. Run the backfill if this is unexpected.
-        </p>
+      <div className="bg-card border-border overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-2xl">
+            <SearchX className="h-6 w-6 text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
+          </div>
+          <p className="text-foreground text-sm font-semibold">
+            No matches for &ldquo;{query}&rdquo;
+          </p>
+          <p className="text-muted-foreground mt-1 text-[12.5px]">
+            Communications + documents must be embedded first. Run the backfill if this is
+            unexpected.
+          </p>
+        </div>
       </div>
     );
   }
@@ -33,13 +39,11 @@ export function SearchResults({ hits, query }: SearchResultsProps) {
       <p className="text-muted-foreground text-xs">
         {hits.length} result{hits.length === 1 ? '' : 's'} for &ldquo;{query}&rdquo;
       </p>
-      <ul className="space-y-2" role="list">
+      <div className="bg-card border-border overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(16,33,63,.05),0_4px_12px_rgba(16,33,63,.04)]">
         {hits.map((hit) => (
-          <li key={`${hit.kind}-${hit.id}`}>
-            <CitationCard hit={hit} href={hrefForHit(hit)} />
-          </li>
+          <CitationCard key={`${hit.kind}-${hit.id}`} hit={hit} href={hrefForHit(hit)} />
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

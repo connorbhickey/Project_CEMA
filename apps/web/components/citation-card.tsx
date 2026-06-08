@@ -1,28 +1,28 @@
-import type { Route } from 'next';
-import Link from 'next/link';
+import { FileText, MessageSquare } from 'lucide-react';
 
+import { InboxRow } from '@/components/queue/inbox-row';
 import type { SearchHit } from '@/lib/actions/search-similar';
 
 interface CitationCardProps {
   hit: SearchHit;
-  href: Route;
+  href: string;
 }
 
 export function CitationCard({ hit, href }: CitationCardProps) {
+  const isComm = hit.kind === 'communication';
   return (
-    <Link
+    <InboxRow
       href={href}
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{hit.preview}</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            <span className="capitalize">{hit.kind}</span> · similarity{' '}
-            {(hit.similarity * 100).toFixed(1)}%
-          </p>
-        </div>
-      </div>
-    </Link>
+      icon={isComm ? MessageSquare : FileText}
+      iconTint={isComm ? 'text-blue-600 dark:text-blue-400' : 'text-sky-600 dark:text-sky-400'}
+      iconBg="bg-blue-500/10"
+      title={hit.preview}
+      sub={
+        <>
+          <span className="capitalize">{hit.kind}</span>
+          {' · '}similarity {(hit.similarity * 100).toFixed(1)}%
+        </>
+      }
+    />
   );
 }
