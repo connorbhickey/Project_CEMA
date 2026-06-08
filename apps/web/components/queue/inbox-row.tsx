@@ -39,6 +39,7 @@ export function InboxRow({
   return (
     <Link
       href={routeHref(href)}
+      role="listitem"
       className="border-border hover:bg-accent/40 group relative flex items-center gap-3 border-b px-4 py-3 transition-colors last:border-b-0"
     >
       {stripe ? (
