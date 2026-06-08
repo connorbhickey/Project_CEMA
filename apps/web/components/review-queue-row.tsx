@@ -1,13 +1,9 @@
-import Link from 'next/link';
+import { FileText } from 'lucide-react';
 
+import { InboxRow } from '@/components/queue/inbox-row';
+import { QueueStateBadge } from '@/components/queue/queue-state-badge';
 import type { ReviewQueueItem } from '@/lib/actions/list-review-queue';
-
-const STATE_BADGE: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  claimed: 'bg-blue-100 text-blue-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
-};
+import { documentKindLabel } from '@/lib/deals/document-kind';
 
 function formatDate(date: Date | null): string {
   if (!date) return '—';
@@ -20,32 +16,25 @@ interface ReviewQueueRowProps {
 
 export function ReviewQueueRow({ item }: ReviewQueueRowProps) {
   const { queue, document, submittedBy, reviewer } = item;
+
+  const kindLabel = document?.kind
+    ? documentKindLabel(document.kind)
+    : `Document ${queue.documentId}`;
+
+  const submitterLabel = submittedBy?.email ?? queue.submittedById;
+  const subLine = reviewer
+    ? `Submitted by ${submitterLabel} · ${formatDate(queue.submittedAt)} · claimed by ${reviewer.email}`
+    : `Submitted by ${submitterLabel} · ${formatDate(queue.submittedAt)}`;
+
   return (
-    <Link
+    <InboxRow
       href={`/attorney/queue/${queue.id}`}
-      className="hover:bg-muted/50 block rounded-lg border bg-white p-4 shadow-sm transition-colors"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
-            {document?.kind ?? `Document ${queue.documentId}`} (v{queue.documentVersion})
-          </p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            Submitted by {submittedBy?.email ?? queue.submittedById} ·{' '}
-            {formatDate(queue.submittedAt)}
-          </p>
-          {reviewer ? (
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              Claimed by {reviewer.email} · {formatDate(queue.claimedAt)}
-            </p>
-          ) : null}
-        </div>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STATE_BADGE[queue.state] ?? 'bg-gray-100 text-gray-600'}`}
-        >
-          {queue.state}
-        </span>
-      </div>
-    </Link>
+      icon={FileText}
+      iconTint="text-blue-600 dark:text-blue-400"
+      iconBg="bg-blue-500/10"
+      title={`${kindLabel} · v${queue.documentVersion}`}
+      sub={subLine}
+      badges={<QueueStateBadge state={queue.state} />}
+    />
   );
 }
