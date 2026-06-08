@@ -30,10 +30,9 @@ import {
   properties,
   users,
 } from '@cema/db';
+import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq, inArray, like, sql as sqlFrag } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-
-import { withRls } from '@/lib/with-rls';
 
 // ---------------------------------------------------------------------------
 // Guard: dev-only
@@ -66,36 +65,65 @@ export async function GET(): Promise<Response> {
 
   const db = getDb();
 
+  // The Clerk → DB sync webhook needs a public URL, which is rarely wired up in
+  // local dev — so the org/user can exist in Clerk but not the DB (which makes
+  // EVERY tenant-scoped query return []). This dev seed is self-sufficient: it
+  // upserts them from the Clerk session, mirroring clerk-sync.ts. getDb() runs
+  // as the bypass-RLS owner, exactly like the real webhook, so these succeed.
+  let orgName = 'Demo Workspace';
+  let orgSlug =
+    clerkOrgId
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .slice(0, 60) || 'demo-org';
+  try {
+    const clerk = await clerkClient();
+    const clerkOrg = await clerk.organizations.getOrganization({ organizationId: clerkOrgId });
+    orgName = clerkOrg.name;
+    if (clerkOrg.slug) orgSlug = clerkOrg.slug;
+  } catch {
+    // Clerk lookup failed — fall back to the derived name/slug.
+  }
+  await db
+    .insert(organizations)
+    .values({ clerkOrgId, name: orgName, slug: orgSlug })
+    .onConflictDoUpdate({
+      target: organizations.clerkOrgId,
+      set: { name: orgName, slug: orgSlug },
+    });
+
+  const email =
+    clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
+  if (!email) {
+    return Response.json({ error: 'Clerk user has no email address.' }, { status: 400 });
+  }
+  const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || null;
+  await db
+    .insert(users)
+    .values({ clerkUserId: clerkUser.id, email, fullName })
+    .onConflictDoUpdate({ target: users.clerkUserId, set: { email, fullName } });
+
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.clerkOrgId, clerkOrgId),
   });
-  if (!org) {
-    return Response.json(
-      {
-        error:
-          'Organization not yet synced to the database. The Clerk webhook may still be processing — try again in a moment.',
-      },
-      { status: 400 },
-    );
-  }
-
   const user = await db.query.users.findFirst({
     where: eq(users.clerkUserId, clerkUser.id),
   });
-  if (!user) {
+  if (!org || !user) {
     return Response.json(
-      {
-        error:
-          'User not yet synced to the database. The Clerk webhook may still be processing — try again in a moment.',
-      },
-      { status: 400 },
+      { error: 'Failed to upsert org/user into the database.' },
+      { status: 500 },
     );
   }
 
   // ---------------------------------------------------------------------------
-  // Seed inside withRls so RLS policies evaluate correctly
+  // Seed as the bypass-RLS owner (db) so the properties INSERT is not blocked
+  // by the USING-only RLS policy that requires a deal to already reference the
+  // property — impossible at property-insert time. org.id is set explicitly on
+  // every org-scoped row so the RLS-reading dashboard loaders still see the data.
   // ---------------------------------------------------------------------------
-  await withRls(org.id, async (tx) => {
+  {
+    const tx = db;
     // -----------------------------------------------------------------------
     // 1. Delete previous demo rows (idempotency).
     //    Deals own everything via cascade or FK, so deleting deals cleans
@@ -991,16 +1019,7 @@ export async function GET(): Promise<Response> {
         submittedById: user.id,
       });
     }
-
-    return {
-      deals: DEMO_DEALS.length,
-      statusCounts: Object.fromEntries(
-        dealStatusEnum.enumValues.map((s) => [s, DEMO_DEALS.filter((d) => d.status === s).length]),
-      ),
-      auditEvents: auditRows.length,
-      chainBreakRows: chainBreakDealIdxs.length,
-    };
-  });
+  }
 
   // Redirect to dashboard so the user immediately sees the seeded data.
   redirect('/dashboard');
