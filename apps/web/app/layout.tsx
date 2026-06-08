@@ -1,10 +1,20 @@
+import { ThemeProvider } from '@cema/ui';
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Geist_Mono, Hanken_Grotesk } from 'next/font/google';
 
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const fontSans = Hanken_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-hanken',
+  display: 'swap',
+});
+const fontMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Project_CEMA',
@@ -13,9 +23,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ClerkProvider>{children}</ClerkProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${fontSans.variable} ${fontMono.variable}`}
+    >
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClerkProvider>{children}</ClerkProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
