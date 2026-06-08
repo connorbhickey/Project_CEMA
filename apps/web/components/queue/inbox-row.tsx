@@ -1,7 +1,8 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react';
-import type { Route } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+
+import { routeHref } from '@/lib/routes';
 
 /**
  * Shared command-center inbox row — an icon chip, a title + mono sub-line, a
@@ -37,7 +38,7 @@ export function InboxRow({
 }: InboxRowProps) {
   return (
     <Link
-      href={href as Route}
+      href={routeHref(href)}
       className="border-border hover:bg-accent/40 group relative flex items-center gap-3 border-b px-4 py-3 transition-colors last:border-b-0"
     >
       {stripe ? (

@@ -8,9 +8,11 @@ interface NeedsYouProps {
   exceptions: DealExceptions[];
 }
 
-// Sort highest severity first
+// Sort highest severity first. `blocking` is the most urgent (and renders with
+// the same high-severity styling below), so it must sort to the TOP, not fall
+// through to the default.
 function severityOrder(s: string): number {
-  if (s === 'critical') return 0;
+  if (s === 'blocking') return 0;
   if (s === 'high') return 1;
   if (s === 'medium') return 2;
   return 3;
