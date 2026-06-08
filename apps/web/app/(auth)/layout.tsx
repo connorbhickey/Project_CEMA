@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="bg-brand-teal-bright flex h-10 w-10 items-center justify-center rounded-xl">
           <Layers className="text-brand-navy h-[22px] w-[22px]" strokeWidth={2.2} />
         </div>
-        <span className="text-foreground text-xl font-extrabold tracking-tight">Project_CEMA</span>
+        <span className="text-foreground text-xl font-extrabold tracking-tight">Empyre</span>
       </div>
 
       {children}

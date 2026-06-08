@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="bg-brand-teal-bright flex h-8 w-8 items-center justify-center rounded-lg">
             <Layers className="text-brand-navy h-[18px] w-[18px]" strokeWidth={2.2} />
           </div>
-          <span className="text-[15px] font-bold tracking-tight text-white">Project_CEMA</span>
+          <span className="text-[15px] font-bold tracking-tight text-white">Empyre</span>
         </div>
         <div className="flex items-center gap-3">
           <OrganizationSwitcher
