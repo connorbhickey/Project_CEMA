@@ -6,8 +6,9 @@
  * single sanctioned literal, matching the /deals + dashboard surfaces).
  */
 
+import type { UrlObject } from 'url';
+
 import { ChevronRight } from 'lucide-react';
-import type { Route } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -24,7 +25,7 @@ export function BentoCard({
   icon: ReactNode;
   iconTile: string;
   title: string;
-  linkHref?: Route;
+  linkHref?: UrlObject;
   linkLabel?: string;
   children: ReactNode;
 }) {

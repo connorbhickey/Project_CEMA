@@ -1,5 +1,4 @@
 import { CheckCircle, Folder, TriangleAlert } from 'lucide-react';
-import type { Route } from 'next';
 import Link from 'next/link';
 
 import { AgentFleet } from '@/components/dashboard/agent-fleet';
@@ -16,6 +15,7 @@ import { type PipelineSummary, summarizePipeline } from '@/lib/dashboard/pipelin
 import { getAgentActionCounts } from '@/lib/queries/agent-action-counts';
 import { getDealsByStatus } from '@/lib/queries/deals-by-status';
 import { getOrgAgentActivity } from '@/lib/queries/org-agent-activity';
+import { routeHref } from '@/lib/routes';
 
 export default async function DashboardPage() {
   const [statusCounts, actionCounts, exceptions, activityPage] = await Promise.all([
@@ -110,7 +110,7 @@ function Card({
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-foreground text-[13px] font-bold">{title}</h3>
         <Link
-          href={linkHref as Route}
+          href={routeHref(linkHref)}
           className="flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
         >
           {linkLabel}

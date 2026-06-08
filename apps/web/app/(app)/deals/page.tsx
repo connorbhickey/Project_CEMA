@@ -9,6 +9,7 @@ import {
   dealStatusLabel,
   parseDealStatusFilter,
 } from '@/lib/deals/deal-status';
+import { routeHref } from '@/lib/routes';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -133,7 +134,7 @@ function FilterChip({
 }) {
   return (
     <Link
-      href={href as Route}
+      href={typeof href === 'string' ? routeHref(href) : href}
       className={[
         'inline-flex h-7 items-center rounded-full border px-3 text-[11.5px] font-semibold transition-colors',
         active

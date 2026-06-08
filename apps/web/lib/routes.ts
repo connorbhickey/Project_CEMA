@@ -1,19 +1,16 @@
-import type { Route } from 'next';
+import type { UrlObject } from 'url';
 
 /**
- * Cast a computed path string to a typed `Route` at a single, opaque-`string`
- * boundary.
+ * Build a Next `<Link>` href for a *computed* path string.
  *
- * Next's typed-routes lint (`@typescript-eslint/no-unnecessary-type-assertion`,
- * which only runs in CI *after* `next typegen` regenerates the route table)
- * flags an inline `` `/deals/${id}/loans` as Route `` because, post-typegen, the
- * template literal is already a *known* `Route` — so the auto-format strips the
- * cast and the `Route` import becomes unused (`no-unused-vars`). Locally, without
- * typegen, `tsc` instead *demands* the cast. Funnelling every computed href
- * through this helper keeps the cast source a plain `string`, so the
- * `string → Route` narrowing is genuinely necessary from BOTH perspectives —
- * ending the flip-flop. Pass a string built from any interpolation; get a Route.
+ * Returns a `UrlObject` (its `pathname` is a plain `string`) rather than casting
+ * to the branded `Route` type — which deliberately sidesteps the Next
+ * typed-routes flip-flop: local `tsc` demands `` `/x/${id}` as Route `` (string is
+ * not assignable to the branded `Route`), while CI's post-`next typegen` eslint
+ * resolves `Route` loosely and flags that exact cast as *unnecessary*, then
+ * strips it. A `UrlObject` never touches `Route`, so BOTH type-checkers agree —
+ * no `as Route`, no eslint-disable. `<Link>` accepts `Route | UrlObject`.
  */
-export function routeHref(path: string): Route {
-  return path as Route;
+export function routeHref(path: string): UrlObject {
+  return { pathname: path };
 }
